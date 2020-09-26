@@ -7,12 +7,12 @@ import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
-import {Map} from "immutable";
+import {HashMap} from "prelude-ts";
 
 
 interface OwnProps {
     theme: AppTheme;
-    colorPalettes: Map<string, Palette>
+    colorPalettes: HashMap<string, Palette>
 }
 
 interface StateProps {
@@ -26,7 +26,7 @@ interface StateProps {
     // the name of the current theme
     name: string;
     // the current map of the theme names and their associated color palettes
-    palettes: Map<string, Palette>;
+    palettes: HashMap<string, Palette>;
 }
 
 interface DispatchProps {

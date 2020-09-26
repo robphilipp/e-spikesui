@@ -1,5 +1,5 @@
 import {ITheme} from "@uifabric/styling";
-import {Map} from "immutable";
+import {HashMap} from "prelude-ts";
 import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../../theming";
 import {CHANGE_THEME, /*KAFKA_SETTINGS_CHANGED,*/ SettingsAction} from "../actions/settings";
 // import {KafkaSettings} from "../../components/settings/KafkaSettings";
@@ -10,7 +10,7 @@ import {CHANGE_THEME, /*KAFKA_SETTINGS_CHANGED,*/ SettingsAction} from "../actio
 export interface SettingsState {
     itheme: ITheme;
     name: string;
-    palettes: Map<string, Palette>;
+    palettes: HashMap<string, Palette>;
     // kafka: KafkaSettings;
 }
 

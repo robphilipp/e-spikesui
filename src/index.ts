@@ -11,6 +11,12 @@ const createWindow = (): void => {
   const mainWindow = new BrowserWindow({
     height: 600,
     width: 800,
+
+    // addition of `prelude-ts` caused "Uncaught ReferenceError: require is not defined"
+    // error when running; this fixes it
+    webPreferences: {
+      nodeIntegration: true
+    }
   });
 
   // and load the index.html of the app.

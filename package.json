@@ -96,7 +96,7 @@
     "@fortawesome/react-fontawesome": "^0.1.11",
     "axios": "^0.20.0",
     "electron-squirrel-startup": "^1.0.0",
-    "immutable": "^4.0.0-rc.12",
+    "prelude-ts": "^1.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-redux": "^7.2.1",

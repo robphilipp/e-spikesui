@@ -1,5 +1,5 @@
 import {IPartialTheme, ITheme, loadTheme} from '@fluentui/react';
-import {Map} from "immutable";
+import {HashMap} from "prelude-ts";
 
 export interface Palette {
     themePrimary: string;
@@ -77,10 +77,14 @@ const lightPalette: Palette = {
 };
 
 export const defaultTheme = "dark";
-export const defaultPalettes: Map<string, Palette> = Map({
+export const defaultPalettes = HashMap.ofObjectDictionary<Palette>({
     "light": lightPalette,
     "dark": darkPalette
 });
+// export const defaultPalettes = HashMap.ofObjectDictionary({
+//     "light": lightPalette,
+//     "dark": darkPalette
+// });
 
 /**
  * Holds the current theme name and fabric-ui theme
@@ -106,11 +110,11 @@ export const createDefaultTheme = (name: string): AppTheme => {
  * @param palettes A map(theme_name -> fabric_ui_color_palette) holding the available themes
  * @return The actual theme
  */
-export const createTheme = (name: string, palettes: Map<string, Palette>): AppTheme => {
+export const createTheme = (name: string, palettes: HashMap<string, Palette>): AppTheme => {
     const palette: IPartialTheme = name === 'default' ? {
         defaultFontStyle: {fontFamily: '"Avenir Next", sans-serif', fontWeight: 400}
     } : {
-        palette: palettes.get(name),
+        palette: palettes.get(name).getOrElse(darkPalette),
         defaultFontStyle: {fontFamily: '"Avenir Next", sans-serif', fontWeight: 400}
     };
     const theme = loadTheme(palette);

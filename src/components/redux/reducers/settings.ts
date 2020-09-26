@@ -1,8 +1,8 @@
 import {ITheme} from "@uifabric/styling";
 import {HashMap} from "prelude-ts";
 import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../../theming";
-import {CHANGE_THEME, /*KAFKA_SETTINGS_CHANGED,*/ SettingsAction} from "../actions/settings";
-// import {KafkaSettings} from "../../components/settings/KafkaSettings";
+import {CHANGE_THEME, KAFKA_SETTINGS_CHANGED, SettingsAction} from "../actions/settings";
+import {KafkaSettings} from "../../settings/KafkaSettings";
 
 /**
  * The state holding the application settings
@@ -11,7 +11,7 @@ export interface SettingsState {
     itheme: ITheme;
     name: string;
     palettes: HashMap<string, Palette>;
-    // kafka: KafkaSettings;
+    kafka: KafkaSettings;
 }
 
 /**
@@ -21,7 +21,7 @@ const initialSettingsState: SettingsState = {
     itheme: createDefaultTheme("dark").theme,
     name: "dark",
     palettes: defaultPalettes,
-    // kafka: {brokers: [{host: 'localhost', port: 9092}, {host: 'localhost', port: 9093}]}
+    kafka: {brokers: [{host: 'localhost', port: 9092}, {host: 'localhost', port: 9093}]}
 };
 
 /**
@@ -41,11 +41,11 @@ export function settingsReducer(state= initialSettingsState, action: SettingsAct
                 itheme: createTheme(action.theme, state.palettes).theme,
             };
 
-        // case KAFKA_SETTINGS_CHANGED:
-        //     return {
-        //         ...state,
-        //         kafka: action.kafkaSettings
-        //     };
+        case KAFKA_SETTINGS_CHANGED:
+            return {
+                ...state,
+                kafka: action.kafkaSettings
+            };
 
         default:
             return state;

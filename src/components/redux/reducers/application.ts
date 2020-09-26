@@ -1,14 +1,15 @@
 // import {Option} from "prelude-ts";
 import {ApplicationAction, CLEAR_ERROR_MESSAGES, SET_ERROR_MESSAGES} from "../actions/actions";
 import {SETTINGS_PANEL_VISIBLE} from "../actions/settings";
+import {Option} from "prelude-ts";
 
 interface ApplicationState {
-    // errorMessages: Option<string[]>;
+    errorMessages: Option<string[]>;
     settingsPanelVisible: boolean;
 }
 
 const initialState: ApplicationState = {
-    // errorMessages: Option.none<string[]>(),
+    errorMessages: Option.none<string[]>(),
     settingsPanelVisible: false
 };
 
@@ -20,17 +21,17 @@ const initialState: ApplicationState = {
  */
 export function applicationReducer(state = initialState, action: ApplicationAction): ApplicationState {
     switch (action.type) {
-        // case CLEAR_ERROR_MESSAGES:
-        //     return {
-        //         ...state,
-        //         errorMessages: Option.none<string[]>()
-        //     };
-        //
-        // case SET_ERROR_MESSAGES:
-        //     return {
-        //         ...state,
-        //         errorMessages: Option.some<string[]>(action.messages)
-        //     };
+        case CLEAR_ERROR_MESSAGES:
+            return {
+                ...state,
+                errorMessages: Option.none<string[]>()
+            };
+
+        case SET_ERROR_MESSAGES:
+            return {
+                ...state,
+                errorMessages: Option.some<string[]>(action.messages)
+            };
 
         case SETTINGS_PANEL_VISIBLE:
             return {

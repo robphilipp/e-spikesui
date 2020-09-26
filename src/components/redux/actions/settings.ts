@@ -6,6 +6,8 @@
 
 // import {KafkaSettings} from "../../components/settings/KafkaSettings";
 
+import {KafkaSettings} from "../../settings/KafkaSettings";
+
 export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";
 export const KAFKA_SETTINGS_CHANGED = "kafka-settings-changed";
@@ -32,14 +34,14 @@ export interface ChangeThemeAction {
     theme: string;
 }
 
-// export interface KafkaSettingsChangeAction {
-//     type: typeof KAFKA_SETTINGS_CHANGED;
-//     kafkaSettings: KafkaSettings;
-// }
+export interface KafkaSettingsChangeAction {
+    type: typeof KAFKA_SETTINGS_CHANGED;
+    kafkaSettings: KafkaSettings;
+}
 
 export type SettingsAction = ChangeThemeAction
     | SettingsPanelVisibleAction
-    // | KafkaSettingsChangeAction
+    | KafkaSettingsChangeAction
     ;
 
 
@@ -78,12 +80,12 @@ export const changeTheme = (theme: string): ChangeThemeAction => ({
     theme: theme
 });
 
-// /**
-//  * Action to update the kafka settings
-//  * @param {KafkaSettings} settings The updated kafka settings
-//  * @return {KafkaSettingsChangeAction} An action to update the kafka settings
-//  */
-// export const changeKafkaSettings = (settings: KafkaSettings): KafkaSettingsChangeAction => ({
-//     type: KAFKA_SETTINGS_CHANGED,
-//     kafkaSettings: settings
-// });
+/**
+ * Action to update the kafka settings
+ * @param {KafkaSettings} settings The updated kafka settings
+ * @return {KafkaSettingsChangeAction} An action to update the kafka settings
+ */
+export const changeKafkaSettings = (settings: KafkaSettings): KafkaSettingsChangeAction => ({
+    type: KAFKA_SETTINGS_CHANGED,
+    kafkaSettings: settings
+});

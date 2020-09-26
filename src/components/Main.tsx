@@ -5,8 +5,8 @@ import {AppTheme, Palette} from "../theming";
 import { connect } from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
-import {changeTheme} from "./redux/actions/settings";
-import {ApplicationAction} from "./redux/actions/actions";
+import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
+import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {Map} from "immutable";
 
 
@@ -16,12 +16,23 @@ interface OwnProps {
 }
 
 interface StateProps {
+    // // holds an error message
+    // errorMessages: Option<string[]>;
+
+    // determines if the application settings panel is visible
+    settingsPanelVisible: boolean;
+    // the current theme
     itheme: ITheme;
+    // the name of the current theme
     name: string;
+    // the current map of the theme names and their associated color palettes
     palettes: Map<string, Palette>;
 }
 
 interface DispatchProps {
+    onClearErrorMessages: () => void;
+    onShowSettingsPanel: () => void;
+    onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
 }
 
@@ -51,7 +62,7 @@ function Main(props: Props): JSX.Element {
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     ...ownProps,
     // errorMessages: state.application.errorMessages,
-    // settingsPanelVisible: state.application.settingsPanelVisible,
+    settingsPanelVisible: state.application.settingsPanelVisible,
     itheme: state.settings.itheme,
     name: state.settings.name,
     palettes: state.settings.palettes
@@ -65,10 +76,10 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @param {OwnProps} _ The component's own properties
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
-const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, ApplicationAction>, _: OwnProps): DispatchProps => ({
-    // onClearErrorMessages: () => dispatch(clearErrorMessages()),
-    // onShowSettingsPanel: () => dispatch(showSettingsPanel()),
-    // onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
+const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
+    onClearErrorMessages: () => dispatch(clearErrorMessages()),
+    onShowSettingsPanel: () => dispatch(showSettingsPanel()),
+    onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme))
 });
 

@@ -1,8 +1,8 @@
 {
-  "name": "react-test",
-  "productName": "react-test",
+  "name": "spikes-ui",
+  "productName": "spikes-ui",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "User interface for defining and running spikes neural networks",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -24,7 +24,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "react_test"
+            "name": "spikes_ui"
           }
         },
         {

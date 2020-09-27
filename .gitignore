@@ -89,3 +89,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# application data and dev
+.spikes-ui

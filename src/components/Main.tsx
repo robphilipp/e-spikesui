@@ -9,9 +9,10 @@ import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
+import {RouteComponentProps, withRouter } from 'react-router-dom';
 
 
-interface OwnProps {
+interface OwnProps extends RouteComponentProps<any> {
     theme: AppTheme;
     colorPalettes: HashMap<string, Palette>
 }
@@ -56,7 +57,7 @@ function Main(props: Props): JSX.Element {
                     iconName: 'Add'
                 },
                 ariaLabel: 'New',
-                // onClick: () => props.history.push('spikes-chart')
+                onClick: () => props.history.push('spikes-chart')
                 // href: 'spikes-chart',
                 // subMenuProps: {
                 //     items: [
@@ -160,4 +161,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme))
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Main)
+const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)
+
+export default withRouter(connectedApp)

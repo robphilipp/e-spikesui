@@ -2,7 +2,7 @@ import {ITheme} from "@uifabric/styling";
 import {HashMap} from "prelude-ts";
 import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../../theming";
 import {CHANGE_THEME, KAFKA_SETTINGS_CHANGED, SettingsAction} from "../actions/settings";
-import {KafkaSettings} from "../../settings/KafkaSettings";
+import {KafkaSettings} from "../../settings/kafkaSettings";
 
 /**
  * The state holding the application settings

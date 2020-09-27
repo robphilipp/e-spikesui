@@ -20,7 +20,7 @@ import {connect} from "react-redux";
 import {Palette} from "../../theming";
 import {HashMap, Option} from 'prelude-ts';
 import {changeTheme, hideSettingsPanel, changeKafkaSettings, showSettingsPanel} from "../redux/actions/settings";
-import {KafkaSettings} from "./KafkaSettings";
+import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 
 const themes: IDropdownOption[] = [

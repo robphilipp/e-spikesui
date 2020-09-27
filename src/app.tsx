@@ -6,27 +6,21 @@ import {createDefaultTheme, defaultPalettes, defaultTheme} from "./theming";
 import {Provider} from "react-redux";
 import store from './components/redux/store';
 import {generateRemoteActionCreators} from './components/redux/actions/rootActions';
-import ServerSettings from "./components/settings/ServerSettings";
 import {BrowserRouter} from "react-router-dom";
+import {loadOrInitializeSetting} from "./components/settings/settings";
 
 // set up and register all the icons for the application. the fabric-ui icons are
 // copyrighted by microsoft and so we can't use them for non-microsoft-office
 // development
 prepareIcons();
 
-// this application needs to connect to a spikes neural network server that creates,
-// executes, and accepts sensor signals from this application. the server settings
-// hold the URL components to connect to this REST service.
-const serverSettings: ServerSettings = {
-    host: 'localhost',
-    port: 3000,
-    // port: 8080,
-    basePath: ''
-};
+// load the application settings/preferences from file, or if they aren't available,
+// load the default settings and write the settings to disk
+const applicationSettings = loadOrInitializeSetting();
 
 // generate the wrapper so that action-creators can be enriched with the server
 // settings
-export const remoteActionCreators = generateRemoteActionCreators(serverSettings);
+export const remoteActionCreators = generateRemoteActionCreators(applicationSettings.server);
 
 ReactDOM.render(
     <Provider store={store}>

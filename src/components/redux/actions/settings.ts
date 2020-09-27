@@ -6,7 +6,7 @@
 
 // import {KafkaSettings} from "../../components/settings/KafkaSettings";
 
-import {KafkaSettings} from "../../settings/KafkaSettings";
+import {KafkaSettings} from "../../settings/kafkaSettings";
 
 export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
 
-import {KafkaBroker, KafkaSettings} from "./KafkaSettings";
+import {KafkaBroker, KafkaSettings} from "./kafkaSettings";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";

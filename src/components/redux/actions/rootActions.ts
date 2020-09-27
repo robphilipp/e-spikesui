@@ -1,4 +1,4 @@
-import ServerSettings from "../../settings/ServerSettings";
+import ServerSettings from "../../settings/serverSettings";
 // import {networkManagementActionCreators} from "./networkManagement";
 
 /**

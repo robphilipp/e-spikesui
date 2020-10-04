@@ -9,10 +9,6 @@ import {changeKafkaSettings} from "../redux/actions/settings";
 import {connect} from "react-redux";
 import {DetailsList, DetailsListLayoutMode, IColumn, SelectionMode} from "@fluentui/react";
 
-interface OwnProps {
-    nothing?: string
-}
-
 interface StateProps {
     kafkaSettings: KafkaSettings;
 }
@@ -21,7 +17,7 @@ interface DispatchProps {
     onChangeKafkaSettings: (settings: KafkaSettings) => void;
 }
 
-type Props = StateProps & DispatchProps & OwnProps
+type Props = StateProps & DispatchProps
 
 
 // const classNames = mergeStyleSets({
@@ -87,7 +83,7 @@ function KafkaSettingsEditor(props: Props): JSX.Element {
             maxWidth: 300,
             data: 'string',
             isResizable: true,
-            onColumnClick: onColumnClick,
+            onColumnClick: (event, column) => onColumnClick(event, column),
             // onRender: (item: KafkaBroker) => {
             //     return <span>{item.host}</span>;
             // }
@@ -109,7 +105,7 @@ function KafkaSettingsEditor(props: Props): JSX.Element {
             isSortedDescending: true,
             sortAscendingAriaLabel: 'Sorted A to Z',
             sortDescendingAriaLabel: 'Sorted Z to A',
-            onColumnClick: onColumnClick,
+            onColumnClick: (event, column) => onColumnClick(event, column),
             // onRender: (item: KafkaBroker) => {
             //     return <span>{item.port}</span>;
             // }
@@ -187,12 +183,13 @@ function sortRowsBy<T>(rows: T[], columnKey: string, isSortedDescending = false)
 /**
  * react-redux function that maps the application state to the props used by the `App` component.
  * @param state The updated application state
- * @param ownProps The current properties of the `App` component
+ * @return The state properties
  */
-const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    ...ownProps,
-    kafkaSettings: state.settings.kafka
-});
+function mapStateToProps(state: AppState): StateProps {
+    return {
+        kafkaSettings: state.settings.kafka
+    }
+}
 
 /**
  * react-redux function that maps the event handlers to the dispatch functions. Note that in the
@@ -201,8 +198,10 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @param {ThunkDispatch} dispatch The redux dispatcher
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
-const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings))
-});
+function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps {
+    return {
+        onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings))
+    }
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(KafkaSettingsEditor)

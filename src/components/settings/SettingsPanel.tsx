@@ -11,8 +11,6 @@ import {
     PanelType,
     PrimaryButton, Separator, IStackTokens
 } from "@fluentui/react";
-// import {AppUiState} from "../../App";
-// import {AppUiContext} from "../../app-ui-context";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -22,6 +20,8 @@ import {HashMap, Option} from 'prelude-ts';
 import {changeTheme, hideSettingsPanel, changeKafkaSettings, showSettingsPanel} from "../redux/actions/settings";
 import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
+import ServerSettings from "./serverSettings";
+import ServerSettingsEditor from "./ServerSettingsEditor";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -40,6 +40,7 @@ interface StateProps {
     // current theme name
     name: string;
     palettes: HashMap<string, Palette>;
+    serverSettings: ServerSettings;
     kafkaSettings: KafkaSettings;
 }
 
@@ -129,38 +130,39 @@ function SettingsPanel(props: Props): JSX.Element {
 
     const stackTokens: IStackTokens = {childrenGap: 20};
     return (
-        // <AppUiContext.Consumer>
-        //     {(_: AppUiState) => (
-                <Panel
-                    isOpen={props.settingsPanelVisible}
-                    type={PanelType.medium}
-                    onDismiss={handleCancelChanges}
-                    headerText="Settings"
-                    closeButtonAriaLabel="Close"
-                    onRenderFooterContent={onRenderFooterContent}
-                    isFooterAtBottom={true}
-                >
-                    <Stack tokens={stackTokens}>
-                        <Stack.Item>
-                            <Separator theme={props.itheme}>Look and feel</Separator>
-                            <Label htmlFor={"theme-dropdown"}>Select a theme</Label>
-                            <Dropdown
-                                id={"theme-dropdown"}
-                                dropdownWidth={200}
-                                options={themes}
-                                defaultSelectedKey={props.name}
-                                onChange={(event, option) => handleThemeChange(option)}
-                            />
-                        </Stack.Item>
-                        <Stack.Item>
-                            <Separator theme={props.itheme}>Advanced</Separator>
-                            <Label>Kafka Brokers</Label>
-                            <KafkaSettingsEditor/>
-                        </Stack.Item>
-                    </Stack>
-                </Panel>
-            // )}
-        // </AppUiContext.Consumer>
+        <Panel
+            isOpen={props.settingsPanelVisible}
+            type={PanelType.medium}
+            onDismiss={handleCancelChanges}
+            headerText="Settings"
+            closeButtonAriaLabel="Close"
+            onRenderFooterContent={onRenderFooterContent}
+            isFooterAtBottom={true}
+        >
+            <Stack tokens={stackTokens}>
+                <Stack.Item>
+                    <Separator theme={props.itheme}>Look and feel</Separator>
+                    <Label htmlFor={"theme-dropdown"}>Select a theme</Label>
+                    <Dropdown
+                        id={"theme-dropdown"}
+                        dropdownWidth={200}
+                        options={themes}
+                        defaultSelectedKey={props.name}
+                        selectedKey={props.name}
+                        onChange={(event, option) => handleThemeChange(option)}
+                    />
+                </Stack.Item>
+                <Stack.Item>
+                    <Separator theme={props.itheme}>Server Settings</Separator>
+                    <ServerSettingsEditor/>
+                </Stack.Item>
+                <Stack.Item>
+                    <Separator theme={props.itheme}>Kafka Settings</Separator>
+                    <Label>Kafka Brokers</Label>
+                    <KafkaSettingsEditor/>
+                </Stack.Item>
+            </Stack>
+        </Panel>
     );
 }
 
@@ -176,14 +178,17 @@ function SettingsPanel(props: Props): JSX.Element {
  * @param state The updated application state
  * @param ownProps The current properties of the `App` component
  */
-const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    ...ownProps,
-    settingsPanelVisible: state.application.settingsPanelVisible,
-    itheme: state.settings.itheme,
-    name: state.settings.name,
-    palettes: state.settings.palettes,
-    kafkaSettings: state.settings.kafka
-});
+function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
+    return {
+        ...ownProps,
+        settingsPanelVisible: state.application.settingsPanelVisible,
+        itheme: state.settings.itheme,
+        name: state.settings.name,
+        palettes: state.settings.palettes,
+        serverSettings: state.settings.server,
+        kafkaSettings: state.settings.kafka
+    }
+}
 
 /**
  * react-redux function that maps the event handlers to the dispatch functions. Note that in the
@@ -193,11 +198,13 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @param {OwnProps} ownProps The components own properties
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
-const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, ApplicationAction>, ownProps: OwnProps): DispatchProps => ({
-    onShowSettingsPanel: () => dispatch(showSettingsPanel()),
-    onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
-    onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
-    onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings))
-});
+function mapDispatchToProps(dispatch: ThunkDispatch<any, any, ApplicationAction>, ownProps: OwnProps): DispatchProps {
+    return {
+        onShowSettingsPanel: () => dispatch(showSettingsPanel()),
+        onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
+        onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+        onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings))
+    }
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(SettingsPanel)

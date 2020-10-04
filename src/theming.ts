@@ -81,10 +81,6 @@ export const defaultPalettes = HashMap.ofObjectDictionary<Palette>({
     "light": lightPalette,
     "dark": darkPalette
 });
-// export const defaultPalettes = HashMap.ofObjectDictionary({
-//     "light": lightPalette,
-//     "dark": darkPalette
-// });
 
 /**
  * Holds the current theme name and fabric-ui theme

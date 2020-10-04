@@ -3,6 +3,8 @@ import {HashMap} from "prelude-ts";
 import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../../theming";
 import {CHANGE_THEME, KAFKA_SETTINGS_CHANGED, SettingsAction} from "../actions/settings";
 import {KafkaSettings} from "../../settings/kafkaSettings";
+import {loadOrInitializeSetting} from "../../settings/appSettings";
+import ServerSettings from "../../settings/serverSettings";
 
 /**
  * The state holding the application settings
@@ -11,18 +13,24 @@ export interface SettingsState {
     itheme: ITheme;
     name: string;
     palettes: HashMap<string, Palette>;
+    server: ServerSettings;
     kafka: KafkaSettings;
 }
 
 /**
- * The initial settings
+ * Loads the settings from file and returns the initial settings.
+ * @return {SettingsState} The initial settings state based on the settings file
  */
-const initialSettingsState: SettingsState = {
-    itheme: createDefaultTheme("dark").theme,
-    name: "dark",
-    palettes: defaultPalettes,
-    kafka: {brokers: [{host: 'localhost', port: 9092}, {host: 'localhost', port: 9093}]}
-};
+function initialSettings(): SettingsState {
+    const settings = loadOrInitializeSetting();
+    return {
+        name: settings.themeName,
+        itheme: createDefaultTheme(settings.themeName).theme,
+        palettes: defaultPalettes,
+        server: settings.server,
+        kafka: settings.kafka
+    }
+}
 
 /**
  * Reducer function that accepts the current state and action, and for change theme actions, updates the
@@ -31,7 +39,7 @@ const initialSettingsState: SettingsState = {
  * @param {SettingsAction} action The action holding the new state information
  * @return {SettingsState} the updated state
  */
-export function settingsReducer(state= initialSettingsState, action: SettingsAction): SettingsState {
+export function settingsReducer(state= initialSettings(), action: SettingsAction): SettingsState {
     switch(action.type) {
         case CHANGE_THEME:
             console.log(`settings -- theme; action type: ${action.type}; theme: ${action.theme}`);

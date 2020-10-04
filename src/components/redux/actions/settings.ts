@@ -7,9 +7,11 @@
 // import {KafkaSettings} from "../../components/settings/KafkaSettings";
 
 import {KafkaSettings} from "../../settings/kafkaSettings";
+import ServerSettings from "../../settings/serverSettings";
 
 export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";
+export const SERVER_SETTINGS_CHANGED = "server-settings-changed";
 export const KAFKA_SETTINGS_CHANGED = "kafka-settings-changed";
 
 /*
@@ -34,6 +36,11 @@ export interface ChangeThemeAction {
     theme: string;
 }
 
+export interface ServerSettingsChangeAction {
+    type: typeof SERVER_SETTINGS_CHANGED;
+    serverSettings: ServerSettings;
+}
+
 export interface KafkaSettingsChangeAction {
     type: typeof KAFKA_SETTINGS_CHANGED;
     kafkaSettings: KafkaSettings;
@@ -41,6 +48,7 @@ export interface KafkaSettingsChangeAction {
 
 export type SettingsAction = ChangeThemeAction
     | SettingsPanelVisibleAction
+    | ServerSettingsChangeAction
     | KafkaSettingsChangeAction
     ;
 
@@ -56,36 +64,56 @@ export type SettingsAction = ChangeThemeAction
  * Action to show the application settings panel
  * @return {SettingsPanelVisibleAction}
  */
-export const showSettingsPanel = (): SettingsPanelVisibleAction => ({
-    type: SETTINGS_PANEL_VISIBLE,
-    visible: true
-});
+export function showSettingsPanel(): SettingsPanelVisibleAction {
+    return {
+        type: SETTINGS_PANEL_VISIBLE,
+        visible: true
+    }
+}
 
 /**
  * Action to hide the settings panel
  * @return {SettingsPanelVisibleAction}
  */
-export const hideSettingsPanel = (): SettingsPanelVisibleAction => ({
-    type: SETTINGS_PANEL_VISIBLE,
-    visible: false
-});
+export function hideSettingsPanel(): SettingsPanelVisibleAction {
+    return {
+        type: SETTINGS_PANEL_VISIBLE,
+        visible: false
+    }
+}
 
 /**
  * Action to change the UI theme
- * @param {string} theme
- * @return {ChangeThemeAction}
+ * @param {string} name The name of the new theme
+ * @return {ChangeThemeAction} The action
  */
-export const changeTheme = (theme: string): ChangeThemeAction => ({
-    type: CHANGE_THEME,
-    theme: theme
-});
+export function changeTheme(name: string): ChangeThemeAction {
+    return {
+        type: CHANGE_THEME,
+        theme: name
+    }
+}
+
+/**
+ * Action to change the settings for connecting to the spikes server
+ * @param {ServerSettings} settings The server settings (host, port, base URL)
+ * @return {ServerSettingsChangeAction} The change action
+ */
+export function changeServerSettings(settings: ServerSettings): ServerSettingsChangeAction {
+    return {
+        type: SERVER_SETTINGS_CHANGED,
+        serverSettings: settings
+    }
+}
 
 /**
  * Action to update the kafka settings
  * @param {KafkaSettings} settings The updated kafka settings
  * @return {KafkaSettingsChangeAction} An action to update the kafka settings
  */
-export const changeKafkaSettings = (settings: KafkaSettings): KafkaSettingsChangeAction => ({
-    type: KAFKA_SETTINGS_CHANGED,
-    kafkaSettings: settings
-});
+export function changeKafkaSettings(settings: KafkaSettings): KafkaSettingsChangeAction {
+    return {
+        type: KAFKA_SETTINGS_CHANGED,
+        kafkaSettings: settings
+    }
+}

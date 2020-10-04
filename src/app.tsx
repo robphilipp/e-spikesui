@@ -7,7 +7,7 @@ import {Provider} from "react-redux";
 import store from './components/redux/store';
 import {generateRemoteActionCreators} from './components/redux/actions/rootActions';
 import {BrowserRouter} from "react-router-dom";
-import {loadOrInitializeSetting} from "./components/settings/settings";
+import {loadOrInitializeSetting} from "./components/settings/appSettings";
 
 // set up and register all the icons for the application. the fabric-ui icons are
 // copyrighted by microsoft and so we can't use them for non-microsoft-office

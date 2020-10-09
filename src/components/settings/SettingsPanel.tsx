@@ -17,11 +17,18 @@ import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
 import {Palette} from "../../theming";
 import {HashMap, Option} from 'prelude-ts';
-import {changeTheme, hideSettingsPanel, changeKafkaSettings, showSettingsPanel} from "../redux/actions/settings";
+import {
+    changeTheme,
+    hideSettingsPanel,
+    changeKafkaSettings,
+    showSettingsPanel,
+    changeServerSettings
+} from "../redux/actions/settings";
 import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
+import serverSettings from "./serverSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -48,6 +55,7 @@ interface DispatchProps {
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
+    onChangeServerSettings: (settings: ServerSettings) => void;
     onChangeKafkaSettings: (settings: KafkaSettings) => void;
 }
 
@@ -60,33 +68,38 @@ type Props = StateProps & DispatchProps & OwnProps
  */
 function SettingsPanel(props: Props): JSX.Element {
     // initially we start out with the current theme name to be an empty option. when
-    // the user selects a theme, then we update the current theme with the theme that
+    // the user selects a theme, we update the current theme with the theme that
     // was originally set, before any changes were made. this update value signifies
     // that there has been a change, and holds the theme to revert to if the user cancels
     // from the theme.
-    const [currentThemeName, setCurrentThemeName] = useState(Option.none<string>());
+    const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
+
+    const [originalServer, setOriginalServer] = useState(Option.none<ServerSettings>());
+    const [currentServer, setCurrentServer] = useState<ServerSettings>(props.serverSettings);
 
     /**
      * Renders the footer content of the settings panel
      * @return {Element} The footer
      */
-    const onRenderFooterContent = (): JSX.Element => (
-        <div>
-            <PrimaryButton
-                onClick={handleAcceptChanges}
-                iconProps={{iconName: 'CompletedSolid'}}
-                style={{marginRight: '8px'}}
-            >
-                OK
-            </PrimaryButton>
-            <DefaultButton
-                onClick={handleCancelChanges}
-                iconProps={{iconName: 'StatusErrorFull'}}
-            >
-                Cancel
-            </DefaultButton>
-        </div>
-    );
+    function onRenderFooterContent(): JSX.Element {
+        return (
+            <div>
+                <PrimaryButton
+                    onClick={handleAcceptChanges}
+                    iconProps={{iconName: 'CompletedSolid'}}
+                    style={{marginRight: '8px'}}
+                >
+                    OK
+                </PrimaryButton>
+                <DefaultButton
+                    onClick={handleCancelChanges}
+                    iconProps={{iconName: 'StatusErrorFull'}}
+                >
+                    Cancel
+                </DefaultButton>
+            </div>
+        )
+    }
 
     /**
      * Calls the theme changer callback function passed down through the react context
@@ -98,10 +111,19 @@ function SettingsPanel(props: Props): JSX.Element {
         }
         // if this is the first change before selecting "accept" or "cancel", then
         // we grab the name of the current theme
-        currentThemeName.ifNone(() => setCurrentThemeName(Option.of(props.name)));
+        originalThemeName.ifNone(() => setOriginalThemeName(Option.of(props.name)));
 
         // update the theme for display, but don't set it permanently
         props.onChangeTheme(option.key as string);
+    }
+
+    /**
+     * When the server settings are changed, then
+     * @param {ServerSettings} settings
+     */
+    function handleServerChange(settings: ServerSettings): void {
+        originalServer.ifNone(() => setOriginalServer(Option.of(props.serverSettings)));
+        setCurrentServer(settings);
     }
 
     /**
@@ -109,10 +131,16 @@ function SettingsPanel(props: Props): JSX.Element {
      */
     function handleAcceptChanges() {
         // accepting the changes, just leaves things as they were, but we need to set the
-        // current theme name back to an empty optional to signify that there have been on
+        // original theme name back to an empty optional to signify that there have been no
         // changes.
         props.onHideSettingsPanel();
-        setCurrentThemeName(Option.none());
+        setOriginalThemeName(Option.none());
+
+        // accept any changes to the server settings, if there were any, otherwise, do nothing.
+        if (originalServer.isSome()) {
+            props.onChangeServerSettings(currentServer);
+            setOriginalServer(Option.none());
+        }
     }
 
     /**
@@ -120,12 +148,17 @@ function SettingsPanel(props: Props): JSX.Element {
      * action to hide the panel
      */
     function handleCancelChanges() {
-        // if there are changes to the theme (i.e. the current theme name is not an empty
+        // if there are changes to the theme (i.e. the original theme name is not an empty
         // optional), then we set the theme back to the original theme, and update the
-        // current theme back to an empty optional to signify that the were no changes
-        currentThemeName.ifSome(theme => props.onChangeTheme(theme));
+        // original theme back to an empty optional to signify that the were no changes
+        originalThemeName.ifSome(theme => props.onChangeTheme(theme));
         props.onHideSettingsPanel();
-        setCurrentThemeName(Option.none());
+        setOriginalThemeName(Option.none());
+
+        // if there are changes to the server settings, we need to discard then and set the
+        // the server settings back to their origin value, and clear the changes.
+        originalServer.ifSome(settings => setCurrentServer(settings));
+        setOriginalServer(Option.none());
     }
 
     const stackTokens: IStackTokens = {childrenGap: 20};
@@ -154,7 +187,11 @@ function SettingsPanel(props: Props): JSX.Element {
                 </Stack.Item>
                 <Stack.Item>
                     <Separator theme={props.itheme}>Server Settings</Separator>
-                    <ServerSettingsEditor/>
+                    <ServerSettingsEditor
+                        theme={props.itheme}
+                        settings={currentServer}
+                        onChange={settings => handleServerChange(settings)}
+                    />
                 </Stack.Item>
                 <Stack.Item>
                     <Separator theme={props.itheme}>Kafka Settings</Separator>
@@ -203,6 +240,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<any, any, ApplicationAction>
         onShowSettingsPanel: () => dispatch(showSettingsPanel()),
         onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
         onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+        onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings)),
         onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings))
     }
 }

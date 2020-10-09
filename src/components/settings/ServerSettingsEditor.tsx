@@ -1,102 +1,139 @@
 import * as React from 'react';
+import {FormEvent, useState} from 'react';
 import ServerSettings from "./serverSettings";
-import {ITheme, Stack, TextField } from '@fluentui/react';
-import {AppState} from "../redux/reducers/root";
-import {ThunkDispatch} from "redux-thunk";
-import {ApplicationAction} from "../redux/actions/actions";
-import {changeServerSettings} from "../redux/actions/settings";
-import {connect} from "react-redux";
-import {useCallback, useState} from "react";
+import {ITheme, Stack, TextField} from '@fluentui/react';
 
-interface StateProps {
-    serverSettings: ServerSettings;
+interface Props {
+    theme: ITheme;
+    settings: ServerSettings;
+    onChange: (settings: ServerSettings) => void;
 }
-
-interface DispatchProps {
-    onChangeServerSettings: (settings: ServerSettings) => void;
-}
-
-type Props = StateProps & DispatchProps
 
 const hostnameRegex = /^[a-zA-Z0-9_-]+[a-zA-Z0-9_\-\\.]*$/
-const ip4Regex = /^[0-9_-]{1,3}(.[0-9]{1,3}){3}$/
+const basePathRegex = /^(?!\/)[a-zA-Z0-9_-]*(\/[a-zA-Z0-9_-]+)*$/
 
-function ServerSettingsEditor(props: Props): JSX.Element {
-    const [host, setHost] = useState<string>(props.serverSettings.host);
-    const [port, setPort] = useState<number>(props.serverSettings.port);
-    const [basePath, setBasePath] = useState<string>(props.serverSettings.basePath);
+/**
+ * Panel that provides the user with an interface to view and update the server settings
+ * @param {Props} props The props
+ * @return {JSX.Element} The panel
+ * @constructor
+ */
+export default function ServerSettingsEditor(props: Props): JSX.Element {
+    const {theme, settings, onChange} = props;
 
-    const [hostError, setHostError] = useState<string>();
+    const [hostError, setHostError] = useState<string>(hostnameErrorMessage(settings.host));
+    const [portError, setPortError] = useState<string>(portErrorMessage(settings.port));
+    const [basePathError, setBasePathError] = useState<string>(basePathErrorMessage(settings.basePath));
 
-    const onHostChange = useCallback(
-        (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newHost?: string) => {
-            // if (newHost) {
-            //     props.onChangeServerSettings(({...props.serverSettings, host: newHost}));
-            // }
-            if (newHost === undefined || (newHost.match(hostnameRegex) === null && newHost.match(ip4Regex) === null)) {
-                setHostError("Invalid hostname or IP address")
-            } else {
-                setHostError('')
-            }
-            setHost(newHost)
-            // }
-        },
-        [],
+    /**
+     * Returns an error message if the hostname or IP are not valid, and an empty string if the
+     * hostname or IP address is valid
+     * @param {string} host The hostname or IP address
+     * @return {string} An empty string if the hostname and IP address or valid; otherwise an error
+     * message
+     */
+    function hostnameErrorMessage(host: string): string {
+        if (host.match(hostnameRegex) === null) {
+            return "Invalid hostname or IP address";
+        }
+        return '';
+    }
 
-    )
+    /**
+     * Returns an error message if the port is not valid, and an empty string if it is valid.
+     * @param {number} port The server port
+     * @return {string} an error message if the port is not valid, and an empty string if it is valid
+     */
+    function portErrorMessage(port: number): string {
+        if (port <= 0 || port > 65535) {
+            return "Port must be a positive integer less than or equal to 65535";
+        }
+        return '';
+    }
+
+    /**
+     * Returns an error message if the base path is not valid, and an empty string if it is valid.
+     * @param {string} basePath The base path for the REST endpoints
+     * @return {string} an error message if the base path is not valid, and an empty string if it is valid
+     */
+    function basePathErrorMessage(basePath: string): string {
+        if (basePath.match(basePathRegex) === null) {
+            return "Invalid base path. The base path can only contain number, characters, dashes, underscores, " +
+                "forward slashes, and cannot start of end with a forward slash."
+        }
+        return '';
+    }
+
+    /**
+     * Handles changes to the hostname or IP address
+     * @param {React.FormEvent<HTMLInputElement>} event The change event
+     * @param {string} host The new hostname or IP address
+     */
+    function handleHostChange(event: FormEvent<HTMLInputElement>, host: string = settings.host): void {
+        setHostError(hostnameErrorMessage(host))
+        onChange({...settings, host})
+    }
+
+    /**
+     * Handles changes to the part
+     * @param {React.FormEvent<HTMLInputElement>} event The change event
+     * @param {string} portString The new port number represented as a string
+     */
+    function handlePortChange(event: FormEvent<HTMLInputElement>, portString: string = settings.port.toString()): void {
+        // if the port string is undefined or empty, then just set a zero, and show an error
+        if (portString.length === 0) {
+            setPortError("Port must be a positive integer");
+            onChange({...settings, port: 0});
+            return;
+        }
+
+        // attempt to parse the port string into an integer and ensure that it is a valid
+        // port number
+        const port = parseInt(portString);
+        if (isNaN(port)) {
+            setPortError("Port may only have digits and must be a positive integer");
+            return;
+        }
+        setPortError(portErrorMessage(port));
+        onChange({...settings, port});
+    }
+
+    /**
+     * Handles changes to the base path for making rest calls
+     * @param {React.FormEvent<HTMLInputElement>} event
+     * @param {string} basePath
+     */
+    function handleBasePathChange(event: FormEvent<HTMLInputElement>, basePath: string = settings.basePath): void {
+        setBasePathError(basePathErrorMessage(basePath))
+        onChange({...settings, basePath})
+    }
 
     return (
         <Stack>
             <TextField
                 label="Hostname or IP Address:"
-                onChange={onHostChange}
-                value={host}
+                onChange={handleHostChange}
+                value={settings.host}
                 errorMessage={hostError}
+                styles={{errorMessage: {color: theme.palette.redDark}}}
                 underlined
             />
             <TextField
                 label="Port on which server listens:"
-                value={`${port}`}
+                onChange={handlePortChange}
+                value={`${settings.port}`}
+                errorMessage={portError}
+                styles={{errorMessage: {color: theme.palette.redDark}}}
                 underlined
             />
             <TextField
-                label="Base URL:"
-                value={basePath}
+                label="Base path for REST calls:"
+                onChange={handleBasePathChange}
+                value={settings.basePath}
+                errorMessage={basePathError}
+                styles={{errorMessage: {color: theme.palette.redDark}}}
                 underlined
             />
         </Stack>
     )
 }
-
-/*
- |
- |    REACT-REDUX functions and code
- |    (see also redux/actions.ts for the action types)
- |
- */
-
-/**
- * react-redux function that maps the application state to the props used by the `App` component.
- * @param state The updated application state
- * @return The state properties
- */
-function mapStateToProps(state: AppState): StateProps {
-    return {
-        serverSettings: state.settings.server
-    }
-}
-
-/**
- * react-redux function that maps the event handlers to the dispatch functions. Note that in the
- * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
- * and the third type is, obviously, the action.
- * @param {ThunkDispatch} dispatch The redux dispatcher
- * @return {DispatchProps} The updated dispatch-properties holding the event handlers
- */
-function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps {
-    return {
-        onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings))
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(ServerSettingsEditor)

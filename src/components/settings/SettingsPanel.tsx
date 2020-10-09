@@ -8,6 +8,8 @@ import {
     IStackTokens,
     ITheme,
     Label,
+    MessageBar,
+    MessageBarType,
     Panel,
     PanelType,
     PrimaryButton,
@@ -31,6 +33,7 @@ import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
+import {saveSettings, saveSettingsAsync} from "./appSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -79,27 +82,45 @@ function SettingsPanel(props: Props): JSX.Element {
     const [originalServer, setOriginalServer] = useState(Option.none<ServerSettings>());
     const [currentServer, setCurrentServer] = useState<ServerSettings>(props.serverSettings);
 
+    // flag that is true when the settings are being saved to file, and an error message
+    // for when there is an error saving the settings
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string>('');
+
     /**
      * Renders the footer content of the settings panel
      * @return {Element} The footer
      */
     function onRenderFooterContent(): JSX.Element {
         return (
-            <div>
+            <Stack horizontal={true} tokens={{childrenGap: 8}}>
                 <PrimaryButton
                     onClick={handleAcceptChanges}
                     iconProps={{iconName: 'CompletedSolid'}}
-                    style={{marginRight: '8px'}}
+                    disabled={saving}
                 >
                     OK
                 </PrimaryButton>
                 <DefaultButton
                     onClick={handleCancelChanges}
                     iconProps={{iconName: 'StatusErrorFull'}}
+                    disabled={saving}
                 >
                     Cancel
                 </DefaultButton>
-            </div>
+                {saveError.length > 0 ?
+                    <MessageBar
+                        messageBarType={MessageBarType.error}
+                        isMultiline={false}
+                        onDismiss={() => setSaveError('')}
+                        dismissButtonAriaLabel="Close"
+                        styles={{icon: {margin: 0, fontSize: 12}}}
+                    >
+                        {saveError}
+                    </MessageBar> :
+                    <div></div>
+                }
+            </Stack>
         )
     }
 
@@ -132,17 +153,36 @@ function SettingsPanel(props: Props): JSX.Element {
      * Dispatches the action to hide the settings panel (all changes are already done)
      */
     function handleAcceptChanges() {
-        // accepting the changes, just leaves things as they were, but we need to set the
-        // original theme name back to an empty optional to signify that there have been no
-        // changes.
-        props.onHideSettingsPanel();
-        setOriginalThemeName(Option.none());
-
-        // accept any changes to the server settings, if there were any, otherwise, do nothing.
-        if (originalServer.isSome()) {
-            props.onChangeServerSettings(currentServer);
-            setOriginalServer(Option.none());
+        // attempt to save the settings
+        const newSettings = {
+            themeName: props.name,
+            server: props.serverSettings,
+            kafka: props.kafkaSettings
         }
+        setSaving(true);
+        saveSettingsAsync(newSettings)
+            .then(() => {
+                setSaving(false)
+                // accepting the changes, just leaves things as they were, but we need to set the
+                // original theme name back to an empty optional to signify that there have been no
+                // changes.
+                props.onHideSettingsPanel();
+                setOriginalThemeName(Option.none());
+
+                // accept any changes to the server settings, if there were any, otherwise, do nothing.
+                if (originalServer.isSome()) {
+                    props.onChangeServerSettings(currentServer);
+                    setOriginalServer(Option.none());
+                }
+
+                // clear any previous error message
+                setSaveError('');
+            })
+            .catch(reason => {
+                setSaving(false)
+                setSaveError(reason);
+            })
+        ;
     }
 
     /**
@@ -163,6 +203,9 @@ function SettingsPanel(props: Props): JSX.Element {
             setCurrentServer(settings);
             setOriginalServer(Option.none());
         });
+
+        // clear any previous error message
+        setSaveError('');
     }
 
     const stackTokens: IStackTokens = {childrenGap: 20};

@@ -26,7 +26,7 @@ ReactDOM.render(
     <Provider store={store}>
         <BrowserRouter>
             <Main
-                theme={createDefaultTheme(defaultTheme)}
+                theme={createDefaultTheme(applicationSettings.themeName)}
                 colorPalettes={defaultPalettes}
             />
         </BrowserRouter>

@@ -71,3 +71,17 @@ export function saveSettings(settings: ApplicationSettings): Either<string, void
         return Either.left(err.toString());
     }
 }
+
+/**
+ * Asynchronous version to save the application settings to file. Returns either an error, or a void
+ * if the settings were successfully saved.
+ * @param {ApplicationSettings} settings The application settings to save
+ * @return {Promise<string>} A promise for saving the file
+ */
+export function saveSettingsAsync(settings: ApplicationSettings): Promise<string> {
+    return new Promise((resolve, reject) => {
+        saveSettings(settings)
+            .ifRight(() => resolve())
+            .ifLeft(error => reject(error))
+    })
+}

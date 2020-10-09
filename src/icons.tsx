@@ -19,12 +19,12 @@ import {
     faPlus,
     faTimes,
     faChevronDown,
-    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare
+    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare, faExclamationCircle
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
     far,
-    faCircle as farCircle,
+    faCircle as farCircle, faTimesCircle,
 } from '@fortawesome/free-regular-svg-icons'
 import {mergeStyles} from "@fluentui/react";
 
@@ -68,8 +68,9 @@ export default function prepareIcons(): void {
             'circlering': <FontAwesomeIcon icon={farCircle}/>,
             'statuscirclecheckmark': <FontAwesomeIcon icon={faCheck} size={"sm"}/>,
             'checkmark': <FontAwesomeIcon icon={faCheck} size={"sm"}/>,
-            'regex': (<span><svg><text>(.*)</text></svg></span>)
-
+            'regex': (<span><svg><text>(.*)</text></svg></span>),
+            'clear': <FontAwesomeIcon icon={faTimes}/>,
+            'errorbadge': <FontAwesomeIcon icon={faExclamationCircle}/>,
         }
     });
 }

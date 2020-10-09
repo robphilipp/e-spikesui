@@ -2,14 +2,17 @@ import * as React from "react";
 import {useState} from "react";
 
 import {
-    Stack,
     DefaultButton,
     Dropdown,
     IDropdownOption,
-    ITheme, Label,
+    IStackTokens,
+    ITheme,
+    Label,
     Panel,
     PanelType,
-    PrimaryButton, Separator, IStackTokens
+    PrimaryButton,
+    Separator,
+    Stack
 } from "@fluentui/react";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -18,17 +21,16 @@ import {connect} from "react-redux";
 import {Palette} from "../../theming";
 import {HashMap, Option} from 'prelude-ts';
 import {
+    changeKafkaSettings,
+    changeServerSettings,
     changeTheme,
     hideSettingsPanel,
-    changeKafkaSettings,
-    showSettingsPanel,
-    changeServerSettings
+    showSettingsPanel
 } from "../redux/actions/settings";
 import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
-import serverSettings from "./serverSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -122,7 +124,7 @@ function SettingsPanel(props: Props): JSX.Element {
      * @param {ServerSettings} settings
      */
     function handleServerChange(settings: ServerSettings): void {
-        originalServer.ifNone(() => setOriginalServer(Option.of(props.serverSettings)));
+        originalServer.ifNone(() => setOriginalServer(Option.of(currentServer)));
         setCurrentServer(settings);
     }
 
@@ -157,8 +159,10 @@ function SettingsPanel(props: Props): JSX.Element {
 
         // if there are changes to the server settings, we need to discard then and set the
         // the server settings back to their origin value, and clear the changes.
-        originalServer.ifSome(settings => setCurrentServer(settings));
-        setOriginalServer(Option.none());
+        originalServer.ifSome(settings => {
+            setCurrentServer(settings);
+            setOriginalServer(Option.none());
+        });
     }
 
     const stackTokens: IStackTokens = {childrenGap: 20};

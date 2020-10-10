@@ -44,26 +44,80 @@ function Main(props: Props): JSX.Element {
 
     /**
      * Returns a list of menu items at the top of the page
-     * @param {Props} props
      * @return {{onClick: () => void; cacheKey: string; name: string; iconProps: {iconName: string}; key: string; ariaLabel: string}[]}
      */
-    function menuItems(props: Props) {
+    function menuItems() {
         return [
             {
-                key: 'newNetwork',
-                name: 'New',
-                cacheKey: 'new-network-cache-key',
-                iconProps: {
-                    iconName: 'Add'
+                key: 'simulation',
+                name: 'Simulation',
+                cacheKey: 'simulation-cache-key',
+                iconProps: {iconName: 'brain'},
+                ariaLabel: 'Simulation',
+                // onClick: () => props.history.push('spikes-chart')
+                subMenuProps: {
+                    items: [
+                        {
+                            key: 'newSimulation',
+                            text: 'New Simulation',
+                            iconProps: { iconName: 'add' },
+                            // onClick: () => props.history.push('spikes-chart')
+                        },
+                        {
+                            key: 'loadSimulation',
+                            text: 'Load Simulation',
+                            iconProps: { iconName: 'upload' },
+                            // onClick: () => props.history.push('spikes-chart')
+                        },
+                    ],
                 },
-                ariaLabel: 'New',
-                onClick: () => props.history.push('spikes-chart')
-                // href: 'spikes-chart',
-                // subMenuProps: {
-                //     items: [
-                //
-                //     ]
-                // }
+            },
+            {
+                key: 'network',
+                name: 'Network',
+                cacheKey: 'network-cache-key',
+                iconProps: {iconName: 'homegroup'},
+                ariaLabel: 'Network',
+                // onClick: () => props.history.push('spikes-chart')
+                subMenuProps: {
+                    items: [
+                        {
+                            key: 'newNetwork',
+                            text: 'New Network',
+                            iconProps: { iconName: 'add' },
+                            ariaLabel: 'Networks',
+                            // onClick: () => props.history.push('spikes-chart')
+                        },
+                        {
+                            key: 'loadNetwork',
+                            text: 'Load Network',
+                            iconProps: { iconName: 'upload' },
+                            // onClick: () => props.history.push('spikes-chart')
+                        },
+                    ],
+                },
+            },
+            {
+                key: 'environment',
+                name: 'Environment',
+                cacheKey: 'environment-cache-key',
+                iconProps: {iconName: 'environment'},
+                subMenuProps: {
+                    items: [
+                        {
+                            key: 'newEnvironment',
+                            text: 'New Environment',
+                            iconProps: { iconName: 'add' },
+                            // onClick: () => props.history.push('spikes-chart')
+                        },
+                        {
+                            key: 'loadEnvironment',
+                            text: 'Load Environment',
+                            iconProps: { iconName: 'upload' },
+                            // onClick: () => props.history.push('spikes-chart')
+                        },
+                    ],
+                },
             }
         ];
     }
@@ -85,6 +139,14 @@ function Main(props: Props): JSX.Element {
                 },
                 iconOnly: true,
                 onClick: () => settingVisibilityManager(true)
+            },
+            {
+                key: 'help',
+                name: 'Help',
+                ariaLabel: 'Help',
+                iconProps: {iconName: 'help'},
+                iconOnly: true,
+                // onClick: () => settingVisibilityManager(true)
             }
         ];
     }
@@ -113,7 +175,7 @@ function Main(props: Props): JSX.Element {
             </StackItem>
             <StackItem>
                 <CommandBar
-                    items={menuItems(props)}
+                    items={menuItems()}
                     farItems={farMenuItems(handleSettingsPanelVisibility)}
                 />
             </StackItem>

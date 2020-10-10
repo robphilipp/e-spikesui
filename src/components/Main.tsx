@@ -9,7 +9,8 @@ import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
-import {RouteComponentProps, withRouter} from 'react-router-dom';
+import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
+import NetworkEditor from "./network/NetworkEditor";
 
 
 interface OwnProps extends RouteComponentProps<any> {
@@ -86,7 +87,7 @@ function Main(props: Props): JSX.Element {
                             text: 'New Network',
                             iconProps: { iconName: 'add' },
                             ariaLabel: 'Networks',
-                            // onClick: () => props.history.push('spikes-chart')
+                            onClick: () => props.history.push('network-editor')
                         },
                         {
                             key: 'loadNetwork',
@@ -183,6 +184,12 @@ function Main(props: Props): JSX.Element {
                 <SettingsPanel/>
             </StackItem>
             <Label>This is a label<FontIcon iconName="check-square" className={iconControlsClass}/></Label>
+            <Switch>
+                <Route
+                    path="/network-editor"
+                    render={(props) => <NetworkEditor/>}
+                />
+            </Switch>
         </Stack>
     )
 }

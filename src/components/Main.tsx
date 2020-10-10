@@ -1,15 +1,15 @@
 import * as React from 'react'
-import {CommandBar, FontIcon, ITheme, Label, MessageBar, MessageBarType, Stack} from '@fluentui/react'
+import {CommandBar, FontIcon, ITheme, Label, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
 import {iconControlsClass} from "../icons";
 import {AppTheme, Palette} from "../theming";
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
-import {RouteComponentProps, withRouter } from 'react-router-dom';
+import {RouteComponentProps, withRouter} from 'react-router-dom';
 
 
 interface OwnProps extends RouteComponentProps<any> {
@@ -95,7 +95,7 @@ function Main(props: Props): JSX.Element {
 
     return (
         <Stack>
-            <Stack.Item>
+            <StackItem>
                 {props.errorMessages.map(messages => (
                     <MessageBar
                         key="error-messages"
@@ -110,16 +110,16 @@ function Main(props: Props): JSX.Element {
                         {messages}
                     </MessageBar>
                 )).getOrElse((<div/>))}
-            </Stack.Item>
-            <Stack.Item>
+            </StackItem>
+            <StackItem>
                 <CommandBar
                     items={menuItems(props)}
                     farItems={farMenuItems(handleSettingsPanelVisibility)}
                 />
-            </Stack.Item>
-            <Stack.Item grow>
+            </StackItem>
+            <StackItem grow>
                 <SettingsPanel/>
-            </Stack.Item>
+            </StackItem>
             <Label>This is a label<FontIcon iconName="check-square" className={iconControlsClass}/></Label>
         </Stack>
     )

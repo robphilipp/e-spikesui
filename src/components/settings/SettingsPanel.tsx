@@ -5,7 +5,6 @@ import {
     DefaultButton,
     Dropdown,
     IDropdownOption,
-    IStackTokens,
     ITheme,
     Label,
     MessageBar,
@@ -14,7 +13,8 @@ import {
     PanelType,
     PrimaryButton,
     Separator,
-    Stack
+    Stack,
+    StackItem
 } from "@fluentui/react";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -224,7 +224,7 @@ function SettingsPanel(props: Props): JSX.Element {
             isFooterAtBottom={true}
         >
             <Stack tokens={{childrenGap: 20}}>
-                <Stack.Item>
+                <StackItem>
                     <Separator theme={props.itheme}>Look and feel</Separator>
                     <Label htmlFor={"theme-dropdown"}>Select a theme</Label>
                     <Dropdown
@@ -235,20 +235,20 @@ function SettingsPanel(props: Props): JSX.Element {
                         selectedKey={props.name}
                         onChange={(event, option) => handleThemeChange(option)}
                     />
-                </Stack.Item>
-                <Stack.Item>
+                </StackItem>
+                <StackItem>
                     <Separator theme={props.itheme}>Server Settings</Separator>
                     <ServerSettingsEditor
                         theme={props.itheme}
                         settings={currentServer}
                         onChange={settings => handleServerChange(settings)}
                     />
-                </Stack.Item>
-                <Stack.Item>
+                </StackItem>
+                <StackItem>
                     <Separator theme={props.itheme}>Kafka Settings</Separator>
                     <Label>Kafka Brokers</Label>
                     <KafkaSettingsEditor/>
-                </Stack.Item>
+                </StackItem>
             </Stack>
         </Panel>
     );

@@ -33,7 +33,7 @@ import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
-import {saveSettings, saveSettingsAsync} from "./appSettings";
+import {saveSettingsAsync} from "./appSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -67,7 +67,9 @@ interface DispatchProps {
 type Props = StateProps & DispatchProps & OwnProps
 
 /**
- * The settings panel for the application. Allows the user to set the theme.
+ * The settings panel for the application. Allows the user to set the theme, the
+ * URL to the REST server, and the kafka broker locations.
+ * @param {Props} props The properties for the settings panel.
  * @return {Element} The rendered settings panel
  * @constructor
  */
@@ -79,6 +81,9 @@ function SettingsPanel(props: Props): JSX.Element {
     // from the theme.
     const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
 
+    // tracks the REST server settings so that changes can be reverted. unlike the theme,
+    // changes to the server settings do not update the application state until the "Ok"
+    // button is selected to save the changes
     const [originalServer, setOriginalServer] = useState(Option.none<ServerSettings>());
     const [currentServer, setCurrentServer] = useState<ServerSettings>(props.serverSettings);
 
@@ -118,7 +123,7 @@ function SettingsPanel(props: Props): JSX.Element {
                     >
                         {saveError}
                     </MessageBar> :
-                    <div></div>
+                    <div/>
                 }
             </Stack>
         )
@@ -208,7 +213,6 @@ function SettingsPanel(props: Props): JSX.Element {
         setSaveError('');
     }
 
-    const stackTokens: IStackTokens = {childrenGap: 20};
     return (
         <Panel
             isOpen={props.settingsPanelVisible}
@@ -219,7 +223,7 @@ function SettingsPanel(props: Props): JSX.Element {
             onRenderFooterContent={onRenderFooterContent}
             isFooterAtBottom={true}
         >
-            <Stack tokens={stackTokens}>
+            <Stack tokens={{childrenGap: 20}}>
                 <Stack.Item>
                     <Separator theme={props.itheme}>Look and feel</Separator>
                     <Label htmlFor={"theme-dropdown"}>Select a theme</Label>

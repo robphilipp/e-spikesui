@@ -81,6 +81,8 @@ export function saveSettings(settings: ApplicationSettings): Either<string, void
 export function saveSettingsAsync(settings: ApplicationSettings): Promise<string> {
     return new Promise((resolve, reject) => {
         saveSettings(settings)
+            // .ifLeft(() => resolve())
+            // .ifRight(error => reject("Unable to save the file"))
             .ifRight(() => resolve())
             .ifLeft(error => reject(error))
     })

@@ -33,7 +33,7 @@ module.exports = [
   },
   {
     test: /\.css$/i,
-    use: ['to-string-loader', 'style-loader', 'css-loader', 'less-loader'],
+    use: ['style-loader', 'css-loader', 'less-loader'],
     include:[path.resolve(__dirname, '..', 'node_modules/monaco-editor')],
   },
 ];

@@ -11,6 +11,8 @@ import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
 import NetworkEditor from "./network/NetworkEditor";
+import {useEffect} from "react";
+import {registerSpikesLanguage} from "./language/spikes-language";
 
 
 interface OwnProps extends RouteComponentProps<any> {
@@ -42,6 +44,13 @@ interface DispatchProps {
 type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
+
+    useEffect(
+        () => {
+            registerSpikesLanguage();
+        },
+        []
+    )
 
     /**
      * Returns a list of menu items at the top of the page

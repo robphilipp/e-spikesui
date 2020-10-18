@@ -27,9 +27,9 @@ module.exports = [
     }
   },
   {
-    test: /\.ttf$/,
+    // test: /\.ttf$/,
+    test: /\.(png|woff|woff2|eot|svg|ttf)$/,
     use: ['file-loader'],
-    include:[path.resolve(__dirname, '..', 'node_modules/monaco-editor')],
   },
   {
     test: /\.css$/i,

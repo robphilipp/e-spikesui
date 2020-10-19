@@ -1,6 +1,6 @@
 import * as React from 'react'
-import {CommandBar, FontIcon, ITheme, Label, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
-import {iconControlsClass} from "../icons";
+import {useEffect} from 'react'
+import {CommandBar, ITheme, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
 import {AppTheme, Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
@@ -10,8 +10,7 @@ import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
-import NetworkEditor from "./network/NetworkEditor";
-import {useEffect} from "react";
+import NetworkEditor, { editorThemeFrom } from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
 
 
@@ -44,6 +43,10 @@ interface DispatchProps {
 type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
+    const {
+        theme,
+        name
+    } = props;
 
     useEffect(
         () => {
@@ -192,11 +195,10 @@ function Main(props: Props): JSX.Element {
             <StackItem grow>
                 <SettingsPanel/>
             </StackItem>
-            <Label>This is a label<FontIcon iconName="check-square" className={iconControlsClass}/></Label>
             <Switch>
                 <Route
                     path="/network-editor"
-                    render={(props) => <NetworkEditor/>}
+                    render={(renderProps) => <NetworkEditor theme={editorThemeFrom(name)}/>}
                 />
             </Switch>
         </Stack>

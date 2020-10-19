@@ -9,10 +9,13 @@ const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 const emptyFunction = () => {return;}
 
 interface Props {
-    test?: string;
+    theme?: string;
 }
 
 export default function NetworkEditor(props: Props): JSX.Element {
+    const {
+        theme = DefaultTheme.DARK
+    } = props;
 
     const [networkDescription, setNetworkDescription] = useState<string>(initialNetworkDescription);
 
@@ -21,7 +24,7 @@ export default function NetworkEditor(props: Props): JSX.Element {
             editorId='spikes-lang'
             height={600}
             language={SPIKES_LANGUAGE_ID}
-            theme={DefaultTheme.DARK}
+            theme={theme}
             customThemes={customThemes}
             value={networkDescription}
             options={editorOptions}
@@ -29,6 +32,20 @@ export default function NetworkEditor(props: Props): JSX.Element {
             editorDidMount={emptyFunction}
         />
     )
+}
+
+export function editorThemeFrom(name: string): string {
+    switch (name) {
+        case 'default':
+        case 'light':
+            return DefaultTheme.LIGHT;
+
+        case 'dark':
+            return DefaultTheme.DARK;
+
+        default:
+            return DefaultTheme.LIGHT;
+    }
 }
 
 const initialNetworkDescription = `// line sensor network

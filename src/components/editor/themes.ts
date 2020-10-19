@@ -160,7 +160,18 @@ const defaultLightTheme: editor.IStandaloneThemeData = {
     base: DefaultTheme.VS_LIGHT,
     inherit: true,
     rules: [
-        {token: 'comment', background: '#3f3c3c', foreground: '#9b9b9b'}
+        {token: 'comment', foreground: '#7eac6d', fontStyle: 'italic'},
+        {token: 'section', foreground: '#e08c00', fontStyle: 'bold'},
+        {token: 'function', foreground: '#ad5a29', fontStyle: 'bold'},
+        {token: 'function-name', foreground: '#29ada2', fontStyle: 'underline'},
+        {token: 'unit', foreground: '#9b9b9b', fontStyle: 'italic'},
+        {token: 'string-attribute', foreground: '#d6c261'},
+        {token: 'number-attribute', foreground: '#5894b8'},
+        {token: 'list-attribute', foreground: '#916fa2', fontStyle: 'bold italic'},
+        {token: 'property', foreground: '#bf882a'},
+        {token: 'property.neuron.function', foreground: '#c18200', fontStyle: 'bold'},
+        {token: 'coordinates', foreground: '#bf882a'},
+        {token: 'list', foreground: '#916fa2', fontStyle: 'bold italic'},
     ],
     colors: {
         'editorCursor.foreground': '#e08c00',

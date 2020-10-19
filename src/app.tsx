@@ -6,7 +6,7 @@ import {createDefaultTheme, defaultPalettes, defaultTheme} from "./theming";
 import {Provider} from "react-redux";
 import store from './components/redux/store';
 import {generateRemoteActionCreators} from './components/redux/actions/rootActions';
-import {BrowserRouter} from "react-router-dom";
+import {BrowserRouter, HashRouter} from "react-router-dom";
 import {loadOrInitializeSetting} from "./components/settings/appSettings";
 
 // set up and register all the icons for the application. the fabric-ui icons are
@@ -24,12 +24,12 @@ export const remoteActionCreators = generateRemoteActionCreators(applicationSett
 
 ReactDOM.render(
     <Provider store={store}>
-        <BrowserRouter>
+        <HashRouter>
             <Main
                 theme={createDefaultTheme(applicationSettings.themeName)}
                 colorPalettes={defaultPalettes}
             />
-        </BrowserRouter>
+        </HashRouter>
     </Provider>,
     document.getElementById('root')
 );

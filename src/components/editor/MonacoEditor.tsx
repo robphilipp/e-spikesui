@@ -45,8 +45,8 @@ interface Props {
 export default function MonacoEditor(props: Props): JSX.Element {
     const {
         editorId,
-        width,
-        height = 500,
+        width = 100,
+        height = 100,
         value,
         defaultValue = '',
         language = 'javascript',
@@ -86,16 +86,10 @@ export default function MonacoEditor(props: Props): JSX.Element {
                 );
 
                 // set the editor's dimensions
-                const dimensions = {
-                    width: width || containerElementRef.current.offsetWidth,
-                    height
-                };
-                editorRef.current.layout(dimensions);
+                editorRef.current.layout({width: width, height: height});
 
                 // after initializing monaco editor
                 handleEditorDidMount(editorRef.current);
-
-                window.addEventListener('resize', () => handleWindowResize());
             }
 
             return () => {
@@ -109,8 +103,6 @@ export default function MonacoEditor(props: Props): JSX.Element {
                 if (subscriptionRef.current) {
                     subscriptionRef.current.dispose();
                 }
-
-                window.removeEventListener('resize', () => handleWindowResize());
             }
         },
         // even though the linter complains, we really do only want to call this useEffect(..)
@@ -178,6 +170,16 @@ export default function MonacoEditor(props: Props): JSX.Element {
         [options]
     )
 
+    // when the width and height of the editor change need to update the layout
+    useEffect(
+        () => {
+            if (containerElementRef.current) {
+                editorRef.current?.layout({width: width, height: height});
+            }
+        },
+        [width, height]
+    )
+
     /**
      * Adds the on-change function from the props so that it gets called when there is a change
      * to the text in the editor
@@ -191,20 +193,6 @@ export default function MonacoEditor(props: Props): JSX.Element {
                 onChange(editor.getValue(), event);
             }
         });
-    }
-
-    /**
-     * updates the editor's width and height when the container's dimensions change
-     */
-    function handleWindowResize(): void {
-        if (containerElementRef.current) {
-            const dimensions = {
-                width: width || containerElementRef.current.offsetWidth,
-                // height: containerElementRef.current.offsetHeight
-                height
-            };
-            editorRef.current?.layout(dimensions);
-        }
     }
 
     return (

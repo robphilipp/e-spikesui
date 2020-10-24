@@ -10,7 +10,7 @@ import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
-import NetworkEditor, { editorThemeFrom } from "./network/NetworkEditor";
+import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
 
 
@@ -73,13 +73,13 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'newSimulation',
                             text: 'New Simulation',
-                            iconProps: { iconName: 'add' },
+                            iconProps: {iconName: 'add'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                         {
                             key: 'loadSimulation',
                             text: 'Load Simulation',
-                            iconProps: { iconName: 'upload' },
+                            iconProps: {iconName: 'upload'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                     ],
@@ -97,14 +97,14 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'newNetwork',
                             text: 'New Network',
-                            iconProps: { iconName: 'add' },
+                            iconProps: {iconName: 'add'},
                             ariaLabel: 'Networks',
                             onClick: () => props.history.push('network-editor')
                         },
                         {
                             key: 'loadNetwork',
                             text: 'Load Network',
-                            iconProps: { iconName: 'upload' },
+                            iconProps: {iconName: 'upload'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                     ],
@@ -120,13 +120,13 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'newEnvironment',
                             text: 'New Environment',
-                            iconProps: { iconName: 'add' },
+                            iconProps: {iconName: 'add'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                         {
                             key: 'loadEnvironment',
                             text: 'Load Environment',
-                            iconProps: { iconName: 'upload' },
+                            iconProps: {iconName: 'upload'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                     ],
@@ -195,12 +195,19 @@ function Main(props: Props): JSX.Element {
             <StackItem grow>
                 <SettingsPanel/>
             </StackItem>
-            <Switch>
-                <Route
-                    path="/network-editor"
-                    render={(renderProps) => <NetworkEditor theme={editorThemeFrom(name)}/>}
-                />
-            </Switch>
+            <StackItem>
+                <Switch>
+                    <Route
+                        path="/network-editor"
+                        render={(renderProps) =>
+                            <NetworkEditor theme={editorThemeFrom(name)} {...renderProps}/>
+                        }
+                    />
+                </Switch>
+            </StackItem>
+            <StackItem>
+                <p>Footer</p>
+            </StackItem>
         </Stack>
     )
 }

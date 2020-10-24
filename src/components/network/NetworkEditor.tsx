@@ -1,12 +1,19 @@
 import * as React from 'react'
 import MonacoEditor from "../editor/MonacoEditor";
 import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
-import { SPIKES_LANGUAGE_ID } from '../language/spikes-language';
-import {useState} from "react";
+import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
+import {MutableRefObject, useEffect, useRef, useState} from "react";
 
 const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
-const emptyFunction = () => {return;}
+const emptyFunction = () => {
+    return;
+}
+
+interface Dimension {
+    height: number;
+    width: number;
+}
 
 interface Props {
     theme?: string;
@@ -17,23 +24,83 @@ export default function NetworkEditor(props: Props): JSX.Element {
         theme = DefaultTheme.DARK
     } = props;
 
+    const editorRef = useRef<HTMLDivElement>();
+    const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
     const [networkDescription, setNetworkDescription] = useState<string>(initialNetworkDescription);
 
+    // when component mounts, sets the initial dimension of the editor and registers to listen
+    // to window resize events. when component unmounts, removes the window-resize event listener
+    useEffect(
+        () => {
+            if (editorRef.current) {
+                setDimension(editorDimensions());
+            }
+
+            // listen to resize events so that the editor width and height can be updated
+            window.addEventListener('resize', () => handleWindowResize());
+
+            return () => {
+                // stop listening to resize events
+                window.removeEventListener('resize', () => handleWindowResize());
+            }
+        },
+        []
+    )
+
+    /**
+     * calculates the editors dimensions based on the `<div>`'s width and height
+     * @return {Dimension} The dimesion of the editor
+     */
+    function editorDimensions(): Dimension {
+        return {
+            width: editorRef.current.offsetWidth,
+            height: editorRef.current.clientHeight
+        };
+
+    }
+
+    /**
+     * updates the editor's width and height when the container's dimensions change
+     */
+    function handleWindowResize(): void {
+        if (editorRef.current) {
+            const nextDimension = editorDimensions()
+            const minDiff = 2;
+            if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
+                Math.abs(nextDimension.width - dimension.width) > minDiff) {
+                setDimension(nextDimension);
+            }
+        }
+    }
+
     return (
-        <MonacoEditor
-            editorId='spikes-lang'
-            height={600}
-            language={SPIKES_LANGUAGE_ID}
-            theme={theme}
-            customThemes={customThemes}
-            value={networkDescription}
-            options={editorOptions}
-            onChange={(value: string) => setNetworkDescription(value)}
-            editorDidMount={emptyFunction}
-        />
+        <div
+            ref={editorRef}
+            // can't just set a fraction for the height because the parent height may not be
+            // set...but if it is, then you can use that.
+            style={{height: window.innerHeight * 0.9, width: '100%'}}
+        >
+            <MonacoEditor
+                editorId='spikes-lang'
+                width={dimension.width}
+                height={dimension.height}
+                language={SPIKES_LANGUAGE_ID}
+                theme={theme}
+                customThemes={customThemes}
+                value={networkDescription}
+                options={editorOptions}
+                onChange={(value: string) => setNetworkDescription(value)}
+                editorDidMount={emptyFunction}
+            />
+        </div>
     )
 }
 
+/**
+ * Returns the editor's theme that is mapped to the application's theme
+ * @param {string} name The name of the application's theme
+ * @return {string} The name of the editor's theme
+ */
 export function editorThemeFrom(name: string): string {
     switch (name) {
         case 'default':

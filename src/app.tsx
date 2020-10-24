@@ -2,11 +2,11 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import Main from './components/Main'
 import prepareIcons from "./icons";
-import {createDefaultTheme, defaultPalettes, defaultTheme} from "./theming";
+import {createDefaultTheme, defaultPalettes} from "./theming";
 import {Provider} from "react-redux";
 import store from './components/redux/store';
 import {generateRemoteActionCreators} from './components/redux/actions/rootActions';
-import {BrowserRouter, HashRouter} from "react-router-dom";
+import {HashRouter} from "react-router-dom";
 import {loadOrInitializeSetting} from "./components/settings/appSettings";
 
 // set up and register all the icons for the application. the fabric-ui icons are

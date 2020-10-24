@@ -11,8 +11,9 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 function createWindow(): void {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
-        height: 600,
+        height: 800,
         width: 800,
+        useContentSize: true,
 
         // addition of `prelude-ts` caused "Uncaught ReferenceError: require is not defined"
         // error when running; this fixes it

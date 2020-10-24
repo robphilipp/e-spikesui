@@ -6,10 +6,10 @@ import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
 import {RouteComponentProps, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
-import {ApplicationAction, clearErrorMessages} from "../redux/actions/actions";
-import {changeTheme, hideSettingsPanel, showSettingsPanel} from "../redux/actions/settings";
-import { updateNetworkDescription } from '../redux/actions/networkDescription';
+import {ApplicationAction} from "../redux/actions/actions";
+import {updateNetworkDescription} from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
+import {IconButton, ITheme, Stack, StackItem} from '@fluentui/react';
 
 
 const customThemes = defaultCustomThemes();
@@ -18,6 +18,9 @@ const emptyFunction = () => {
     return;
 }
 
+const SIDEBAR_WIDTH = 32;
+const SIDEBAR_ELEMENT_HEIGHT = 25;
+
 interface Dimension {
     height: number;
     width: number;
@@ -25,15 +28,17 @@ interface Dimension {
 
 interface StateProps {
     networkDescription: string;
+    modified: boolean;
+    path?: string;
 }
 
 interface DispatchProps {
     onDescriptionChanged: (description: string) => void;
 }
 
-interface OwnProps  extends RouteComponentProps<any> {
+interface OwnProps  extends RouteComponentProps<never> {
+    itheme: ITheme;
     theme?: string;
-    // networkDescription: string;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -48,12 +53,13 @@ function NetworkEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
         networkDescription,
-        onDescriptionChanged
+        onDescriptionChanged,
+        modified,
+        path
     } = props;
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
-    // const [networkDescription, setNetworkDescription] = useState<string>(initialNetworkDescription);
 
     // when component mounts, sets the initial dimension of the editor and registers to listen
     // to window resize events. when component unmounts, removes the window-resize event listener
@@ -99,6 +105,24 @@ function NetworkEditor(props: Props): JSX.Element {
         }
     }
 
+    function saveButton(): JSX.Element {
+        if (modified) {
+            return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+                <IconButton iconProps={{iconName: 'save'}}/>
+            </div>
+        }
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}/>
+    }
+
+    function buildButton(): JSX.Element {
+        if (!modified && (networkDescription && networkDescription.length > 31)) {
+            return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+                <IconButton iconProps={{iconName: 'homegroup'}}/>
+            </div>
+        }
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}/>
+    }
+
     return (
         <div
             ref={editorRef}
@@ -106,19 +130,36 @@ function NetworkEditor(props: Props): JSX.Element {
             // set...but if it is, then you can use that.
             style={{height: window.innerHeight * 0.9, width: '100%'}}
         >
-            <MonacoEditor
-                editorId='spikes-lang'
-                width={dimension.width}
-                height={dimension.height}
-                language={SPIKES_LANGUAGE_ID}
-                theme={theme}
-                customThemes={customThemes}
-                value={networkDescription}
-                options={editorOptions}
-                // onChange={(value: string) => setNetworkDescription(value)}
-                onChange={(value: string) => onDescriptionChanged(value)}
-                editorDidMount={emptyFunction}
-            />
+            <div
+                style={{
+                    marginLeft: 30,
+                    marginBottom: 8,
+                    height: 15,
+                    color: props.itheme.palette.themeSecondary
+                }}
+            >
+                {path || '[new file]'}
+            </div>
+            <Stack horizontal>
+                <StackItem>
+                    {saveButton()}
+                    {buildButton()}
+                </StackItem>
+                <StackItem>
+                    <MonacoEditor
+                        editorId='spikes-lang'
+                        width={dimension.width}
+                        height={dimension.height}
+                        language={SPIKES_LANGUAGE_ID}
+                        theme={theme}
+                        customThemes={customThemes}
+                        value={networkDescription}
+                        options={editorOptions}
+                        onChange={(value: string) => onDescriptionChanged(value)}
+                        editorDidMount={emptyFunction}
+                    />
+                </StackItem>
+            </Stack>
         </div>
     )
 }
@@ -156,7 +197,9 @@ export function editorThemeFrom(name: string): string {
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     ...ownProps,
-    networkDescription: state.networkDescription.description
+    networkDescription: state.networkDescription.description,
+    modified: state.networkDescription.modified,
+    path: state.networkDescription.path
 });
 
 /**
@@ -171,102 +214,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onDescriptionChanged: (description: string) => dispatch(updateNetworkDescription(description))
 });
 
-const connectedNetworkEditor = connect(mapStateToProps, mapDispatchToProps)(NetworkEditor)
-export default withRouter(connectedNetworkEditor);
+const connectedNetworkEditor = connect(mapStateToProps, mapDispatchToProps)(NetworkEditor);
 
-// export const initialNetworkDescription = `// line sensor network
-// // For parameters that accept units, if they are not specified, they default to:
-// // • distances to µm
-// // • times to ms
-// // • conductance speeds to m/s
-// // • electric potentials to mV
-// // • frequencies to Hz
-// // • magnetic flux to Wb
-// // notes
-// // • wnm from 1e-3 to 0
-// // • ipl from 0.001 to 0.00 for output layer
-// // • mpn from 0.05 to 0.0
-// (
-// GRP=[
-//     (gid=group1)
-//     //(gid=group1, hst=localhost, prt=2553)
-// ],
-// NRN=[
-//     // input layer
-//     (nid=in-1, grp=group1, nty=mi, mst=1 mV, inh=f, rfp=2 ms, rfb=0.1 µWb, mnp=0 mV, mpd=2500 ms, mpr=2 ms, mpn=0.0 mV, wnm=0, spp=1.1 mV, csp=0.1 m/s,
-//         ipb=0 mV, ipl=0 mV, ipd=3600 s,
-//         WDF=(fnc=zer),
-//         SRP=(fcb=1000, fcm=0.1, fct=100 ms, dpb=1000, dpm=0.1, dpt=100 ms),
-//         WLF=(fnc=bnd, lwb=0.0, upb=1.0),
-//         LOC=(cst=ct, px1=-300 µm, px2=0µm, px3=100 µm)
-//     ),
-//     (nid=in-2, grp=group1, nty=mi, mst=1 mV, inh=f, rfp=2 ms, rfb=0.1 µWb, mnp=0 mV, mpd=2500 ms, mpr=2 ms, mpn=0.0 mV, wnm=0, spp=1.1 mV, csp=0.1 m/s,
-//         ipb=0 mV, ipl=0 mV, ipd=3600 s,
-//         WDF=(fnc=zer),
-//         SRP=(fcb=1000, fcm=0.1, fct=100 ms, dpb=1000, dpm=0.1, dpt=100 ms),
-//         WLF=(fnc=bnd, lwb=0.0, upb=1.0),
-//         LOC=(cst=ct, px1=300 µm, px2=0 µm, px3=100 µm)
-//     ),
-//
-//     // inhibition neuron
-//     (nid=inh-1, grp=group1, nty=mi, mst=0.4 mV, inh=t, rfp=0.1 ms, rfb=0.1 µWb, mnp=0 mV, mpd=250 ms, mpr=2 ms, mpn=0.0 mV, wnm=0, spp=0.5 mV, csp=0.08 m/s,
-//         ipb=0 mV, ipl=0 mV, ipd=3600 s,
-//         WDF=(fnc=exp, dhl=10 s),
-//         SRP=(fcb=1000, fcm=0, fct=100 ms, dpb=1000, dpm=0, dpt=100 ms),
-//         WLF=(fnc=bnd, lwb=0.0, upb=1.5),
-//         LOC=(cst=ct, px1=-290 µm, px2=0 µm, px3=0 µm)
-//     ),
-//     (nid=inh-2, grp=group1, nty=mi, mst=0.4 mV, inh=t, rfp=0.1 ms, rfb=0.1 µWb, mnp=0 mV, mpd=250 ms, mpr=2 ms, mpn=0.0 mV, wnm=0, spp=0.5 mV, csp=0.08 m/s,
-//         ipb=0 mV, ipl=0 mV, ipd=3600 s,
-//         WDF=(fnc=exp, dhl=10 s),
-//         SRP=(fcb=1000, fcm=0, fct=100 ms, dpb=1000, dpm=0, dpt=100 ms),
-//         WLF=(fnc=bnd, lwb=0.0, upb=1.5),
-//         LOC=(cst=ct, px1=290 µm, px2=0 µm, px3=0 µm)
-//     ),
-//
-//     // output layer
-//     (nid=out-1, grp=group1, nty=mi, mst=1.0 mV, inh=f, rfp=20 ms, rfb=0.1 µWb, mnp=0 mV, mpd=2500 ms, mpr=2 ms, mpn=0.0 mV, wnm=1e-5, spp=1 mV, csp=1 m/s,
-//         ipb=0 mV, ipl=0 nV, ipd=3600 s,
-//         WDF=(fnc=zer),
-//         SRP=(fcb=1000, fcm=0.1, fct=100 ms, dpb=1000, dpm=10, dpt=100 ms),
-//         WLF=(fnc=bnd, lwb=0.0, upb=1.0),
-//         LOC=(cst=ct, px1=-300 µm, px2=0 µm, px3=0 µm)
-//     ),
-//     (nid=out-2, grp=group1, nty=mi, mst=1.0 mV, inh=f, rfp=20 ms, rfb=0.1 µWb, mnp=0 mV, mpd=2500 ms, mpr=2 ms, mpn=0.0 mV, wnm=1e-5, spp=1 mV, csp=1 m/s,
-//         ipb=0 mV, ipl=0 nV, ipd=3600 s,
-//         WDF=(fnc=zer),
-//         SRP=(fcb=1000, fcm=0.1, fct=100 ms, dpb=1000, dpm=10, dpt=100 ms),
-//         WLF=(fnc=bnd, lwb=0.0, upb=1.0),
-//         LOC=(cst=ct, px1=300 µm, px2=0 µm, px3=0 µm)
-//     )
-// ],
-//
-// CON=[
-//     // input to output
-//     (prn=in-{1,2}, psn=out-{1,2}, cnw=0.5, eqw=0.5, lrn=stdp_alpha),
-//     //(prn=in-{1,2}, psn=out-{1,2}, cnw=0.5, eqw=0.5, lrn=stdp_soft),
-//     //(prn=in-{1,2}, psn=out-{1,2}, cnw=0.5, eqw=0.5, lrn=stdp_hard),
-//
-//     // output to inhibition
-//     //(prn=out-1, psn=inh-1, cnw=1, eqw=1, lrn=stdp_hard),
-//     //(prn=out-2, psn=inh-2, cnw=1, eqw=1, lrn=stdp_hard),
-//     (prn=out-1, psn=inh-1, cnw=1, eqw=1, lrn=flat),
-//     (prn=out-2, psn=inh-2, cnw=1, eqw=1, lrn=flat),
-//
-//     // inhib to output
-//     //(prn=inh-1, psn=out-2, cnw=1, eqw=1, lrn=stdp_hard),
-//     //(prn=inh-2, psn=out-1, cnw=1, eqw=1, lrn=stdp_hard)
-//     (prn=inh-1, psn=out-2, cnw=1, eqw=1, lrn=flat),
-//     (prn=inh-2, psn=out-1, cnw=1, eqw=1, lrn=flat)
-// ],
-//
-// LRN=[
-//     //(fnc=stdp_soft, ina=0.04, inp=30 ms, exa=0.02, exp=10 ms),
-//     (fnc=stdp_soft, ina=0.06, inp=15 ms, exa=0.02, exp=10 ms),
-//     //(fnc=stdp_hard, ina=0.06, inp=15 ms, exa=0.02, exp=10 ms),
-//     //(fnc=stdp_alpha, bln=-1, alr=0.02, atc=22 ms),
-//     //(fnc=stdp_alpha, bln=-1, alr=0.02, atc=22 ms),
-//     (fnc=stdp_alpha, bln=-1, alr=0.04, atc=22 ms),
-//     (fnc=flat)
-// ]
-// )`;
+export default withRouter(connectedNetworkEditor);

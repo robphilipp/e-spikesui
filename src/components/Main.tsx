@@ -223,6 +223,7 @@ function Main(props: Props): JSX.Element {
                         render={(renderProps) =>
                             <NetworkEditor
                                 theme={editorThemeFrom(name)}
+                                itheme={props.itheme}
                                 {...renderProps}
                             />
                         }

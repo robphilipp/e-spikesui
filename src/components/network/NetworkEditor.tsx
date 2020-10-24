@@ -1,8 +1,8 @@
 import * as React from 'react'
+import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "../editor/MonacoEditor";
 import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
-import {MutableRefObject, useEffect, useRef, useState} from "react";
 
 const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
@@ -19,6 +19,12 @@ interface Props {
     theme?: string;
 }
 
+/**
+ * Wrapper for the monaco editor that manages resizing and theme updates
+ * @param {Props} props The properties holding the current theme
+ * @return {JSX.Element} The network editor
+ * @constructor
+ */
 export default function NetworkEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK
@@ -56,7 +62,6 @@ export default function NetworkEditor(props: Props): JSX.Element {
             width: editorRef.current.offsetWidth,
             height: editorRef.current.clientHeight
         };
-
     }
 
     /**

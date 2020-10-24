@@ -34,6 +34,7 @@ import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
 import {saveSettingsAsync} from "./appSettings";
+import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -54,6 +55,7 @@ interface StateProps {
     palettes: HashMap<string, Palette>;
     serverSettings: ServerSettings;
     kafkaSettings: KafkaSettings;
+    networkDescriptionSettings: NetworkDescriptionSettings;
 }
 
 interface DispatchProps {
@@ -162,7 +164,8 @@ function SettingsPanel(props: Props): JSX.Element {
         const newSettings = {
             themeName: props.name,
             server: props.serverSettings,
-            kafka: props.kafkaSettings
+            kafka: props.kafkaSettings,
+            networkDescription: props.networkDescriptionSettings
         }
         setSaving(true);
         saveSettingsAsync(newSettings)
@@ -274,7 +277,8 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
         name: state.settings.name,
         palettes: state.settings.palettes,
         serverSettings: state.settings.server,
-        kafkaSettings: state.settings.kafka
+        kafkaSettings: state.settings.kafka,
+        networkDescriptionSettings: state.settings.networkDescription
     }
 }
 

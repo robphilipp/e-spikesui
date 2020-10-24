@@ -2,11 +2,13 @@ import ServerSettings from "./serverSettings";
 import {KafkaSettings} from "./kafkaSettings";
 import * as fs from "fs";
 import {Either} from "prelude-ts";
+import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
 
 export interface ApplicationSettings {
     themeName: string;
     server: ServerSettings;
-    kafka: KafkaSettings
+    kafka: KafkaSettings;
+    networkDescription: NetworkDescriptionSettings;
 }
 
 export const SETTINGS_PATH = '.spikes-ui'
@@ -22,6 +24,9 @@ export const DEFAULT_SETTINGS: ApplicationSettings = {
             {host: 'localhost', port: 9092},
             {host: 'localhost', port: 9093},
         ]
+    },
+    networkDescription: {
+        templatePath: '.spikes-network-template',
     }
 }
 
@@ -81,8 +86,6 @@ export function saveSettings(settings: ApplicationSettings): Either<string, void
 export function saveSettingsAsync(settings: ApplicationSettings): Promise<string> {
     return new Promise((resolve, reject) => {
         saveSettings(settings)
-            // .ifLeft(() => resolve())
-            // .ifRight(error => reject("Unable to save the file"))
             .ifRight(() => resolve())
             .ifLeft(error => reject(error))
     })

@@ -8,11 +8,13 @@
 
 import {KafkaSettings} from "../../settings/kafkaSettings";
 import ServerSettings from "../../settings/serverSettings";
+import {NetworkDescriptionSettings} from "../../settings/networkDescriptionSettings";
 
 export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";
 export const SERVER_SETTINGS_CHANGED = "server-settings-changed";
 export const KAFKA_SETTINGS_CHANGED = "kafka-settings-changed";
+export const NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED = "network-description-template-path-changed";
 
 /*
  |
@@ -46,10 +48,16 @@ export interface KafkaSettingsChangeAction {
     kafkaSettings: KafkaSettings;
 }
 
+export interface NetworkDescriptionTemplatePathChangeAction {
+    type: typeof NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED;
+    networkDescriptionSettings: NetworkDescriptionSettings;
+}
+
 export type SettingsAction = ChangeThemeAction
     | SettingsPanelVisibleAction
     | ServerSettingsChangeAction
     | KafkaSettingsChangeAction
+    | NetworkDescriptionTemplatePathChangeAction
     ;
 
 
@@ -115,5 +123,17 @@ export function changeKafkaSettings(settings: KafkaSettings): KafkaSettingsChang
     return {
         type: KAFKA_SETTINGS_CHANGED,
         kafkaSettings: settings
+    }
+}
+
+/**
+ * Action to update the path to the network-description template
+ * @param {string} path The new path to the template
+ * @return {NetworkDescriptionTemplatePathChangeAction} The action representing the change to the path
+ */
+export function updateNetworkDescriptionTemplatePath(path: string): NetworkDescriptionTemplatePathChangeAction {
+    return {
+        type: NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+        networkDescriptionSettings: {templatePath: path}
     }
 }

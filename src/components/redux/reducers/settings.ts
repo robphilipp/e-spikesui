@@ -1,10 +1,16 @@
 import {ITheme} from "@uifabric/styling";
 import {HashMap} from "prelude-ts";
 import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../../theming";
-import {CHANGE_THEME, KAFKA_SETTINGS_CHANGED, SettingsAction} from "../actions/settings";
+import {
+    CHANGE_THEME,
+    KAFKA_SETTINGS_CHANGED,
+    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+    SettingsAction
+} from "../actions/settings";
 import {KafkaSettings} from "../../settings/kafkaSettings";
 import {loadOrInitializeSetting} from "../../settings/appSettings";
 import ServerSettings from "../../settings/serverSettings";
+import {NetworkDescriptionSettings} from "../../settings/networkDescriptionSettings";
 
 /**
  * The state holding the application settings
@@ -15,6 +21,7 @@ export interface SettingsState {
     palettes: HashMap<string, Palette>;
     server: ServerSettings;
     kafka: KafkaSettings;
+    networkDescription: NetworkDescriptionSettings;
 }
 
 /**
@@ -28,7 +35,8 @@ function initialSettings(): SettingsState {
         itheme: createDefaultTheme(settings.themeName).theme,
         palettes: defaultPalettes,
         server: settings.server,
-        kafka: settings.kafka
+        kafka: settings.kafka,
+        networkDescription: settings.networkDescription
     }
 }
 
@@ -39,8 +47,8 @@ function initialSettings(): SettingsState {
  * @param {SettingsAction} action The action holding the new state information
  * @return {SettingsState} the updated state
  */
-export function settingsReducer(state= initialSettings(), action: SettingsAction): SettingsState {
-    switch(action.type) {
+export function settingsReducer(state = initialSettings(), action: SettingsAction): SettingsState {
+    switch (action.type) {
         case CHANGE_THEME:
             console.log(`settings -- theme; action type: ${action.type}; theme: ${action.theme}`);
             return {
@@ -53,6 +61,12 @@ export function settingsReducer(state= initialSettings(), action: SettingsAction
             return {
                 ...state,
                 kafka: action.kafkaSettings
+            };
+
+        case NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED:
+            return {
+                ...state,
+                networkDescription: action.networkDescriptionSettings
             };
 
         default:

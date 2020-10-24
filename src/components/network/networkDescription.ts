@@ -1,128 +1,38 @@
-import * as React from 'react'
-import {useEffect, useRef, useState} from 'react'
-import MonacoEditor from "../editor/MonacoEditor";
-import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
-import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
+import { Either } from "prelude-ts";
+import fs from "fs";
 
+// const NETWORK_DESCRIPTION_TEMPLATE = '.spikes-network-template'
 
-const customThemes = defaultCustomThemes();
-const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
-const emptyFunction = () => {
-    return;
+export function loadTemplateOrInitialize(path: string): string {
+    return readNetworkDescription(path)
+        .ifLeft(err => {
+            console.log(`Unable to read network-description template; path: ${path}; error: ${err.toString()}`);
+            saveNetworkDescription(path, initialNetworkDescription).ifLeft(err => {
+                console.log(`Unable to write network description template to file; path: ${path}; error: ${err.toString()}`)
+            });
+        })
+        .getOrElse(initialNetworkDescription)
 }
 
-interface Dimension {
-    height: number;
-    width: number;
-}
-
-interface Props {
-    theme?: string;
-    // networkDescription: string;
-}
-
-/**
- * Wrapper for the monaco editor that manages resizing and theme updates
- * @param {Props} props The properties holding the current theme
- * @return {JSX.Element} The network editor
- * @constructor
- */
-export default function NetworkEditor(props: Props): JSX.Element {
-    const {
-        theme = DefaultTheme.DARK
-    } = props;
-
-    const editorRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
-    const [networkDescription, setNetworkDescription] = useState<string>(initialNetworkDescription);
-
-    // when component mounts, sets the initial dimension of the editor and registers to listen
-    // to window resize events. when component unmounts, removes the window-resize event listener
-    useEffect(
-        () => {
-            if (editorRef.current) {
-                setDimension(editorDimensions());
-            }
-
-            // listen to resize events so that the editor width and height can be updated
-            window.addEventListener('resize', () => handleWindowResize());
-
-            return () => {
-                // stop listening to resize events
-                window.removeEventListener('resize', () => handleWindowResize());
-            }
-        },
-        []
-    )
-
-    /**
-     * calculates the editors dimensions based on the `<div>`'s width and height
-     * @return {Dimension} The dimesion of the editor
-     */
-    function editorDimensions(): Dimension {
-        return {
-            width: editorRef.current.offsetWidth,
-            height: editorRef.current.clientHeight
-        };
-    }
-
-    /**
-     * updates the editor's width and height when the container's dimensions change
-     */
-    function handleWindowResize(): void {
-        if (editorRef.current) {
-            const nextDimension = editorDimensions()
-            const minDiff = 2;
-            if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
-                Math.abs(nextDimension.width - dimension.width) > minDiff) {
-                setDimension(nextDimension);
-            }
-        }
-    }
-
-    return (
-        <div
-            ref={editorRef}
-            // can't just set a fraction for the height because the parent height may not be
-            // set...but if it is, then you can use that.
-            style={{height: window.innerHeight * 0.9, width: '100%'}}
-        >
-            <MonacoEditor
-                editorId='spikes-lang'
-                width={dimension.width}
-                height={dimension.height}
-                language={SPIKES_LANGUAGE_ID}
-                theme={theme}
-                customThemes={customThemes}
-                value={networkDescription}
-                options={editorOptions}
-                onChange={(value: string) => setNetworkDescription(value)}
-                editorDidMount={emptyFunction}
-            />
-        </div>
-    )
-}
-
-/**
- * Returns the editor's theme that is mapped to the application's theme
- * @param {string} name The name of the application's theme
- * @return {string} The name of the editor's theme
- */
-export function editorThemeFrom(name: string): string {
-    switch (name) {
-        case 'default':
-        case 'light':
-            return DefaultTheme.LIGHT;
-
-        case 'dark':
-            return DefaultTheme.DARK;
-
-        default:
-            return DefaultTheme.LIGHT;
+export function readNetworkDescription(path: string): Either<string, string> {
+    try {
+        const description = fs.readFileSync(path).toString();
+        return Either.right(description);
+    } catch(err) {
+        return Either.left(err.toString())
     }
 }
 
-export const initialNetworkDescription = `// line sensor network
+export function saveNetworkDescription(path: string, description: string): Either<string, string> {
+    try {
+        fs.writeFileSync(path, description);
+        return Either.right(undefined);
+    } catch(err) {
+        return Either.left(err.toString());
+    }
+}
+
+const initialNetworkDescription = `// line sensor network
 // For parameters that accept units, if they are not specified, they default to:
 // • distances to µm
 // • times to ms

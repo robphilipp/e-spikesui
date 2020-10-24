@@ -42,6 +42,7 @@ interface DispatchProps {
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
+    onNetworkDescriptionTemplateLoaded: (description: string) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -180,7 +181,7 @@ function Main(props: Props): JSX.Element {
     }
 
     function handleNewNetwork(): void {
-        loadedNetworkDescriptionFromTemplate(loadTemplateOrInitialize(networkDescriptionTemplate));
+        props.onNetworkDescriptionTemplateLoaded(loadTemplateOrInitialize(networkDescriptionTemplate));
         props.history.push('network-editor');
     }
 
@@ -222,15 +223,11 @@ function Main(props: Props): JSX.Element {
                         render={(renderProps) =>
                             <NetworkEditor
                                 theme={editorThemeFrom(name)}
-                                // networkDescription={networkDescription}
                                 {...renderProps}
                             />
                         }
                     />
                 </Switch>
-            </StackItem>
-            <StackItem>
-                <p>Footer</p>
             </StackItem>
         </Stack>
     )
@@ -271,6 +268,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+    onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description))
     // onNetworkDescriptionChange: (description: string) => dispatch(changeNetworkDescription(description))
 });
 

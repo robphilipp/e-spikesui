@@ -68,28 +68,19 @@ NRN=[
 CON=[
     // input to output
     (prn=in-{1,2}, psn=out-{1,2}, cnw=0.5, eqw=0.5, lrn=stdp_alpha),
-    //(prn=in-{1,2}, psn=out-{1,2}, cnw=0.5, eqw=0.5, lrn=stdp_soft),
-    //(prn=in-{1,2}, psn=out-{1,2}, cnw=0.5, eqw=0.5, lrn=stdp_hard),
 
     // output to inhibition
-    //(prn=out-1, psn=inh-1, cnw=1, eqw=1, lrn=stdp_hard),
-    //(prn=out-2, psn=inh-2, cnw=1, eqw=1, lrn=stdp_hard),
     (prn=out-1, psn=inh-1, cnw=1, eqw=1, lrn=flat),
     (prn=out-2, psn=inh-2, cnw=1, eqw=1, lrn=flat),
 
     // inhib to output
-    //(prn=inh-1, psn=out-2, cnw=1, eqw=1, lrn=stdp_hard),
-    //(prn=inh-2, psn=out-1, cnw=1, eqw=1, lrn=stdp_hard)
     (prn=inh-1, psn=out-2, cnw=1, eqw=1, lrn=flat),
     (prn=inh-2, psn=out-1, cnw=1, eqw=1, lrn=flat)
 ],
 
 LRN=[
-    //(fnc=stdp_soft, ina=0.04, inp=30 ms, exa=0.02, exp=10 ms),
     (fnc=stdp_soft, ina=0.06, inp=15 ms, exa=0.02, exp=10 ms),
     //(fnc=stdp_hard, ina=0.06, inp=15 ms, exa=0.02, exp=10 ms),
-    //(fnc=stdp_alpha, bln=-1, alr=0.02, atc=22 ms),
-    //(fnc=stdp_alpha, bln=-1, alr=0.02, atc=22 ms),
     (fnc=stdp_alpha, bln=-1, alr=0.04, atc=22 ms),
     (fnc=flat)
 ]

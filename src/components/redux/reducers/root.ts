@@ -7,7 +7,7 @@ import {networkDescriptionReducer} from "./networkDescription";
 export const rootReducer = combineReducers({
     application: applicationReducer,
     settings: settingsReducer,
-    networkDescriptions: networkDescriptionReducer
+    networkDescription: networkDescriptionReducer
 });
 
 export type AppState = ReturnType<typeof rootReducer>

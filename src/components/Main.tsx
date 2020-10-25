@@ -7,16 +7,17 @@ import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
-import {HashMap, Option} from "prelude-ts";
+import {Either, HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
 import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
-import {loadTemplateOrInitialize} from "./network/networkDescription";
-import {loadedNetworkDescriptionFromTemplate} from "./redux/actions/networkDescription";
+import {loadTemplateOrInitialize, saveNetworkDescription} from "./network/networkDescription";
+import {loadedNetworkDescriptionFromTemplate, networkDescriptionSaved} from "./redux/actions/networkDescription";
+import {remote} from "electron";
 
 
-interface OwnProps extends RouteComponentProps<any> {
+interface OwnProps extends RouteComponentProps<never> {
     theme: AppTheme;
     colorPalettes: HashMap<string, Palette>
 }
@@ -35,6 +36,9 @@ interface StateProps {
     palettes: HashMap<string, Palette>;
     // network-description template
     networkDescriptionTemplate: string;
+    //
+    networkDescription: string;
+    networkDescriptionPath: string;
 }
 
 interface DispatchProps {
@@ -43,6 +47,7 @@ interface DispatchProps {
     onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
     onNetworkDescriptionTemplateLoaded: (description: string) => void;
+    onNetworkDescriptionSaved: (path: string) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -52,6 +57,9 @@ function Main(props: Props): JSX.Element {
         theme,
         name,
         networkDescriptionTemplate,
+        networkDescription,
+        networkDescriptionPath,
+        onNetworkDescriptionSaved
     } = props;
 
     useEffect(
@@ -102,23 +110,33 @@ function Main(props: Props): JSX.Element {
                     items: [
                         {
                             key: 'newNetwork',
-                            text: 'New Network',
+                            text: 'New',
                             iconProps: {iconName: 'add'},
-                            ariaLabel: 'Networks',
+                            ariaLabel: 'New Network',
                             onClick: () => handleNewNetwork()
                         },
                         {
                             key: 'loadNetwork',
-                            text: 'Load Network',
+                            text: 'Load',
                             iconProps: {iconName: 'upload'},
+                            ariaLabel: 'Load Network',
                             // onClick: () => props.history.push('spikes-chart')
                         },
                         {
                             key: 'saveNetwork',
-                            text: 'Save Network',
+                            text: 'Save',
                             iconProps: {iconName: 'save'},
-                            onClick: () => handleSaveNetwork()
-                        }
+                            ariaLabel: 'Save Network',
+                            disabled: !props.networkDescriptionPath,
+                            onClick: () => handleSaveNetworkDescription()
+                        },
+                        {
+                            key: 'saveNetworkAs',
+                            text: 'Save As...',
+                            ariaLabel: 'Save Network As',
+                            iconProps: {iconName: 'save'},
+                            onClick: () => handleSaveNetworkDescriptionAs()
+                        },
                     ],
                 },
             },
@@ -185,8 +203,33 @@ function Main(props: Props): JSX.Element {
         props.history.push('network-editor');
     }
 
-    function handleSaveNetwork(): void {
-        console.log('save')
+    /**
+     * Handles saving the network description to the current network description path.
+     */
+    function handleSaveNetworkDescription(): void {
+        if (networkDescriptionPath) {
+            saveNetworkDescription(networkDescriptionPath, networkDescription)
+                .ifRight(() => onNetworkDescriptionSaved(networkDescriptionPath));
+            return;
+        }
+
+        // todo hold on to this for a bit; when enableRemoteModule is false, then must use
+        //      IPC methods to open the dialog, etc
+        // ipcRenderer.send('save-network-description');
+        // ipcRenderer.once('save-network-description-path', (event, arg) => {
+        //     console.log('file path');
+        //     console.log(arg);
+        // })
+        handleSaveNetworkDescriptionAs();
+    }
+
+    function handleSaveNetworkDescriptionAs(): void {
+        remote.dialog
+            .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+            .then(retVal => {
+                saveNetworkDescription(retVal.filePath, networkDescription)
+                    .ifRight(() => onNetworkDescriptionSaved(retVal.filePath));
+            })
     }
 
     return (
@@ -253,7 +296,9 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     itheme: state.settings.itheme,
     name: state.settings.name,
     palettes: state.settings.palettes,
-    networkDescriptionTemplate: state.settings.networkDescription.templatePath
+    networkDescriptionTemplate: state.settings.networkDescription.templatePath,
+    networkDescription: state.networkDescription.description,
+    networkDescriptionPath: state.networkDescription.path
 });
 
 /**
@@ -269,8 +314,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
-    onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description))
+    onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
     // onNetworkDescriptionChange: (description: string) => dispatch(changeNetworkDescription(description))
+    onNetworkDescriptionSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
 });
 
 const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {useEffect} from 'react'
-import {CommandBar, ITheme, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
+import {CommandBar, ContextualMenuItemType, ITheme, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
 import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
@@ -9,13 +9,17 @@ import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
-import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
+import {Route, RouteComponentProps, Switch, useHistory, useLocation, useRouteMatch, withRouter} from 'react-router-dom';
 import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
 import {loadTemplateOrInitialize, readNetworkDescription, saveNetworkDescription} from "./network/networkDescription";
 import {loadedNetworkDescriptionFromTemplate, networkDescriptionLoaded, networkDescriptionSaved} from "./redux/actions/networkDescription";
 import {remote} from "electron";
 
+enum AppPath {
+    NETWORK_EDITOR = '/network-editor',
+    SIMULATION = '/simulation'
+}
 
 interface OwnProps extends RouteComponentProps<never> {
     colorPalettes: HashMap<string, Palette>
@@ -71,6 +75,9 @@ function Main(props: Props): JSX.Element {
         onNetworkDescriptionLoaded,
     } = props;
 
+    const history = useHistory();
+    const location = useLocation();
+
     useEffect(
         () => {
             registerSpikesLanguage();
@@ -90,20 +97,19 @@ function Main(props: Props): JSX.Element {
                 cacheKey: 'simulation-cache-key',
                 iconProps: {iconName: 'brain'},
                 ariaLabel: 'Simulation',
-                // onClick: () => props.history.push('spikes-chart')
                 subMenuProps: {
                     items: [
                         {
                             key: 'newSimulation',
                             text: 'New Simulation',
                             iconProps: {iconName: 'add'},
-                            // onClick: () => props.history.push('spikes-chart')
+                            onClick: () => history.push(AppPath.SIMULATION)
                         },
                         {
                             key: 'loadSimulation',
                             text: 'Load Simulation',
                             iconProps: {iconName: 'upload'},
-                            // onClick: () => props.history.push('spikes-chart')
+                            onClick: () => history.push(AppPath.SIMULATION)
                         },
                     ],
                 },
@@ -114,9 +120,19 @@ function Main(props: Props): JSX.Element {
                 cacheKey: 'network-cache-key',
                 iconProps: {iconName: 'homegroup'},
                 ariaLabel: 'Network',
-                // onClick: () => props.history.push('spikes-chart')
                 subMenuProps: {
                     items: [
+                        {
+                            key: 'editNetwork',
+                            text: 'Edit',
+                            iconProps: {iconName: 'homegroup'},
+                            ariaLabel: 'Edit Network',
+                            onClick: () => history.push(AppPath.NETWORK_EDITOR)
+                        },
+                        {
+                            key: 'divider_1',
+                            itemType: ContextualMenuItemType.Divider
+                        },
                         {
                             key: 'newNetwork',
                             text: 'New',
@@ -136,7 +152,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Save',
                             iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network',
-                            disabled: !networkDescriptionPath || !networkDescriptionModified,
+                            disabled: !networkDescriptionPath || !networkDescriptionModified || !useRouteMatch(AppPath.NETWORK_EDITOR),
                             onClick: () => handleSaveNetworkDescription()
                         },
                         {
@@ -144,6 +160,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Save As...',
                             ariaLabel: 'Save Network As',
                             iconProps: {iconName: 'save'},
+                            disabled: !useRouteMatch(AppPath.NETWORK_EDITOR),
                             onClick: () => handleSaveNetworkDescriptionAs()
                         },
                     ],
@@ -203,15 +220,26 @@ function Main(props: Props): JSX.Element {
         ];
     }
 
+    /**
+     * Handles the visibility of the settings panel
+     */
     function handleSettingsPanelVisibility(): void {
         settingsPanelVisible ? onHideSettingsPanel() : onShowSettingsPanel();
     }
 
+    /**
+     * Handles loading the network description template into the editor and chages
+     * the router path to the network editor
+     */
     function handleNewNetwork(): void {
         onNetworkDescriptionTemplateLoaded(loadTemplateOrInitialize(networkDescriptionTemplate));
-        props.history.push('network-editor');
+        history.push(AppPath.NETWORK_EDITOR);
     }
 
+    /**
+     * Handles loading a network description using the system open-file dialog, then
+     * reads the network description from file and sets the
+     */
     function handleLoadNetworkDescription(): void {
         remote.dialog
             .showOpenDialog(
@@ -223,7 +251,10 @@ function Main(props: Props): JSX.Element {
                 })
             .then(response => {
                 readNetworkDescription(response.filePaths[0])
-                    .ifRight(description => onNetworkDescriptionLoaded(description, response.filePaths[0]))
+                    .ifRight(description => {
+                        onNetworkDescriptionLoaded(description, response.filePaths[0]);
+                        history.push(AppPath.NETWORK_EDITOR);
+                    })
             })
     }
 
@@ -299,6 +330,10 @@ function Main(props: Props): JSX.Element {
                                 {...renderProps}
                             />
                         }
+                    />
+                    <Route
+                        path="/simulation"
+                        render={(renderProps) => <div>Simulation</div>}
                     />
                 </Switch>
             </StackItem>

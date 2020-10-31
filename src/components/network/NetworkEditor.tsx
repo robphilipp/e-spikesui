@@ -105,6 +105,11 @@ function NetworkEditor(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Creates a save button in the gutter when the contents have an associated file
+     * path, and when they can be saved.
+     * @return {JSX.Element} The save-button component
+     */
     function saveButton(): JSX.Element {
         if (modified) {
             return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
@@ -114,6 +119,11 @@ function NetworkEditor(props: Props): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}/>
     }
 
+    /**
+     * Creates a build button when the network description is saved and can be used to
+     * build a network.
+     * @return {JSX.Element} The build-button component
+     */
     function buildButton(): JSX.Element {
         if (!modified && (networkDescription && networkDescription.length > 31)) {
             return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>

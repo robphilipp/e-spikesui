@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = [
   // Add support for native node modules
   {
@@ -23,5 +25,15 @@ module.exports = [
         transpileOnly: true
       }
     }
+  },
+  {
+    // test: /\.ttf$/,
+    test: /\.(png|woff|woff2|eot|svg|ttf)$/,
+    use: ['file-loader'],
+  },
+  {
+    test: /\.css$/i,
+    use: ['style-loader', 'css-loader', 'less-loader'],
+    include:[path.resolve(__dirname, '..', 'node_modules/monaco-editor')],
   },
 ];

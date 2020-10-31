@@ -1,6 +1,7 @@
-import {app, BrowserWindow, session} from 'electron';
+import {app, BrowserWindow, dialog, ipcMain, IpcMainEvent, session} from 'electron';
 import path from 'path'
 import os from 'os'
+
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -8,16 +9,22 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
     app.quit();
 }
 
-function createWindow(): void {
-    // Create the browser window.
+function createWindow(): BrowserWindow {
+    // create the browser window.
     const mainWindow = new BrowserWindow({
-        height: 600,
+        height: 800,
         width: 800,
+        useContentSize: true,
 
-        // addition of `prelude-ts` caused "Uncaught ReferenceError: require is not defined"
-        // error when running; this fixes it
         webPreferences: {
-            nodeIntegration: true
+            // addition of `prelude-ts` caused "Uncaught ReferenceError: require is not defined"
+            // error when running; this fixes it
+            nodeIntegration: true,
+            // allows running web-workers at the OS thread level
+            nodeIntegrationInWorker: true,
+            // allows the renderer process to access "remote" objects from the main process
+            // (e.g. dialog)
+            enableRemoteModule: true
         }
     });
 
@@ -57,12 +64,30 @@ function createWindow(): void {
             mainWindow.webContents.openDevTools();
         });
     }
+
+    return mainWindow;
 }
+
+// /**
+//  * Registers the IPC listeners for working with the render processes
+//  * @param mainWindow The main window
+//  */
+// function registerIpcListeners(mainWindow: BrowserWindow): void {
+//     ipcMain.on('save-network-description', (event: IpcMainEvent, args) => {
+//         dialog
+//             .showSaveDialog(mainWindow, {title: 'Save As...'})
+//             .then(retVal => event.reply('save-network-description-path', retVal.filePath))
+//     });
+// }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+    createWindow();
+    // const mainWindow = createWindow();
+    // registerIpcListeners(mainWindow);
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -78,6 +103,8 @@ app.on('activate', () => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
+        // const mainWindow = createWindow();
+        // registerIpcListeners(mainWindow);
     }
 });
 

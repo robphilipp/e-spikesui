@@ -1,7 +1,7 @@
 import * as React from 'react'
-import {CommandBar, FontIcon, ITheme, Label, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
-import {iconControlsClass} from "../icons";
-import {AppTheme, Palette} from "../theming";
+import {useEffect} from 'react'
+import {CommandBar, ITheme, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
+import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -9,11 +9,15 @@ import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
-import {RouteComponentProps, withRouter} from 'react-router-dom';
+import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
+import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
+import {registerSpikesLanguage} from "./language/spikes-language";
+import {loadTemplateOrInitialize, readNetworkDescription, saveNetworkDescription} from "./network/networkDescription";
+import {loadedNetworkDescriptionFromTemplate, networkDescriptionLoaded, networkDescriptionSaved} from "./redux/actions/networkDescription";
+import {remote} from "electron";
 
 
-interface OwnProps extends RouteComponentProps<any> {
-    theme: AppTheme;
+interface OwnProps extends RouteComponentProps<never> {
     colorPalettes: HashMap<string, Palette>
 }
 
@@ -29,6 +33,11 @@ interface StateProps {
     name: string;
     // the current map of the theme names and their associated color palettes
     palettes: HashMap<string, Palette>;
+    // network-description template
+    networkDescriptionTemplate: string;
+    //
+    networkDescription: string;
+    networkDescriptionPath: string;
 }
 
 interface DispatchProps {
@@ -36,11 +45,35 @@ interface DispatchProps {
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
+    onNetworkDescriptionTemplateLoaded: (description: string) => void;
+    onNetworkDescriptionSaved: (path: string) => void;
+    onNetworkDescriptionLoaded: (description: string, path: string) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
+    const {
+        name,
+
+        settingsPanelVisible,
+        onShowSettingsPanel,
+        onHideSettingsPanel,
+
+        networkDescriptionTemplate,
+        onNetworkDescriptionTemplateLoaded,
+
+        networkDescription,
+        networkDescriptionPath,
+        onNetworkDescriptionSaved
+    } = props;
+
+    useEffect(
+        () => {
+            registerSpikesLanguage();
+        },
+        []
+    )
 
     /**
      * Returns a list of menu items at the top of the page
@@ -60,13 +93,13 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'newSimulation',
                             text: 'New Simulation',
-                            iconProps: { iconName: 'add' },
+                            iconProps: {iconName: 'add'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                         {
                             key: 'loadSimulation',
                             text: 'Load Simulation',
-                            iconProps: { iconName: 'upload' },
+                            iconProps: {iconName: 'upload'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                     ],
@@ -83,16 +116,32 @@ function Main(props: Props): JSX.Element {
                     items: [
                         {
                             key: 'newNetwork',
-                            text: 'New Network',
-                            iconProps: { iconName: 'add' },
-                            ariaLabel: 'Networks',
-                            // onClick: () => props.history.push('spikes-chart')
+                            text: 'New',
+                            iconProps: {iconName: 'add'},
+                            ariaLabel: 'New Network',
+                            onClick: () => handleNewNetwork()
                         },
                         {
                             key: 'loadNetwork',
-                            text: 'Load Network',
-                            iconProps: { iconName: 'upload' },
-                            // onClick: () => props.history.push('spikes-chart')
+                            text: 'Load',
+                            iconProps: {iconName: 'upload'},
+                            ariaLabel: 'Load Network',
+                            onClick: () => handleLoadNetworkDescription()
+                        },
+                        {
+                            key: 'saveNetwork',
+                            text: 'Save',
+                            iconProps: {iconName: 'save'},
+                            ariaLabel: 'Save Network',
+                            disabled: !props.networkDescriptionPath,
+                            onClick: () => handleSaveNetworkDescription()
+                        },
+                        {
+                            key: 'saveNetworkAs',
+                            text: 'Save As...',
+                            ariaLabel: 'Save Network As',
+                            iconProps: {iconName: 'save'},
+                            onClick: () => handleSaveNetworkDescriptionAs()
                         },
                     ],
                 },
@@ -107,13 +156,13 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'newEnvironment',
                             text: 'New Environment',
-                            iconProps: { iconName: 'add' },
+                            iconProps: {iconName: 'add'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                         {
                             key: 'loadEnvironment',
                             text: 'Load Environment',
-                            iconProps: { iconName: 'upload' },
+                            iconProps: {iconName: 'upload'},
                             // onClick: () => props.history.push('spikes-chart')
                         },
                     ],
@@ -152,7 +201,61 @@ function Main(props: Props): JSX.Element {
     }
 
     function handleSettingsPanelVisibility(): void {
-        props.settingsPanelVisible ? props.onHideSettingsPanel() : props.onShowSettingsPanel();
+        settingsPanelVisible ? onHideSettingsPanel() : onShowSettingsPanel();
+    }
+
+    function handleNewNetwork(): void {
+        onNetworkDescriptionTemplateLoaded(loadTemplateOrInitialize(networkDescriptionTemplate));
+        props.history.push('network-editor');
+    }
+
+    function handleLoadNetworkDescription(): void {
+        remote.dialog
+            .showOpenDialog(
+                remote.getCurrentWindow(),
+                {
+                    title: 'Open...',
+                    filters: [{name: 'spikes-network', extensions: ['boo']}],
+                    properties: ['openFile']
+                })
+            .then(response => {
+                readNetworkDescription(response.filePaths[0])
+                    .ifRight(description => onNetworkDescriptionTemplateLoaded(description))
+            })
+    }
+
+    /**
+     * Handles saving the network description to the current network description path.
+     * If the current network description path is undefined, then revert to the 'save-as'
+     * dialog
+     */
+    function handleSaveNetworkDescription(): void {
+        if (networkDescriptionPath) {
+            saveNetworkDescription(networkDescriptionPath, networkDescription)
+                .ifRight(() => onNetworkDescriptionSaved(networkDescriptionPath));
+        } else {
+            // todo hold on to this for a bit; when enableRemoteModule is false, then must use
+            //      IPC methods to open the dialog, etc
+            // ipcRenderer.send('save-network-description');
+            // ipcRenderer.once('save-network-description-path', (event, arg) => {
+            //     console.log('file path');
+            //     console.log(arg);
+            // })
+            handleSaveNetworkDescriptionAs();
+        }
+    }
+
+    /**
+     * Handles saving the network description file when the path is current set, or the user
+     * would like to save the file to a new name.
+     */
+    function handleSaveNetworkDescriptionAs(): void {
+        remote.dialog
+            .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+            .then(retVal => {
+                saveNetworkDescription(retVal.filePath, networkDescription)
+                    .ifRight(() => onNetworkDescriptionSaved(retVal.filePath));
+            })
     }
 
     return (
@@ -182,7 +285,20 @@ function Main(props: Props): JSX.Element {
             <StackItem grow>
                 <SettingsPanel/>
             </StackItem>
-            <Label>This is a label<FontIcon iconName="check-square" className={iconControlsClass}/></Label>
+            <StackItem>
+                <Switch>
+                    <Route
+                        path="/network-editor"
+                        render={(renderProps) =>
+                            <NetworkEditor
+                                theme={editorThemeFrom(name)}
+                                itheme={props.itheme}
+                                {...renderProps}
+                            />
+                        }
+                    />
+                </Switch>
+            </StackItem>
         </Stack>
     )
 }
@@ -205,7 +321,10 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     settingsPanelVisible: state.application.settingsPanelVisible,
     itheme: state.settings.itheme,
     name: state.settings.name,
-    palettes: state.settings.palettes
+    palettes: state.settings.palettes,
+    networkDescriptionTemplate: state.settings.networkDescription.templatePath,
+    networkDescription: state.networkDescription.description,
+    networkDescriptionPath: state.networkDescription.path
 });
 
 /**
@@ -220,7 +339,12 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onClearErrorMessages: () => dispatch(clearErrorMessages()),
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
-    onChangeTheme: (theme: string) => dispatch(changeTheme(theme))
+    onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+    onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
+    // onNetworkDescriptionChange: (description: string) => dispatch(changeNetworkDescription(description))
+    onNetworkDescriptionSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
+    onNetworkDescriptionLoaded: (description: string, path: string) => dispatch(networkDescriptionLoaded(description, path)),
+
 });
 
 const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)

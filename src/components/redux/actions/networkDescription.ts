@@ -68,7 +68,7 @@ export function loadedNetworkDescriptionFromTemplate(description: string): Netwo
     }
 }
 
-export function loadedNetworkDescription(description: string, path: string): NetworkDescriptionLoadedAction {
+export function networkDescriptionLoaded(description: string, path: string): NetworkDescriptionLoadedAction {
     return {
         type: NETWORK_DESCRIPTION_LOADED,
         networkDescription: description,

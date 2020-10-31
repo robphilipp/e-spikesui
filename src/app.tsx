@@ -26,7 +26,6 @@ ReactDOM.render(
     <Provider store={store}>
         <HashRouter>
             <Main
-                theme={createDefaultTheme(applicationSettings.themeName)}
                 colorPalettes={defaultPalettes}
             />
         </HashRouter>

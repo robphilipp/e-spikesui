@@ -1,24 +1,23 @@
 import * as React from 'react'
 import {useEffect} from 'react'
 import {CommandBar, ITheme, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
-import {AppTheme, Palette} from "../theming";
+import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
-import {Either, HashMap, Option} from "prelude-ts";
+import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, withRouter} from 'react-router-dom';
 import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
-import {loadTemplateOrInitialize, saveNetworkDescription} from "./network/networkDescription";
-import {loadedNetworkDescriptionFromTemplate, networkDescriptionSaved} from "./redux/actions/networkDescription";
+import {loadTemplateOrInitialize, readNetworkDescription, saveNetworkDescription} from "./network/networkDescription";
+import {loadedNetworkDescriptionFromTemplate, networkDescriptionLoaded, networkDescriptionSaved} from "./redux/actions/networkDescription";
 import {remote} from "electron";
 
 
 interface OwnProps extends RouteComponentProps<never> {
-    theme: AppTheme;
     colorPalettes: HashMap<string, Palette>
 }
 
@@ -48,15 +47,22 @@ interface DispatchProps {
     onChangeTheme: (theme: string) => void;
     onNetworkDescriptionTemplateLoaded: (description: string) => void;
     onNetworkDescriptionSaved: (path: string) => void;
+    onNetworkDescriptionLoaded: (description: string, path: string) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
     const {
-        theme,
         name,
+
+        settingsPanelVisible,
+        onShowSettingsPanel,
+        onHideSettingsPanel,
+
         networkDescriptionTemplate,
+        onNetworkDescriptionTemplateLoaded,
+
         networkDescription,
         networkDescriptionPath,
         onNetworkDescriptionSaved
@@ -120,7 +126,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Load',
                             iconProps: {iconName: 'upload'},
                             ariaLabel: 'Load Network',
-                            // onClick: () => props.history.push('spikes-chart')
+                            onClick: () => handleLoadNetworkDescription()
                         },
                         {
                             key: 'saveNetwork',
@@ -195,34 +201,54 @@ function Main(props: Props): JSX.Element {
     }
 
     function handleSettingsPanelVisibility(): void {
-        props.settingsPanelVisible ? props.onHideSettingsPanel() : props.onShowSettingsPanel();
+        settingsPanelVisible ? onHideSettingsPanel() : onShowSettingsPanel();
     }
 
     function handleNewNetwork(): void {
-        props.onNetworkDescriptionTemplateLoaded(loadTemplateOrInitialize(networkDescriptionTemplate));
+        onNetworkDescriptionTemplateLoaded(loadTemplateOrInitialize(networkDescriptionTemplate));
         props.history.push('network-editor');
+    }
+
+    function handleLoadNetworkDescription(): void {
+        remote.dialog
+            .showOpenDialog(
+                remote.getCurrentWindow(),
+                {
+                    title: 'Open...',
+                    filters: [{name: 'spikes-network', extensions: ['boo']}],
+                    properties: ['openFile']
+                })
+            .then(response => {
+                readNetworkDescription(response.filePaths[0])
+                    .ifRight(description => onNetworkDescriptionTemplateLoaded(description))
+            })
     }
 
     /**
      * Handles saving the network description to the current network description path.
+     * If the current network description path is undefined, then revert to the 'save-as'
+     * dialog
      */
     function handleSaveNetworkDescription(): void {
         if (networkDescriptionPath) {
             saveNetworkDescription(networkDescriptionPath, networkDescription)
                 .ifRight(() => onNetworkDescriptionSaved(networkDescriptionPath));
-            return;
+        } else {
+            // todo hold on to this for a bit; when enableRemoteModule is false, then must use
+            //      IPC methods to open the dialog, etc
+            // ipcRenderer.send('save-network-description');
+            // ipcRenderer.once('save-network-description-path', (event, arg) => {
+            //     console.log('file path');
+            //     console.log(arg);
+            // })
+            handleSaveNetworkDescriptionAs();
         }
-
-        // todo hold on to this for a bit; when enableRemoteModule is false, then must use
-        //      IPC methods to open the dialog, etc
-        // ipcRenderer.send('save-network-description');
-        // ipcRenderer.once('save-network-description-path', (event, arg) => {
-        //     console.log('file path');
-        //     console.log(arg);
-        // })
-        handleSaveNetworkDescriptionAs();
     }
 
+    /**
+     * Handles saving the network description file when the path is current set, or the user
+     * would like to save the file to a new name.
+     */
     function handleSaveNetworkDescriptionAs(): void {
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
@@ -317,6 +343,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
     // onNetworkDescriptionChange: (description: string) => dispatch(changeNetworkDescription(description))
     onNetworkDescriptionSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
+    onNetworkDescriptionLoaded: (description: string, path: string) => dispatch(networkDescriptionLoaded(description, path)),
+
 });
 
 const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)

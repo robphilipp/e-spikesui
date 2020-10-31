@@ -38,6 +38,7 @@ interface StateProps {
     //
     networkDescription: string;
     networkDescriptionPath: string;
+    networkDescriptionModified: boolean;
 }
 
 interface DispatchProps {
@@ -64,8 +65,10 @@ function Main(props: Props): JSX.Element {
         onNetworkDescriptionTemplateLoaded,
 
         networkDescription,
+        networkDescriptionModified,
         networkDescriptionPath,
-        onNetworkDescriptionSaved
+        onNetworkDescriptionSaved,
+        onNetworkDescriptionLoaded,
     } = props;
 
     useEffect(
@@ -133,7 +136,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Save',
                             iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network',
-                            disabled: !props.networkDescriptionPath,
+                            disabled: !networkDescriptionPath || !networkDescriptionModified,
                             onClick: () => handleSaveNetworkDescription()
                         },
                         {
@@ -220,7 +223,7 @@ function Main(props: Props): JSX.Element {
                 })
             .then(response => {
                 readNetworkDescription(response.filePaths[0])
-                    .ifRight(description => onNetworkDescriptionTemplateLoaded(description))
+                    .ifRight(description => onNetworkDescriptionLoaded(description, response.filePaths[0]))
             })
     }
 
@@ -324,7 +327,8 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     palettes: state.settings.palettes,
     networkDescriptionTemplate: state.settings.networkDescription.templatePath,
     networkDescription: state.networkDescription.description,
-    networkDescriptionPath: state.networkDescription.path
+    networkDescriptionPath: state.networkDescription.path,
+    networkDescriptionModified: state.networkDescription.modified
 });
 
 /**

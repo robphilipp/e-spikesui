@@ -118,6 +118,9 @@ export default function MonacoEditor(props: Props): JSX.Element {
             const model = editorRef.current?.getModel();
             if (value != null && model && value !== model.getValue() && editorRef.current) {
                 preventTriggerChangeEventRef.current = true;
+                // grab the currently selected text (workaround so that all the text isn't
+                // selected when loading from file or creating new network)
+                const selection = editorRef.current.getSelection();
                 editorRef.current.pushUndoStop();
                 model.pushEditOperations(
                     [],
@@ -129,6 +132,9 @@ export default function MonacoEditor(props: Props): JSX.Element {
                     () => []
                 );
                 editorRef.current.pushUndoStop();
+                // set the selected text (workaround so that all the text isn't selected when
+                // loading from file or creating new network)
+                editorRef.current.setSelection(selection);
                 preventTriggerChangeEventRef.current = false;
             }
         },

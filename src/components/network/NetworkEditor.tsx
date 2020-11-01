@@ -249,10 +249,10 @@ export function editorThemeFrom(name: string): string {
  * @param ownProps The current properties of the `App` component
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    ...ownProps,
     network: state.networkDescription.description,
     modified: state.networkDescription.modified,
-    path: state.networkDescription.path
+    path: state.networkDescription.path,
+    template: state.settings.networkDescription.templatePath
 });
 
 /**

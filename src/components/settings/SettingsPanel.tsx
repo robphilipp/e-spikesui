@@ -27,14 +27,16 @@ import {
     changeServerSettings,
     changeTheme,
     hideSettingsPanel,
-    showSettingsPanel
+    showSettingsPanel, updateNetworkDescriptionTemplatePath
 } from "../redux/actions/settings";
 import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
-import {saveSettingsAsync} from "./appSettings";
+import {ApplicationSettings, saveSettingsAsync} from "./appSettings";
 import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
+import TemplateSettingsEditor from "./TemplateSettingsEditor";
+import TemplateSettings from "./templateSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -55,6 +57,7 @@ interface StateProps {
     palettes: HashMap<string, Palette>;
     serverSettings: ServerSettings;
     kafkaSettings: KafkaSettings;
+    templateSettings: TemplateSettings;
     networkDescriptionSettings: NetworkDescriptionSettings;
 }
 
@@ -64,6 +67,8 @@ interface DispatchProps {
     onChangeTheme: (theme: string) => void;
     onChangeServerSettings: (settings: ServerSettings) => void;
     onChangeKafkaSettings: (settings: KafkaSettings) => void;
+    // onChangeNetworkDescriptionSettings: (settings: NetworkDescriptionSettings) => void;
+    onChangeTemplateSettings: (settings: TemplateSettings) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps
@@ -76,6 +81,24 @@ type Props = StateProps & DispatchProps & OwnProps
  * @constructor
  */
 function SettingsPanel(props: Props): JSX.Element {
+    const {
+        itheme,
+        name,
+        settingsPanelVisible,
+        palettes,
+        serverSettings,
+        kafkaSettings,
+        templateSettings,
+        networkDescriptionSettings,
+        onShowSettingsPanel,
+        onHideSettingsPanel,
+        onChangeTheme,
+        onChangeServerSettings,
+        onChangeKafkaSettings,
+        onChangeTemplateSettings
+        // onChangeNetworkDescriptionSettings
+    } = props;
+
     // initially we start out with the current theme name to be an empty option. when
     // the user selects a theme, we update the current theme with the theme that
     // was originally set, before any changes were made. this update value signifies
@@ -87,7 +110,11 @@ function SettingsPanel(props: Props): JSX.Element {
     // changes to the server settings do not update the application state until the "Ok"
     // button is selected to save the changes
     const [originalServer, setOriginalServer] = useState(Option.none<ServerSettings>());
-    const [currentServer, setCurrentServer] = useState<ServerSettings>(props.serverSettings);
+    const [currentServer, setCurrentServer] = useState<ServerSettings>(serverSettings);
+
+    // tracks the changes to the network description template file
+    const [originalTemplate, setOriginalTemplate] = useState(Option.none<TemplateSettings>());
+    const [currentTemplate, setCurrentTemplate] = useState(templateSettings);
 
     // flag that is true when the settings are being saved to file, and an error message
     // for when there is an error saving the settings
@@ -141,10 +168,10 @@ function SettingsPanel(props: Props): JSX.Element {
         }
         // if this is the first change before selecting "accept" or "cancel", then
         // we grab the name of the current theme
-        originalThemeName.ifNone(() => setOriginalThemeName(Option.of(props.name)));
+        originalThemeName.ifNone(() => setOriginalThemeName(Option.of(name)));
 
         // update the theme for display, but don't set it permanently
-        props.onChangeTheme(option.key as string);
+        onChangeTheme(option.key as string);
     }
 
     /**
@@ -157,15 +184,25 @@ function SettingsPanel(props: Props): JSX.Element {
     }
 
     /**
+     * When the template settings are changed, then update the original if this is the
+     * first update, and set the current to the new value
+     * @param {ServerSettings} settings The updated template settings
+     */
+    function handleTemplateChange(settings: TemplateSettings): void {
+        originalTemplate.ifNone(() => setOriginalTemplate(Option.of(currentTemplate)));
+        setCurrentTemplate(settings);
+    }
+
+    /**
      * Dispatches the action to hide the settings panel (all changes are already done)
      */
     function handleAcceptChanges() {
         // attempt to save the settings
-        const newSettings = {
-            themeName: props.name,
-            server: props.serverSettings,
-            kafka: props.kafkaSettings,
-            networkDescription: props.networkDescriptionSettings
+        const newSettings: ApplicationSettings = {
+            themeName: name,
+            server: serverSettings,
+            kafka: kafkaSettings,
+            networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescription}
         }
         setSaving(true);
         saveSettingsAsync(newSettings)
@@ -174,13 +211,19 @@ function SettingsPanel(props: Props): JSX.Element {
                 // accepting the changes, just leaves things as they were, but we need to set the
                 // original theme name back to an empty optional to signify that there have been no
                 // changes.
-                props.onHideSettingsPanel();
+                onHideSettingsPanel();
                 setOriginalThemeName(Option.none());
 
                 // accept any changes to the server settings, if there were any, otherwise, do nothing.
                 if (originalServer.isSome()) {
-                    props.onChangeServerSettings(currentServer);
+                    onChangeServerSettings(currentServer);
                     setOriginalServer(Option.none());
+                }
+
+                // accept any changes to the template settings, if there were any, otherwise, do nothing
+                if (originalTemplate.isSome()) {
+                    onChangeTemplateSettings(currentTemplate);
+                    setOriginalTemplate(Option.none());
                 }
 
                 // clear any previous error message
@@ -201,8 +244,8 @@ function SettingsPanel(props: Props): JSX.Element {
         // if there are changes to the theme (i.e. the original theme name is not an empty
         // optional), then we set the theme back to the original theme, and update the
         // original theme back to an empty optional to signify that the were no changes
-        originalThemeName.ifSome(theme => props.onChangeTheme(theme));
-        props.onHideSettingsPanel();
+        originalThemeName.ifSome(theme => onChangeTheme(theme));
+        onHideSettingsPanel();
         setOriginalThemeName(Option.none());
 
         // if there are changes to the server settings, we need to discard then and set the
@@ -212,13 +255,20 @@ function SettingsPanel(props: Props): JSX.Element {
             setOriginalServer(Option.none());
         });
 
+        // if there are changes to the template settings, we need to discard then and set the
+        // the template settings back to their origin value, and clear the changes.
+        originalTemplate.ifSome(settings => {
+            setCurrentTemplate(settings);
+            setOriginalTemplate(Option.none());
+        })
+
         // clear any previous error message
         setSaveError('');
     }
 
     return (
         <Panel
-            isOpen={props.settingsPanelVisible}
+            isOpen={settingsPanelVisible}
             type={PanelType.medium}
             onDismiss={handleCancelChanges}
             headerText="Settings"
@@ -228,29 +278,38 @@ function SettingsPanel(props: Props): JSX.Element {
         >
             <Stack tokens={{childrenGap: 20}}>
                 <StackItem>
-                    <Separator theme={props.itheme}>Look and feel</Separator>
+                    <Separator theme={itheme}>Look and feel</Separator>
                     <Label htmlFor={"theme-dropdown"}>Select a theme</Label>
                     <Dropdown
                         id={"theme-dropdown"}
                         dropdownWidth={200}
                         options={themes}
-                        defaultSelectedKey={props.name}
-                        selectedKey={props.name}
+                        defaultSelectedKey={name}
+                        selectedKey={name}
                         onChange={(event, option) => handleThemeChange(option)}
                     />
                 </StackItem>
                 <StackItem>
-                    <Separator theme={props.itheme}>Server Settings</Separator>
+                    <Separator theme={itheme}>Server Settings</Separator>
                     <ServerSettingsEditor
-                        theme={props.itheme}
+                        theme={itheme}
                         settings={currentServer}
                         onChange={settings => handleServerChange(settings)}
                     />
                 </StackItem>
                 <StackItem>
-                    <Separator theme={props.itheme}>Kafka Settings</Separator>
+                    <Separator theme={itheme}>Kafka Settings</Separator>
                     <Label>Kafka Brokers</Label>
                     <KafkaSettingsEditor/>
+                </StackItem>
+                <StackItem>
+                    <Separator theme={itheme}>Templates</Separator>
+                    <Label>Network Description Template</Label>
+                    <TemplateSettingsEditor
+                        theme={itheme}
+                        settings={currentTemplate}
+                        onChange={settings => handleTemplateChange(settings)}
+                    />
                 </StackItem>
             </Stack>
         </Panel>
@@ -278,7 +337,11 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
         palettes: state.settings.palettes,
         serverSettings: state.settings.server,
         kafkaSettings: state.settings.kafka,
-        networkDescriptionSettings: state.settings.networkDescription
+        networkDescriptionSettings: state.settings.networkDescription,
+        templateSettings: {
+            networkDescription: state.settings.networkDescription.templatePath,
+            environment: ''
+        }
     }
 }
 
@@ -296,7 +359,11 @@ function mapDispatchToProps(dispatch: ThunkDispatch<any, any, ApplicationAction>
         onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
         onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
         onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings)),
-        onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings))
+        onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings)),
+        onChangeTemplateSettings: (settings: TemplateSettings) => {
+            dispatch(updateNetworkDescriptionTemplatePath(settings.networkDescription));
+            // todo dispatch to environment settings
+        },
     }
 }
 

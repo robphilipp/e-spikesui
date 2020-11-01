@@ -7,9 +7,11 @@ import {RouteComponentProps, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
-import {updateNetworkDescription} from '../redux/actions/networkDescription';
+import {networkDescriptionSaved, updateNetworkDescription} from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
 import {IconButton, ITheme, Stack, StackItem} from '@fluentui/react';
+import {saveNetworkDescription} from "./networkDescription";
+import {remote} from "electron";
 
 
 const customThemes = defaultCustomThemes();
@@ -26,19 +28,20 @@ interface Dimension {
     width: number;
 }
 
+interface OwnProps  extends RouteComponentProps<never> {
+    itheme: ITheme;
+    theme?: string;
+}
+
 interface StateProps {
-    networkDescription: string;
+    network: string;
     modified: boolean;
     path?: string;
 }
 
 interface DispatchProps {
-    onDescriptionChanged: (description: string) => void;
-}
-
-interface OwnProps  extends RouteComponentProps<never> {
-    itheme: ITheme;
-    theme?: string;
+    onChanged: (description: string) => void;
+    onSaved: (path: string) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -52,8 +55,9 @@ type Props = StateProps & DispatchProps & OwnProps;
 function NetworkEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
-        networkDescription,
-        onDescriptionChanged,
+        network,
+        onChanged,
+        onSaved,
         modified,
         path
     } = props;
@@ -106,6 +110,22 @@ function NetworkEditor(props: Props): JSX.Element {
     }
 
     /**
+     * Handles saving the file when the path exists, otherwise opens a save-file dialog to allow
+     * the user to set the path. Sends redux action when file has been saved.
+     */
+    function handleSave(): void {
+        const save = (path: string, desc: string) => saveNetworkDescription(path, desc).ifRight(() => onSaved(path));
+        if (path) {
+            save(path, network);
+        } else {
+            remote.dialog
+                .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+                .then(retVal => save(retVal.filePath, network));
+        }
+
+    }
+
+    /**
      * Creates a save button in the gutter when the contents have an associated file
      * path, and when they can be saved.
      * @return {JSX.Element} The save-button component
@@ -113,7 +133,10 @@ function NetworkEditor(props: Props): JSX.Element {
     function saveButton(): JSX.Element {
         if (modified) {
             return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-                <IconButton iconProps={{iconName: 'save'}}/>
+                <IconButton
+                    iconProps={{iconName: 'save'}}
+                    onClick={() => handleSave()}
+                />
             </div>
         }
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}/>
@@ -125,7 +148,7 @@ function NetworkEditor(props: Props): JSX.Element {
      * @return {JSX.Element} The build-button component
      */
     function buildButton(): JSX.Element {
-        if (!modified && (networkDescription && networkDescription.length > 31)) {
+        if (!modified && (network && network.length > 31)) {
             return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
                 <IconButton iconProps={{iconName: 'homegroup'}}/>
             </div>
@@ -148,7 +171,7 @@ function NetworkEditor(props: Props): JSX.Element {
                     color: props.itheme.palette.themeSecondary
                 }}
             >
-                {path || '[new file]'}
+                {path || '[new file]'}{modified ? '*' : ''}
             </div>
             <Stack horizontal>
                 <StackItem>
@@ -163,9 +186,9 @@ function NetworkEditor(props: Props): JSX.Element {
                         language={SPIKES_LANGUAGE_ID}
                         theme={theme}
                         customThemes={customThemes}
-                        value={networkDescription}
+                        value={network}
                         options={editorOptions}
-                        onChange={(value: string) => onDescriptionChanged(value)}
+                        onChange={(value: string) => onChanged(value)}
                         editorDidMount={emptyFunction}
                     />
                 </StackItem>
@@ -207,7 +230,7 @@ export function editorThemeFrom(name: string): string {
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     ...ownProps,
-    networkDescription: state.networkDescription.description,
+    network: state.networkDescription.description,
     modified: state.networkDescription.modified,
     path: state.networkDescription.path
 });
@@ -221,7 +244,8 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onDescriptionChanged: (description: string) => dispatch(updateNetworkDescription(description))
+    onChanged: (description: string) => dispatch(updateNetworkDescription(description)),
+    onSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
 });
 
 const connectedNetworkEditor = connect(mapStateToProps, mapDispatchToProps)(NetworkEditor);

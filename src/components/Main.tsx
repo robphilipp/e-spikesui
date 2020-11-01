@@ -9,11 +9,15 @@ import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions
 import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
-import {Route, RouteComponentProps, Switch, useHistory, useLocation, useRouteMatch, withRouter} from 'react-router-dom';
+import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
 import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
 import {loadTemplateOrInitialize, readNetworkDescription, saveNetworkDescription} from "./network/networkDescription";
-import {loadedNetworkDescriptionFromTemplate, networkDescriptionLoaded, networkDescriptionSaved} from "./redux/actions/networkDescription";
+import {
+    loadedNetworkDescriptionFromTemplate,
+    networkDescriptionLoaded,
+    networkDescriptionSaved
+} from "./redux/actions/networkDescription";
 import {remote} from "electron";
 
 enum AppPath {
@@ -75,15 +79,12 @@ function Main(props: Props): JSX.Element {
         onNetworkDescriptionLoaded,
     } = props;
 
+    // react-router history
     const history = useHistory();
-    const location = useLocation();
+    // const location = useLocation();
 
-    useEffect(
-        () => {
-            registerSpikesLanguage();
-        },
-        []
-    )
+    // register spikes language with the monaco editor when the component mounts
+    useEffect(() => registerSpikesLanguage(), []);
 
     /**
      * Returns a list of menu items at the top of the page
@@ -268,13 +269,6 @@ function Main(props: Props): JSX.Element {
             saveNetworkDescription(networkDescriptionPath, networkDescription)
                 .ifRight(() => onNetworkDescriptionSaved(networkDescriptionPath));
         } else {
-            // todo hold on to this for a bit; when enableRemoteModule is false, then must use
-            //      IPC methods to open the dialog, etc
-            // ipcRenderer.send('save-network-description');
-            // ipcRenderer.once('save-network-description-path', (event, arg) => {
-            //     console.log('file path');
-            //     console.log(arg);
-            // })
             handleSaveNetworkDescriptionAs();
         }
     }
@@ -284,6 +278,13 @@ function Main(props: Props): JSX.Element {
      * would like to save the file to a new name.
      */
     function handleSaveNetworkDescriptionAs(): void {
+        // todo hold on to this for a bit; when enableRemoteModule is false, then must use
+        //      IPC methods to open the dialog, etc
+        // ipcRenderer.send('save-network-description');
+        // ipcRenderer.once('save-network-description-path', (event, arg) => {
+        //     console.log('file path');
+        //     console.log(arg);
+        // })
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
             .then(retVal => {
@@ -322,6 +323,10 @@ function Main(props: Props): JSX.Element {
             <StackItem>
                 <Switch>
                     <Route
+                        path="/simulation"
+                        render={(renderProps) => <div>Simulation</div>}
+                    />
+                    <Route
                         path="/network-editor"
                         render={(renderProps) =>
                             <NetworkEditor
@@ -330,10 +335,6 @@ function Main(props: Props): JSX.Element {
                                 {...renderProps}
                             />
                         }
-                    />
-                    <Route
-                        path="/simulation"
-                        render={(renderProps) => <div>Simulation</div>}
                     />
                 </Switch>
             </StackItem>
@@ -380,7 +381,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
     onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
-    // onNetworkDescriptionChange: (description: string) => dispatch(changeNetworkDescription(description))
     onNetworkDescriptionSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
     onNetworkDescriptionLoaded: (description: string, path: string) => dispatch(networkDescriptionLoaded(description, path)),
 

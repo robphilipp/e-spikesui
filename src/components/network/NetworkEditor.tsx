@@ -7,10 +7,14 @@ import {RouteComponentProps, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
-import {networkDescriptionSaved, updateNetworkDescription} from '../redux/actions/networkDescription';
+import {
+    loadedNetworkDescriptionFromTemplate,
+    networkDescriptionSaved,
+    updateNetworkDescription
+} from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
 import {IconButton, ITheme, Stack, StackItem} from '@fluentui/react';
-import {saveNetworkDescription} from "./networkDescription";
+import {loadTemplateOrInitialize, saveNetworkDescription} from "./networkDescription";
 import {remote} from "electron";
 
 
@@ -21,14 +25,14 @@ const emptyFunction = () => {
 }
 
 const SIDEBAR_WIDTH = 32;
-const SIDEBAR_ELEMENT_HEIGHT = 25;
+const SIDEBAR_ELEMENT_HEIGHT = 32;
 
 interface Dimension {
     height: number;
     width: number;
 }
 
-interface OwnProps  extends RouteComponentProps<never> {
+interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
     theme?: string;
 }
@@ -37,11 +41,13 @@ interface StateProps {
     network: string;
     modified: boolean;
     path?: string;
+    template?: string;
 }
 
 interface DispatchProps {
     onChanged: (description: string) => void;
     onSaved: (path: string) => void;
+    onTemplateLoaded: (description: string) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -56,8 +62,10 @@ function NetworkEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
         network,
+        template,
         onChanged,
         onSaved,
+        onTemplateLoaded,
         modified,
         path
     } = props;
@@ -126,20 +134,31 @@ function NetworkEditor(props: Props): JSX.Element {
     }
 
     /**
+     * Create a button to create a new network
+     * @return {JSX.Element} a button to create a new network
+     */
+    function newButton(): JSX.Element {
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <IconButton
+                iconProps={{iconName: 'add'}}
+                onClick={() => onTemplateLoaded(loadTemplateOrInitialize(template))}
+            />
+        </div>
+    }
+
+    /**
      * Creates a save button in the gutter when the contents have an associated file
      * path, and when they can be saved.
      * @return {JSX.Element} The save-button component
      */
     function saveButton(): JSX.Element {
-        if (modified) {
-            return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-                <IconButton
-                    iconProps={{iconName: 'save'}}
-                    onClick={() => handleSave()}
-                />
-            </div>
-        }
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}/>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <IconButton
+                iconProps={{iconName: 'save'}}
+                onClick={() => handleSave()}
+                disabled={!modified}
+            />
+        </div>
     }
 
     /**
@@ -148,12 +167,12 @@ function NetworkEditor(props: Props): JSX.Element {
      * @return {JSX.Element} The build-button component
      */
     function buildButton(): JSX.Element {
-        if (!modified && (network && network.length > 31)) {
-            return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-                <IconButton iconProps={{iconName: 'homegroup'}}/>
-            </div>
-        }
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}/>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <IconButton
+                iconProps={{iconName: 'homegroup'}}
+                disabled={modified || network === undefined || network.length < 31}
+            />
+        </div>
     }
 
     return (
@@ -175,6 +194,7 @@ function NetworkEditor(props: Props): JSX.Element {
             </div>
             <Stack horizontal>
                 <StackItem>
+                    {newButton()}
                     {saveButton()}
                     {buildButton()}
                 </StackItem>
@@ -246,6 +266,7 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onChanged: (description: string) => dispatch(updateNetworkDescription(description)),
     onSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
+    onTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
 });
 
 const connectedNetworkEditor = connect(mapStateToProps, mapDispatchToProps)(NetworkEditor);

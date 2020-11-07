@@ -92,4 +92,5 @@ out/
 
 # application data and dev
 .spikes-ui
+.spikes-session
 *.boo

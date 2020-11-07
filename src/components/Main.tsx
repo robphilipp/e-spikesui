@@ -19,6 +19,7 @@ import {
     networkDescriptionSaved
 } from "./redux/actions/networkDescription";
 import {remote} from "electron";
+import {saveSessionState} from "../session";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -84,7 +85,26 @@ function Main(props: Props): JSX.Element {
     // const location = useLocation();
 
     // register spikes language with the monaco editor when the component mounts
-    useEffect(() => registerSpikesLanguage(), []);
+    useEffect(() => {
+        registerSpikesLanguage();
+        // remote.getCurrentWindow().addListener('close', handleSaveSession);
+        // //
+        // return () => {
+        //     remote.getCurrentWindow().removeListener('close', handleSaveSession)
+        // }
+        // return () => {
+        //     handleSaveSession();
+        // }
+    }, []);
+
+    // /**
+    //  * Grabs the size of the window and saves it
+    //  */
+    // function handleSaveSession(event: Electron.Event): void {
+    //     const currentWindow = remote.getCurrentWindow();
+    //     const [width, height] = currentWindow.getContentSize();
+    //     saveSessionState({windowWidth: width, windowHeight: height});
+    // }
 
     /**
      * Returns a list of menu items at the top of the page

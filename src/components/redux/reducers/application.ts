@@ -1,4 +1,3 @@
-// import {Option} from "prelude-ts";
 import {ApplicationAction, CLEAR_ERROR_MESSAGES, SET_ERROR_MESSAGES} from "../actions/actions";
 import {SETTINGS_PANEL_VISIBLE} from "../actions/settings";
 import {Option} from "prelude-ts";

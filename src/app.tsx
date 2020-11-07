@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import Main from './components/Main'
 import prepareIcons from "./icons";
-import {createDefaultTheme, defaultPalettes} from "./theming";
+import {defaultPalettes} from "./theming";
 import {Provider} from "react-redux";
 import store from './components/redux/store';
 import {generateRemoteActionCreators} from './components/redux/actions/rootActions';

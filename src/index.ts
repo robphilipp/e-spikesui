@@ -1,6 +1,7 @@
-import {app, BrowserWindow, dialog, ipcMain, IpcMainEvent, session} from 'electron';
+import {app, BrowserWindow, session} from 'electron';
 import path from 'path'
 import os from 'os'
+import {loadWindowSize, saveWindowSize} from "./session";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 
@@ -10,10 +11,13 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 }
 
 function createWindow(): BrowserWindow {
+    // const sessionState = loadSessionState();
+    const [width, height] = loadWindowSize();
+
     // create the browser window.
     const mainWindow = new BrowserWindow({
-        height: 800,
-        width: 800,
+        height: height,
+        width: width,
         useContentSize: true,
 
         webPreferences: {
@@ -29,7 +33,6 @@ function createWindow(): BrowserWindow {
     });
 
     // load the dev tool extensions for debugging (react, redux)
-    // tried `electron-devtools-installer` but couldn't get it to work
     session.defaultSession.loadExtension(
         path.join(os.homedir(), '/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.8.2_0')
     ).then(ext => {
@@ -89,10 +92,28 @@ app.on('ready', () => {
     // registerIpcListeners(mainWindow);
 });
 
+app.on('will-quit', () => {
+    // const browserWindows = BrowserWindow.getAllWindows();
+    // console.log(`will-quit windows: ${browserWindows.length}`);
+    // if (browserWindows.length > 0) {
+    //     const [width, height] = browserWindows[0].getContentSize();
+    //     saveSessionState({windowWidth: width, windowHeight: height});
+    // }
+    handleSaveWindowDimensions();
+})
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+    // const browserWindows = BrowserWindow.getAllWindows();
+    // console.log(`window-all-closed windows: ${browserWindows.length}`);
+    // if (browserWindows.length > 0) {
+    //     const [width, height] = browserWindows[0].getContentSize();
+    //     saveSessionState({windowWidth: width, windowHeight: height});
+    // }
+    handleSaveWindowDimensions();
+
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -110,3 +131,10 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+function handleSaveWindowDimensions(): void {
+    const browserWindows = BrowserWindow.getAllWindows();
+    if (browserWindows.length > 0) {
+        const [width, height] = browserWindows[0].getContentSize();
+        saveWindowSize(width, height);
+    }
+}

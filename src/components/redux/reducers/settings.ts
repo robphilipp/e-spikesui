@@ -26,7 +26,7 @@ export interface SettingsState {
 
 /**
  * Loads the settings from file and returns the initial settings.
- * @return {SettingsState} The initial settings state based on the settings file
+ * @return The initial settings state based on the settings file
  */
 function initialSettings(): SettingsState {
     const settings = loadOrInitializeSetting();
@@ -43,9 +43,9 @@ function initialSettings(): SettingsState {
 /**
  * Reducer function that accepts the current state and action, and for change theme actions, updates the
  * state with the new theme and returns the updated state.
- * @param {SettingsState} state The current state of the theme
- * @param {SettingsAction} action The action holding the new state information
- * @return {SettingsState} the updated state
+ * @param state The current state of the theme
+ * @param action The action holding the new state information
+ * @return the updated state
  */
 export function settingsReducer(state = initialSettings(), action: SettingsAction): SettingsState {
     switch (action.type) {

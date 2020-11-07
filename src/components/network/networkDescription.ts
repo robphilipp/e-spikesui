@@ -5,8 +5,8 @@ import fs from "fs";
  * Loads the network description template from its default location. The template is
  * used for creating a new network description. If no network-description-template
  * file exists, then creates one using the `initialNetworkDescription` string.
- * @param {string} path The path to the network-description template file
- * @return {string} The network-description template
+ * @param path The path to the network-description template file
+ * @return The network-description template
  */
 export function loadTemplateOrInitialize(path: string): string {
     return readNetworkDescription(path)
@@ -21,8 +21,8 @@ export function loadTemplateOrInitialize(path: string): string {
 
 /**
  * Attempts to read the network-description from the specified path.
- * @param {string} path The path to the network-description.
- * @return {Either<string, string>} Either the network description template (right)
+ * @param path The path to the network-description.
+ * @return Either the network description template (right)
  * or an error message describing why it couldn't be loaded (left).
  */
 export function readNetworkDescription(path: string): Either<string, string> {
@@ -36,9 +36,9 @@ export function readNetworkDescription(path: string): Either<string, string> {
 
 /**
  * Attempts save the specified network description to the specified path.
- * @param {string} path The path to the network-description.
- * @param {string} description The network description to save
- * @return {Either<string, string>} Either `undefined` (right) if the network
+ * @param path The path to the network-description.
+ * @param description The network description to save
+ * @return Either `undefined` (right) if the network
  * description was saved successfully, or an error message (left) if the network
  * description could not be saved.
  */

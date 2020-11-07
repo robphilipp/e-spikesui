@@ -54,8 +54,8 @@ type Props = StateProps & DispatchProps & OwnProps;
 
 /**
  * Wrapper for the monaco editor that manages resizing and theme updates
- * @param {Props} props The properties holding the current theme
- * @return {JSX.Element} The network editor
+ * @param props The properties holding the current theme
+ * @return The network editor
  * @constructor
  */
 function NetworkEditor(props: Props): JSX.Element {
@@ -94,7 +94,7 @@ function NetworkEditor(props: Props): JSX.Element {
 
     /**
      * calculates the editors dimensions based on the `<div>`'s width and height
-     * @return {Dimension} The dimension of the editor
+     * @return The dimension of the editor
      */
     function editorDimensions(): Dimension {
         return {
@@ -135,7 +135,7 @@ function NetworkEditor(props: Props): JSX.Element {
 
     /**
      * Create a button to create a new network
-     * @return {JSX.Element} a button to create a new network
+     * @return a button to create a new network
      */
     function newButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
@@ -149,7 +149,7 @@ function NetworkEditor(props: Props): JSX.Element {
     /**
      * Creates a save button in the gutter when the contents have an associated file
      * path, and when they can be saved.
-     * @return {JSX.Element} The save-button component
+     * @return The save-button component
      */
     function saveButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
@@ -164,7 +164,7 @@ function NetworkEditor(props: Props): JSX.Element {
     /**
      * Creates a build button when the network description is saved and can be used to
      * build a network.
-     * @return {JSX.Element} The build-button component
+     * @return The build-button component
      */
     function buildButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
@@ -219,8 +219,8 @@ function NetworkEditor(props: Props): JSX.Element {
 
 /**
  * Returns the editor's theme that is mapped to the application's theme
- * @param {string} name The name of the application's theme
- * @return {string} The name of the editor's theme
+ * @param name The name of the application's theme
+ * @return The name of the editor's theme
  */
 export function editorThemeFrom(name: string): string {
     switch (name) {
@@ -259,9 +259,8 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * react-redux function that maps the event handlers to the dispatch functions. Note that in the
  * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
  * and the third type is, obviously, the action.
- * @param {ThunkDispatch} dispatch The redux dispatcher
- * @param {OwnProps} _ The component's own properties
- * @return {DispatchProps} The updated dispatch-properties holding the event handlers
+ * @param dispatch The redux dispatcher
+ * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onChanged: (description: string) => dispatch(updateNetworkDescription(description)),

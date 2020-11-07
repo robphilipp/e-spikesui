@@ -1,6 +1,15 @@
 import * as React from 'react'
 import {useEffect} from 'react'
-import {CommandBar, ContextualMenuItemType, ITheme, MessageBar, MessageBarType, Stack, StackItem} from '@fluentui/react'
+import {
+    CommandBar,
+    ContextualMenuItemType,
+    ICommandBarItemProps,
+    ITheme,
+    MessageBar,
+    MessageBarType,
+    Stack,
+    StackItem
+} from '@fluentui/react'
 import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
@@ -19,7 +28,6 @@ import {
     networkDescriptionSaved
 } from "./redux/actions/networkDescription";
 import {remote} from "electron";
-import {saveSessionState} from "../session";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -87,30 +95,13 @@ function Main(props: Props): JSX.Element {
     // register spikes language with the monaco editor when the component mounts
     useEffect(() => {
         registerSpikesLanguage();
-        // remote.getCurrentWindow().addListener('close', handleSaveSession);
-        // //
-        // return () => {
-        //     remote.getCurrentWindow().removeListener('close', handleSaveSession)
-        // }
-        // return () => {
-        //     handleSaveSession();
-        // }
     }, []);
 
-    // /**
-    //  * Grabs the size of the window and saves it
-    //  */
-    // function handleSaveSession(event: Electron.Event): void {
-    //     const currentWindow = remote.getCurrentWindow();
-    //     const [width, height] = currentWindow.getContentSize();
-    //     saveSessionState({windowWidth: width, windowHeight: height});
-    // }
-
     /**
-     * Returns a list of menu items at the top of the page
-     * @return {{onClick: () => void; cacheKey: string; name: string; iconProps: {iconName: string}; key: string; ariaLabel: string}[]}
+     * Returns a list of menu items that start at the top-left of the page
+     * @return The command bar menu items
      */
-    function menuItems() {
+    function menuItems(): Array<ICommandBarItemProps> {
         return [
             {
                 key: 'simulation',
@@ -215,10 +206,10 @@ function Main(props: Props): JSX.Element {
     /**
      * Returns a list of menu items on the upper right-hand side of the menu bar. For example, returns the settings
      * menu item.
-     * @param {(visible: boolean) => void} settingVisibilityManager Manages the settings panel visibility state
-     * @return {{onClick: () => void; iconOnly: boolean; name: string; iconProps: {iconName: string}; key: string; ariaLabel: string}[]}
+     * @param visibility Manages the settings panel visibility state
+     * @return The menu item properties
      */
-    function farMenuItems(settingVisibilityManager: (visible: boolean) => void) {
+    function farMenuItems(visibility: (visible: boolean) => void): Array<ICommandBarItemProps> {
         return [
             {
                 key: 'settings',
@@ -228,7 +219,7 @@ function Main(props: Props): JSX.Element {
                     iconName: 'Settings'
                 },
                 iconOnly: true,
-                onClick: () => settingVisibilityManager(true)
+                onClick: () => visibility(true)
             },
             {
                 key: 'help',
@@ -391,9 +382,8 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * react-redux function that maps the event handlers to the dispatch functions. Note that in the
  * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
  * and the third type is, obviously, the action.
- * @param {ThunkDispatch} dispatch The redux dispatcher
- * @param {OwnProps} _ The component's own properties
- * @return {DispatchProps} The updated dispatch-properties holding the event handlers
+ * @param dispatch The redux dispatcher
+ * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onClearErrorMessages: () => dispatch(clearErrorMessages()),

@@ -57,8 +57,8 @@ export type ApplicationAction = SetErrorMessageAction
 
 /**
  * Sets the application-level error messages
- * @param {string[]} messages An array of error messages
- * @return {ThunkAction<Promise<SetErrorMessageAction>, any, any, SetErrorMessageAction>}
+ * @param messages An array of error messages
+ * @return
  */
 export function setErrorMessages(messages: string[]):
     ThunkAction<Promise<SetErrorMessageAction>, any, any, SetErrorMessageAction> {
@@ -71,7 +71,7 @@ export function setErrorMessages(messages: string[]):
 
 /**
  * Clears the application-level error messages
- * @return {ThunkAction<Promise<ClearErrorMessageAction>, any, any, ClearErrorMessageAction>}
+ * @return
  */
 export function clearErrorMessages(): ThunkAction<Promise<ClearErrorMessageAction>, any, any, ClearErrorMessageAction> {
     return (dispatch: ThunkDispatch<ClearErrorMessageAction, any, any>): Promise<ClearErrorMessageAction> =>

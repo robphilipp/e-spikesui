@@ -1,8 +1,8 @@
 /**
  * Strips the text of all comments, newlines (\n and/or \r), and all spaces so that it is one long-ass line.
  * This is done to make it easier to construct regex and parse them.
- * @param {string} text The full text to strip
- * @return {string} The text stripped of comments, newlines, and spaces.
+ * @param text The full text to strip
+ * @return The text stripped of comments, newlines, and spaces.
  */
 export function stripText(text: string): string {
     return text
@@ -50,8 +50,8 @@ export const inLrnsSecRe = /LRN=\[[a-zA-Z0-9.\-_ϕθµ/(),=]*\([a-zA-Z0-9.\-_ϕ�
 
 /**
  * Determines whether the cursor is in the NRN section but not in a neuron
- * @param {string} text The text ending at the cursor
- * @return {boolean} `true` if the cursor is in the neuron section and not in a neuron; `false` otherwise
+ * @param text The text ending at the cursor
+ * @return `true` if the cursor is in the neuron section and not in a neuron; `false` otherwise
  */
 export function inNeuronSection(text: string): boolean {
     return notInNeuron(text) && text.match(inNrnsSecRe) !== null;
@@ -59,8 +59,8 @@ export function inNeuronSection(text: string): boolean {
 
 /**
  * Determines whether the cursor is not in a neuron or any of the neurons functions
- * @param {string} text The text ending at the cursor
- * @return {boolean} `true` if the cursor is not in a neuron; `false` otherwise
+ * @param text The text ending at the cursor
+ * @return `true` if the cursor is not in a neuron; `false` otherwise
  */
 export function notInNeuron(text: string): boolean {
     return text.match(afterWdfRe) === null &&

@@ -92,8 +92,8 @@ export function hideSettingsPanel(): SettingsPanelVisibleAction {
 
 /**
  * Action to change the UI theme
- * @param {string} name The name of the new theme
- * @return {ChangeThemeAction} The action
+ * @param name The name of the new theme
+ * @return The action
  */
 export function changeTheme(name: string): ChangeThemeAction {
     return {
@@ -104,8 +104,8 @@ export function changeTheme(name: string): ChangeThemeAction {
 
 /**
  * Action to change the settings for connecting to the spikes server
- * @param {ServerSettings} settings The server settings (host, port, base URL)
- * @return {ServerSettingsChangeAction} The change action
+ * @param settings The server settings (host, port, base URL)
+ * @return The change action
  */
 export function changeServerSettings(settings: ServerSettings): ServerSettingsChangeAction {
     return {
@@ -116,8 +116,8 @@ export function changeServerSettings(settings: ServerSettings): ServerSettingsCh
 
 /**
  * Action to update the kafka settings
- * @param {KafkaSettings} settings The updated kafka settings
- * @return {KafkaSettingsChangeAction} An action to update the kafka settings
+ * @param settings The updated kafka settings
+ * @return An action to update the kafka settings
  */
 export function changeKafkaSettings(settings: KafkaSettings): KafkaSettingsChangeAction {
     return {
@@ -128,8 +128,8 @@ export function changeKafkaSettings(settings: KafkaSettings): KafkaSettingsChang
 
 /**
  * Action to update the path to the network-description template
- * @param {string} path The new path to the template
- * @return {NetworkDescriptionTemplatePathChangeAction} The action representing the change to the path
+ * @param path The new path to the template
+ * @return The action representing the change to the path
  */
 export function updateNetworkDescriptionTemplatePath(path: string): NetworkDescriptionTemplatePathChangeAction {
     return {

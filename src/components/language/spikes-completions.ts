@@ -965,13 +965,13 @@ const REGEX_MAP = regexMap(lastKeyHasValueOf);
  * Creates the string representing part (or all of) a code snippet from the variable information specified. Code
  * snippets are a concatenation of `field=${index:value}` strings. The index specifies the order in which the
  * code (field, value) pair appear in the code snippet.
- * @param {string} prefix A string the prepends the code snippet
- * @param {Array<string>} order The variable names in the order they should appear in the code snippet. Only
+ * @param prefix A string the prepends the code snippet
+ * @param order The variable names in the order they should appear in the code snippet. Only
  * variables whose name match one of these variables will appear in the code snippet
- * @param {Map<string, Variable>} vars The (name, variable_info) pairs used to create the code snippet
- * @param {string} postfix A string appended to the code snippet
- * @param {number} offset The offset applied to the index.
- * @return {string} a concatenation of `field=${index:value}` strings. The index specifies the order in which the
+ * @param vars The (name, variable_info) pairs used to create the code snippet
+ * @param postfix A string appended to the code snippet
+ * @param offset The offset applied to the index.
+ * @return a concatenation of `field=${index:value}` strings. The index specifies the order in which the
  * code (field, value) pair appear in the code snippet. The value is the name of the field.
  */
 function createTemplatePart(prefix: string,
@@ -997,13 +997,13 @@ function createTemplatePart(prefix: string,
  *
  * However, rather than return the name of the field as the value, this function attempts to return the field's
  * default value. If no default exists, then returns the name of the field.
- * @param {string} prefix A string the prepends the code snippet
- * @param {Array<string>} order The variable names in the order they should appear in the code snippet. Only
+ * @param prefix A string the prepends the code snippet
+ * @param order The variable names in the order they should appear in the code snippet. Only
  * variables whose name match one of these variables will appear in the code snippet
- * @param {Map<string, Variable>} vars The (name, variable_info) pairs used to create the code snippet
- * @param {string} postfix A string appended to the code snippet
- * @param {number} offset The offset applied to the index.
- * @return {string} a concatenation of `field=${index:value}` strings. The index specifies the order in which the
+ * @param vars The (name, variable_info) pairs used to create the code snippet
+ * @param postfix A string appended to the code snippet
+ * @param offset The offset applied to the index.
+ * @return a concatenation of `field=${index:value}` strings. The index specifies the order in which the
  * code (field, value) pair appear in the code snippet. The value is the default value, if one exists, otherwise it
  * is the name of the field.
  */
@@ -1028,9 +1028,9 @@ function createDefaultsTemplatePart(prefix: string,
 /**
  * Attempts to extract the field name from the spikes line of code, which consists of (name, value) pairs represented
  * as `name=value`. The name will always have 3 characters
- * @param {string} line The line of spikes code
- * @param {number} position The position from which to extract the property
- * @return {string}
+ * @param line The line of spikes code
+ * @param position The position from which to extract the property
+ * @return
  */
 function extractFieldNameFrom(line: string, position: number): string {
     // process the line by chopping off everything after the position and removing all the white space
@@ -1042,9 +1042,9 @@ function extractFieldNameFrom(line: string, position: number): string {
 /**
  * For a set of variables, calculates the completion items. A completion item contains the information needed
  * to create the completions from which a user can select.
- * @param {Map<string, Variable>} selections The map holding the field names and their associated variable info
- * @param {IPosition} position The position of the cursor
- * @return {Array<languages.CompletionItem>} An array of the completion items for the variables
+ * @param selections The map holding the field names and their associated variable info
+ * @param position The position of the cursor
+ * @return An array of the completion items for the variables
  */
 function completionsFor(selections: Map<string, Variable>, position: IPosition): Array<languages.CompletionItem> {
     // calculates the range for the given position
@@ -1074,8 +1074,8 @@ function completionsFor(selections: Map<string, Variable>, position: IPosition):
  * Calculates the completion list for the field, taking into account the valid values a field may have, and
  * if the field doesn't have a list of valid values, then displays the default value, and if the field doesn't
  * have a default, then just the completion for the field.
- * @param {Variable} variable The variable for which to calculate the completion list
- * @return {Array<languages.CompletionItem>} The list of completions for the variable
+ * @param variable The variable for which to calculate the completion list
+ * @return The list of completions for the variable
  */
 function completionsForField(variable: Variable): Array<languages.CompletionItem> {
     if (variable.validValues !== undefined) {
@@ -1140,11 +1140,11 @@ export function regexMap(lastKeyHasValueOf: (key: string, value: string, text: s
 
 /**
  * Determines whether the value of the last key has the specified value.
- * @param {string} key The key
- * @param {string} value The values that the last value of the key is being tested for
- * @param {string} text The stripped text
- * @param {string} line The current line
- * @return {boolean} `true` if the value of the last key has the specified value; `false` otherwise
+ * @param key The key
+ * @param value The values that the last value of the key is being tested for
+ * @param text The stripped text
+ * @param line The current line
+ * @return `true` if the value of the last key has the specified value; `false` otherwise
  */
 function lastKeyHasValueOf(key: string, value: string, text: string, line: string): boolean {
     // if the key-value pair is found, then value was found
@@ -1168,8 +1168,8 @@ function lastKeyHasValueOf(key: string, value: string, text: string, line: strin
 /**
  * Returns a map holding all the completion variables that match the field name, keyed by
  * the groups for which the completion applies.
- * @param {string} fieldName The name of the field for which to find variables
- * @return {Map<string, Variable>} A map holding all of the variables that have the
+ * @param fieldName The name of the field for which to find variables
+ * @return A map holding all of the variables that have the
  * specified field
  */
 export function allCompletionVariablesFor(fieldName: string): Map<string, Variable> {
@@ -1199,11 +1199,11 @@ export function allCompletionVariablesFor(fieldName: string): Map<string, Variab
 
 /**
  * For a specific field, calculates the completion items.
- * @param {string} fieldName The name of the field
- * @param {string} strippedText The text, stripped of comments, whitespace and return characters, up
+ * @param fieldName The name of the field
+ * @param strippedText The text, stripped of comments, whitespace and return characters, up
  * until the current cursor.
- * @param {string} currentLine The line of text on which the cursor sits
- * @return {Array<languages.CompletionItem>} A list of suggestions
+ * @param currentLine The line of text on which the cursor sits
+ * @return A list of suggestions
  */
 function selectionsForField(fieldName: string, strippedText: string, currentLine: string): Array<languages.CompletionItem> {
     // find all the instances of the field name in the variables, and if the name is not unique, then do further
@@ -1232,11 +1232,11 @@ function selectionsForField(fieldName: string, strippedText: string, currentLine
 /**
  * When the user types an equal sign (i.e. "=") this signifies the intent to add a value to a field.
  * Depending on where the cursor is, returns the values appropriate for that field.
- * @param {string} currentLine The current line of text
- * @param {IPosition} position The current position of the cursor (line, column)
- * @param {string} strippedText The text, stripped of comments, whitespace and return characters, up
+ * @param currentLine The current line of text
+ * @param position The current position of the cursor (line, column)
+ * @param strippedText The text, stripped of comments, whitespace and return characters, up
  * until the current cursor.
- * @return {languages.ProviderResult<languages.CompletionList>} A provider holding a list of suggestions
+ * @return A provider holding a list of suggestions
  */
 function handleTriggerEquals(currentLine: string,
                              position: IPosition,
@@ -1250,10 +1250,10 @@ function handleTriggerEquals(currentLine: string,
  * When the user types an open-parenthesis (i.e. "(") this signifies the intent to create a new
  * item (i.e. group, neuron, neuron function, connection, or learning function). Depending on the
  * current cursor location, return the templates for creating a new item.
- * @param {IPosition} position The current position of the cursor (line, column)
- * @param {string} strippedText The text, stripped of comments, whitespace and return characters, up
+ * @param position The current position of the cursor (line, column)
+ * @param strippedText The text, stripped of comments, whitespace and return characters, up
  * until the current cursor.
- * @return {languages.ProviderResult<languages.CompletionList>} A provider holding a list of suggestions
+ * @return A provider holding a list of suggestions
  */
 function handleTriggerOpenParens(position: IPosition,
                                  strippedText: string
@@ -1334,11 +1334,11 @@ function handleTriggerOpenParens(position: IPosition,
 
 /**
  * When the user types a comma, then we can look for completions
- * @param {string} currentLine The current line of text
- * @param {IPosition} position The current position of the cursor (line, column)
- * @param {string} strippedText The text, stripped of comments, whitespace and return characters, up
+ * @param currentLine The current line of text
+ * @param position The current position of the cursor (line, column)
+ * @param strippedText The text, stripped of comments, whitespace and return characters, up
  * until the current cursor.
- * @return {languages.ProviderResult<languages.CompletionList>} A provider holding a list of suggestions
+ * @return A provider holding a list of suggestions
  */
 function handleTriggerComma(currentLine: string,
                             position: IPosition,
@@ -1454,11 +1454,11 @@ function handleTriggerComma(currentLine: string,
  * the cursor is in a group, then returns a list of the group attributes (i.e. gid, hst, prt).
  * As another example, if the cursor is in the GRP section, but outside a group, then returns
  * the group templates (one with default values, and one with placeholders.
- * @param {editor.ITextModel} model The model holding the text
- * @param {IPosition} position The current cursor position
- * @param {languages.CompletionContext} context The context surrounding the completion event
- * @param {CancellationToken} token The cancellation token
- * @return {languages.ProviderResult<languages.CompletionList>} The list of completion items
+ * @param model The model holding the text
+ * @param position The current cursor position
+ * @param context The context surrounding the completion event
+ * @param token The cancellation token
+ * @return The list of completion items
  */
 function completionItems(model: editor.ITextModel,
                          position: IPosition,

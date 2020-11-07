@@ -28,9 +28,9 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
     /**
      * Returns an error message if the hostname or IP are not valid, and an empty string if the
      * hostname or IP address is valid
-     * @param {string} path The file path
-     * @param {string} setting The setting to which the error applies
-     * @return {string} An empty string if the file path is valid; otherwise an error message
+     * @param path The file path
+     * @param setting The setting to which the error applies
+     * @return An empty string if the file path is valid; otherwise an error message
      */
     function errorMessage(path: string, setting: string): string {
         if (path.match(filePathRegex) === null) {
@@ -41,8 +41,8 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
 
     /**
      * Handles changes to the file path for the network description template
-     * @param {React.FormEvent<HTMLInputElement>} event The change event
-     * @param {string} path The file path of the network description template
+     * @param event The change event
+     * @param path The file path of the network description template
      */
     function handleNetworkDescriptionChange(event: FormEvent<HTMLInputElement>, path: string = settings.networkDescription): void {
         setNetworkDescriptionError(errorMessage(path, Setting.NETWORK_DESCRIPTION))
@@ -51,8 +51,8 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
 
     /**
      * Handles changes to the file path for the network environment template
-     * @param {React.FormEvent<HTMLInputElement>} event The change event
-     * @param {string} path The file path of the network environment template
+     * @param event The change event
+     * @param path The file path of the network environment template
      */
     function handleEnvironmentChange(event: FormEvent<HTMLInputElement>, path: string = settings.environment): void {
         setEnvironmentError(errorMessage(path, Setting.ENVIRONMENT))

@@ -76,8 +76,8 @@ type Props = StateProps & DispatchProps & OwnProps
 /**
  * The settings panel for the application. Allows the user to set the theme, the
  * URL to the REST server, and the kafka broker locations.
- * @param {Props} props The properties for the settings panel.
- * @return {Element} The rendered settings panel
+ * @param props The properties for the settings panel.
+ * @return The rendered settings panel
  * @constructor
  */
 function SettingsPanel(props: Props): JSX.Element {
@@ -123,7 +123,7 @@ function SettingsPanel(props: Props): JSX.Element {
 
     /**
      * Renders the footer content of the settings panel
-     * @return {Element} The footer
+     * @return The footer
      */
     function onRenderFooterContent(): JSX.Element {
         return (
@@ -176,7 +176,7 @@ function SettingsPanel(props: Props): JSX.Element {
 
     /**
      * When the server settings are changed, then
-     * @param {ServerSettings} settings
+     * @param settings
      */
     function handleServerChange(settings: ServerSettings): void {
         originalServer.ifNone(() => setOriginalServer(Option.of(currentServer)));
@@ -186,7 +186,7 @@ function SettingsPanel(props: Props): JSX.Element {
     /**
      * When the template settings are changed, then update the original if this is the
      * first update, and set the current to the new value
-     * @param {ServerSettings} settings The updated template settings
+     * @param settings The updated template settings
      */
     function handleTemplateChange(settings: TemplateSettings): void {
         originalTemplate.ifNone(() => setOriginalTemplate(Option.of(currentTemplate)));
@@ -349,9 +349,9 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
  * react-redux function that maps the event handlers to the dispatch functions. Note that in the
  * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
  * and the third type is, obviously, the action.
- * @param {ThunkDispatch} dispatch The redux dispatcher
- * @param {OwnProps} ownProps The components own properties
- * @return {DispatchProps} The updated dispatch-properties holding the event handlers
+ * @param dispatch The redux dispatcher
+ * @param ownProps The components own properties
+ * @return The updated dispatch-properties holding the event handlers
  */
 function mapDispatchToProps(dispatch: ThunkDispatch<any, any, ApplicationAction>, ownProps: OwnProps): DispatchProps {
     return {

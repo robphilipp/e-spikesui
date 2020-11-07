@@ -33,7 +33,7 @@ export const DEFAULT_SETTINGS: ApplicationSettings = {
 /**
  * Loads the application settings from `SETTINGS_PATH` or, in the event that the settings couldn't be
  * read, writes the default settings to the settings path and returns the default settings.
- * @return {ApplicationSettings} The application settings
+ * @return The application settings
  */
 export function loadOrInitializeSetting(): ApplicationSettings {
     return readSettings()
@@ -49,7 +49,7 @@ export function loadOrInitializeSetting(): ApplicationSettings {
 /**
  * Attempts to read the application settings from file. Returns either the application settings, or
  * a failure message.
- * @return {Either<string, ApplicationSettings>} The left is an error; the right are the application
+ * @return The left is an error; the right are the application
  * settings
  */
 export function readSettings(): Either<string, ApplicationSettings> {
@@ -65,8 +65,8 @@ export function readSettings(): Either<string, ApplicationSettings> {
 /**
  * Attempts to save the application settings to file. Returns either an error, or a void if the settings
  * were successfully saved.
- * @param {ApplicationSettings} settings The application settings to save
- * @return {Either<string, void>} The left is an error; the right (undefined) is a success
+ * @param settings The application settings to save
+ * @return The left is an error; the right (undefined) is a success
  */
 export function saveSettings(settings: ApplicationSettings): Either<string, void> {
     try {
@@ -80,8 +80,8 @@ export function saveSettings(settings: ApplicationSettings): Either<string, void
 /**
  * Asynchronous version to save the application settings to file. Returns either an error, or a void
  * if the settings were successfully saved.
- * @param {ApplicationSettings} settings The application settings to save
- * @return {Promise<string>} A promise for saving the file
+ * @param settings The application settings to save
+ * @return A promise for saving the file
  */
 export function saveSettingsAsync(settings: ApplicationSettings): Promise<string> {
     return new Promise((resolve, reject) => {

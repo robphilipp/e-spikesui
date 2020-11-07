@@ -41,9 +41,9 @@ function initialState(): NetworkDescriptionState {
 /**
  * Reducer function that accepts the current state and action, and for change theme actions, updates the
  * state with the new theme and returns the updated state.
- * @param {NetworkDescriptionState} state The current state of the theme
- * @param {NetworkDescriptionAction} action The action holding the new state information
- * @return {NetworkDescriptionState} the updated state
+ * @param state The current state of the theme
+ * @param action The action holding the new state information
+ * @return the updated state
  */
 export function networkDescriptionReducer(
     state: NetworkDescriptionState = initialState(),

@@ -63,8 +63,8 @@ type Props = StateProps & DispatchProps
 
 /**
  * Holds the list of kafka brokers and allows the user to update, add, and remove brokers
- * @param {Props} props The properties from the parent or from redux
- * @return {Element} The react component representing the kafka broker list
+ * @param props The properties from the parent or from redux
+ * @return The react component representing the kafka broker list
  * @constructor
  */
 function KafkaSettingsEditor(props: Props): JSX.Element {
@@ -195,8 +195,8 @@ function mapStateToProps(state: AppState): StateProps {
  * react-redux function that maps the event handlers to the dispatch functions. Note that in the
  * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
  * and the third type is, obviously, the action.
- * @param {ThunkDispatch} dispatch The redux dispatcher
- * @return {DispatchProps} The updated dispatch-properties holding the event handlers
+ * @param dispatch The redux dispatcher
+ * @return The updated dispatch-properties holding the event handlers
  */
 function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps {
     return {

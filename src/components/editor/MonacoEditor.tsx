@@ -38,8 +38,8 @@ interface Props {
 
 /**
  * React wrapper for the Monaco editor
- * @param {Props} props The props for the editor
- * @return {JSX.Element} The editor
+ * @param props The props for the editor
+ * @return The editor
  * @constructor
  */
 export default function MonacoEditor(props: Props): JSX.Element {
@@ -189,7 +189,7 @@ export default function MonacoEditor(props: Props): JSX.Element {
     /**
      * Adds the on-change function from the props so that it gets called when there is a change
      * to the text in the editor
-     * @param {editor.IStandaloneCodeEditor} editor The editor that has just mounted
+     * @param editor The editor that has just mounted
      */
     function handleEditorDidMount(editor: editor.IStandaloneCodeEditor): void {
         editorDidMount(editor, monaco);

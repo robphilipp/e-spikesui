@@ -21,11 +21,12 @@ import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
 import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
-import {loadTemplateOrInitialize, readNetworkDescription, saveNetworkDescription} from "./network/networkDescription";
 import {
-    loadedNetworkDescriptionFromTemplate,
-    networkDescriptionLoaded,
-    networkDescriptionSaved
+    loadNetworkDescriptionFromTemplate,
+    loadNetworkDescriptionFrom,
+    saveNetworkDescription as persistNetworkDescription,
+    NetworkDescriptionLoadedAction,
+    NetworkDescriptionSavedAction,
 } from "./redux/actions/networkDescription";
 import {remote} from "electron";
 
@@ -51,7 +52,7 @@ interface StateProps {
     // the current map of the theme names and their associated color palettes
     palettes: HashMap<string, Palette>;
     // network-description template
-    networkDescriptionTemplate: string;
+    networkDescriptionTemplatePath: string;
     //
     networkDescription: string;
     networkDescriptionPath: string;
@@ -63,9 +64,10 @@ interface DispatchProps {
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
-    onNetworkDescriptionTemplateLoaded: (description: string) => void;
-    onNetworkDescriptionSaved: (path: string) => void;
-    onNetworkDescriptionLoaded: (description: string, path: string) => void;
+
+    onLoadNetworkDescriptionTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    onSaveNetworkDescription: (path: string, description: string) => Promise<NetworkDescriptionSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -78,14 +80,15 @@ function Main(props: Props): JSX.Element {
         onShowSettingsPanel,
         onHideSettingsPanel,
 
-        networkDescriptionTemplate,
-        onNetworkDescriptionTemplateLoaded,
+        networkDescriptionTemplatePath,
 
         networkDescription,
         networkDescriptionModified,
         networkDescriptionPath,
-        onNetworkDescriptionSaved,
-        onNetworkDescriptionLoaded,
+
+        onLoadNetworkDescriptionTemplate,
+        onLoadNetworkDescription,
+        onSaveNetworkDescription
     } = props;
 
     // react-router history
@@ -139,7 +142,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Edit',
                             iconProps: {iconName: 'homegroup'},
                             ariaLabel: 'Edit Network',
-                            onClick: () => history.push(AppPath.NETWORK_EDITOR)
+                            onClick: () => handleEditNetwork()
                         },
                         {
                             key: 'divider_1',
@@ -239,18 +242,24 @@ function Main(props: Props): JSX.Element {
         settingsPanelVisible ? onHideSettingsPanel() : onShowSettingsPanel();
     }
 
-    /**
-     * Handles loading the network description template into the editor and chages
-     * the router path to the network editor
-     */
-    function handleNewNetwork(): void {
-        onNetworkDescriptionTemplateLoaded(loadTemplateOrInitialize(networkDescriptionTemplate));
-        history.push(AppPath.NETWORK_EDITOR);
+    function handleEditNetwork(): void {
+        history.push(`${AppPath.NETWORK_EDITOR}/${networkDescriptionPath}`);
     }
 
     /**
-     * Handles loading a network description using the system open-file dialog, then
-     * reads the network description from file and sets the
+     * Handles the request to load a new network (from template) by routing the request, along with the
+     * template file path to the network editor, which will load the network template and display the
+     * new network.
+     */
+    function handleNewNetwork(): void {
+        onLoadNetworkDescriptionTemplate(networkDescriptionTemplatePath)
+            .then(() => history.push(`${AppPath.NETWORK_EDITOR}/${networkDescriptionPath}`));
+    }
+
+    /**
+     * Handles the request to load an existing network by routing the request, along with the
+     * network description file path to the network editor, which will load the network description
+     * and display the it.
      */
     function handleLoadNetworkDescription(): void {
         remote.dialog
@@ -262,11 +271,7 @@ function Main(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                readNetworkDescription(response.filePaths[0])
-                    .ifRight(description => {
-                        onNetworkDescriptionLoaded(description, response.filePaths[0]);
-                        history.push(AppPath.NETWORK_EDITOR);
-                    })
+                history.push(`${AppPath.NETWORK_EDITOR}/${encodeURIComponent(response.filePaths[0])}`);
             })
     }
 
@@ -277,8 +282,9 @@ function Main(props: Props): JSX.Element {
      */
     function handleSaveNetworkDescription(): void {
         if (networkDescriptionPath) {
-            saveNetworkDescription(networkDescriptionPath, networkDescription)
-                .ifRight(() => onNetworkDescriptionSaved(networkDescriptionPath));
+            onSaveNetworkDescription(networkDescriptionPath, networkDescription)
+                // todo add an alert
+                .then(() => console.log('saved'));
         } else {
             handleSaveNetworkDescriptionAs();
         }
@@ -298,10 +304,10 @@ function Main(props: Props): JSX.Element {
         // })
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-            .then(retVal => {
-                saveNetworkDescription(retVal.filePath, networkDescription)
-                    .ifRight(() => onNetworkDescriptionSaved(retVal.filePath));
-            })
+            .then(retVal => onSaveNetworkDescription(retVal.filePath, networkDescription)
+                // todo handle the success and failure
+                .then(() => console.log('saved'))
+            );
     }
 
     return (
@@ -338,7 +344,7 @@ function Main(props: Props): JSX.Element {
                         render={(renderProps) => <div>Simulation</div>}
                     />
                     <Route
-                        path="/network-editor"
+                        path={`${AppPath.NETWORK_EDITOR}/:networkDescriptionPath`}
                         render={(renderProps) =>
                             <NetworkEditor
                                 theme={editorThemeFrom(name)}
@@ -372,7 +378,7 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     itheme: state.settings.itheme,
     name: state.settings.name,
     palettes: state.settings.palettes,
-    networkDescriptionTemplate: state.settings.networkDescription.templatePath,
+    networkDescriptionTemplatePath: state.settings.networkDescription.templatePath,
     networkDescription: state.networkDescription.description,
     networkDescriptionPath: state.networkDescription.path,
     networkDescriptionModified: state.networkDescription.modified
@@ -390,9 +396,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
-    onNetworkDescriptionTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
-    onNetworkDescriptionSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
-    onNetworkDescriptionLoaded: (description: string, path: string) => dispatch(networkDescriptionLoaded(description, path)),
+    onLoadNetworkDescriptionTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
+    onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
+    onSaveNetworkDescription: (path: string, description: string) => dispatch(persistNetworkDescription(path, description)),
 
 });
 

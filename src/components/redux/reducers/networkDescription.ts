@@ -2,9 +2,10 @@
  * Holds the network description state
  */
 import {
+    KeyValues,
     NETWORK_DESCRIPTION_CHANGED, NETWORK_DESCRIPTION_LOADED,
     NETWORK_DESCRIPTION_SAVED,
-    NetworkDescriptionAction
+    NetworkDescriptionAction, NetworkDescriptionResult, SAVE_NETWORK_DESCRIPTION
 } from "../actions/networkDescription";
 
 /**
@@ -52,12 +53,15 @@ export function networkDescriptionReducer(
 
     switch (action.type) {
         case NETWORK_DESCRIPTION_LOADED:
-            return {
-                description: action.networkDescription,
-                modified: false,
-                preSavedDescription: action.networkDescription,
-                path: action.path
-            }
+            return action.result
+                .map((result: NetworkDescriptionResult) => ({
+                    ...state,
+                    description: result.description,
+                    modified: false,
+                    path: result.path,
+                    preSavedDescription: result.description
+                }) as NetworkDescriptionState)
+                .getOrElse(state);
 
         case NETWORK_DESCRIPTION_CHANGED:
             return {
@@ -68,12 +72,14 @@ export function networkDescriptionReducer(
             }
 
         case NETWORK_DESCRIPTION_SAVED:
-            return {
-                ...state,
-                modified: false,
-                preSavedDescription: state.description,
-                path: action.path
-            }
+            return action.result
+                .map(result => ({
+                    ...state,
+                    modified: false,
+                    path: result.path,
+                    preSavedDescription: result.description
+                }) as NetworkDescriptionState)
+                .getOrElse(state);
 
         default:
             return state;

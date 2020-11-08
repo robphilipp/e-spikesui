@@ -1,4 +1,3 @@
-import { Either } from "prelude-ts";
 import fs from "fs";
 
 /**
@@ -6,49 +5,53 @@ import fs from "fs";
  * used for creating a new network description. If no network-description-template
  * file exists, then creates one using the `initialNetworkDescription` string.
  * @param path The path to the network-description template file
- * @return The network-description template
+ * @return The a promise with the network-description template
  */
-export function loadTemplateOrInitialize(path: string): string {
+export function loadTemplateOrInitialize(path: string): Promise<string> {
     return readNetworkDescription(path)
-        .ifLeft(err => {
+        .catch(err => {
+            // todo handle success and failure
             console.log(`Unable to read network-description template; path: ${path}; error: ${err.toString()}`);
-            saveNetworkDescription(path, initialNetworkDescription).ifLeft(err => {
-                console.log(`Unable to write network description template to file; path: ${path}; error: ${err.toString()}`)
-            });
-        })
-        .getOrElse(initialNetworkDescription)
+            return saveNetworkDescription(path, initialNetworkDescription)
+                .catch(err => {
+                    // todo handle success and failure
+                    console.log(`Unable to write network description template to file; path: ${path}; error: ${err.toString()}`)
+                })
+                .then(() => initialNetworkDescription);
+        });
 }
 
 /**
  * Attempts to read the network-description from the specified path.
  * @param path The path to the network-description.
- * @return Either the network description template (right)
- * or an error message describing why it couldn't be loaded (left).
+ * @return A promise with the network description
  */
-export function readNetworkDescription(path: string): Either<string, string> {
-    try {
-        const description = fs.readFileSync(path).toString();
-        return Either.right(description);
-    } catch(err) {
-        return Either.left(err.toString())
-    }
+export function readNetworkDescription(path: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        try {
+            const description = fs.readFileSync(path).toString();
+            resolve(description);
+        } catch (err) {
+            reject(err.toString());
+        }
+    })
 }
 
 /**
  * Attempts save the specified network description to the specified path.
  * @param path The path to the network-description.
  * @param description The network description to save
- * @return Either `undefined` (right) if the network
- * description was saved successfully, or an error message (left) if the network
- * description could not be saved.
+ * @return A promise that the network description was saved
  */
-export function saveNetworkDescription(path: string, description: string): Either<string, string> {
-    try {
-        fs.writeFileSync(path, description);
-        return Either.right(undefined);
-    } catch(err) {
-        return Either.left(err.toString());
-    }
+export function saveNetworkDescription(path: string, description: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        try {
+            fs.writeFileSync(path, description);
+            resolve();
+        } catch (err) {
+            reject(err.toString());
+        }
+    })
 }
 
 const initialNetworkDescription = `// line sensor network

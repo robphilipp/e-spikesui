@@ -3,18 +3,20 @@ import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "../editor/MonacoEditor";
 import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
-import {RouteComponentProps, withRouter} from "react-router-dom";
+import {RouteComponentProps, useParams, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {
-    loadedNetworkDescriptionFromTemplate,
-    networkDescriptionSaved,
+    loadNetworkDescriptionFrom,
+    loadNetworkDescriptionFromTemplate,
+    NetworkDescriptionLoadedAction,
+    NetworkDescriptionSavedAction,
+    saveNetworkDescription as persistNetworkDescription,
     updateNetworkDescription
 } from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
 import {IconButton, ITheme, Stack, StackItem} from '@fluentui/react';
-import {loadTemplateOrInitialize, saveNetworkDescription} from "./networkDescription";
 import {remote} from "electron";
 
 
@@ -41,13 +43,14 @@ interface StateProps {
     network: string;
     modified: boolean;
     path?: string;
-    template?: string;
+    templatePath?: string;
 }
 
 interface DispatchProps {
     onChanged: (description: string) => void;
-    onSaved: (path: string) => void;
-    onTemplateLoaded: (description: string) => void;
+    onLoadTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    onSave: (path: string, description: string) => Promise<NetworkDescriptionSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -62,13 +65,16 @@ function NetworkEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
         network,
-        template,
+        templatePath,
         onChanged,
-        onSaved,
-        onTemplateLoaded,
+        onLoadTemplate,
+        onLoadNetworkDescription,
+        onSave,
         modified,
         path
     } = props;
+
+    const {networkDescriptionPath} = useParams<{[key: string]: string}>();
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
@@ -90,6 +96,17 @@ function NetworkEditor(props: Props): JSX.Element {
             }
         },
         []
+    )
+
+    useEffect(
+        () => {
+            const filePath = decodeURIComponent(networkDescriptionPath);
+            if (filePath !== path) {
+                // todo handle success and failure
+                onLoadNetworkDescription(filePath).then(() => console.log("loaded"))
+            }
+        },
+        [networkDescriptionPath]
     )
 
     /**
@@ -122,9 +139,11 @@ function NetworkEditor(props: Props): JSX.Element {
      * the user to set the path. Sends redux action when file has been saved.
      */
     function handleSave(): void {
-        const save = (path: string, desc: string) => saveNetworkDescription(path, desc).ifRight(() => onSaved(path));
+        const save = (path: string, desc: string) => onSave(path, desc);
+        // const save = (path: string, desc: string) => saveNetworkDescription(path, desc).ifRight(() => onSaved(path));
         if (path) {
-            save(path, network);
+            // todo handle success and error
+            save(path, network).then(() => console.log('saved'));
         } else {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
@@ -141,7 +160,8 @@ function NetworkEditor(props: Props): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <IconButton
                 iconProps={{iconName: 'add'}}
-                onClick={() => onTemplateLoaded(loadTemplateOrInitialize(template))}
+                onClick={() => onLoadTemplate(templatePath)}
+                // onClick={() => onTemplateLoaded(loadTemplateOrInitialize(template))}
             />
         </div>
     }
@@ -252,7 +272,7 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     network: state.networkDescription.description,
     modified: state.networkDescription.modified,
     path: state.networkDescription.path,
-    template: state.settings.networkDescription.templatePath
+    templatePath: state.settings.networkDescription.templatePath
 });
 
 /**
@@ -264,8 +284,9 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onChanged: (description: string) => dispatch(updateNetworkDescription(description)),
-    onSaved: (path: string) => dispatch(networkDescriptionSaved(path)),
-    onTemplateLoaded: (description: string) => dispatch(loadedNetworkDescriptionFromTemplate(description)),
+    onLoadTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
+    onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
+    onSave: (path: string, description: string) => dispatch(persistNetworkDescription(path, description)),
 });
 
 const connectedNetworkEditor = connect(mapStateToProps, mapDispatchToProps)(NetworkEditor);

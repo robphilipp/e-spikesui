@@ -253,7 +253,7 @@ function Main(props: Props): JSX.Element {
      */
     function handleNewNetwork(): void {
         onLoadNetworkDescriptionTemplate(networkDescriptionTemplatePath)
-            .then(() => history.push(`${AppPath.NETWORK_EDITOR}/${networkDescriptionPath}`));
+            .then(() => history.push(`${AppPath.NETWORK_EDITOR}/${networkDescriptionTemplatePath}`));
     }
 
     /**

@@ -101,9 +101,10 @@ function NetworkEditor(props: Props): JSX.Element {
     useEffect(
         () => {
             const filePath = decodeURIComponent(networkDescriptionPath);
-            if (filePath !== path) {
+            if (filePath !== path || filePath === '') {
                 // todo handle success and failure
-                onLoadNetworkDescription(filePath).then(() => console.log("loaded"))
+                onLoadNetworkDescription(filePath)
+                    .then(() => console.log("loaded"))
             }
         },
         [networkDescriptionPath]
@@ -141,7 +142,7 @@ function NetworkEditor(props: Props): JSX.Element {
     function handleSave(): void {
         const save = (path: string, desc: string) => onSave(path, desc);
         // const save = (path: string, desc: string) => saveNetworkDescription(path, desc).ifRight(() => onSaved(path));
-        if (path) {
+        if (path && path !== templatePath) {
             // todo handle success and error
             save(path, network).then(() => console.log('saved'));
         } else {
@@ -176,7 +177,7 @@ function NetworkEditor(props: Props): JSX.Element {
             <IconButton
                 iconProps={{iconName: 'save'}}
                 onClick={() => handleSave()}
-                disabled={!modified}
+                disabled={!(modified || path === templatePath)}
             />
         </div>
     }
@@ -210,7 +211,7 @@ function NetworkEditor(props: Props): JSX.Element {
                     color: props.itheme.palette.themeSecondary
                 }}
             >
-                {path || '[new file]'}{modified ? '*' : ''}
+                {path === undefined || path === templatePath ? '[new file]' : path}{modified ? '*' : ''}
             </div>
             <Stack horizontal>
                 <StackItem>

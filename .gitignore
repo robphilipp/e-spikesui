@@ -90,6 +90,8 @@ typings/
 # Electron-Forge
 out/
 
+dist/
+
 # application data and dev
 .spikes-ui
 .spikes-session

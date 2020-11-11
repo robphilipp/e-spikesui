@@ -1,7 +1,7 @@
 import {app, BrowserWindow, session} from 'electron';
 import path from 'path'
 import os from 'os'
-import {loadWindowSize, saveWindowSize} from "./session";
+import {loadWindowDimensions, saveWindowDimensions} from "./components/repos/sessionRepo";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 
@@ -12,10 +12,12 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 
 function createWindow(): BrowserWindow {
     // const sessionState = loadSessionState();
-    const [width, height] = loadWindowSize();
+    const {x, y, width, height} = loadWindowDimensions();
 
     // create the browser window.
     const mainWindow = new BrowserWindow({
+        x: x,
+        y: y,
         height: height,
         width: width,
         useContentSize: true,
@@ -93,12 +95,6 @@ app.on('ready', () => {
 });
 
 app.on('will-quit', () => {
-    // const browserWindows = BrowserWindow.getAllWindows();
-    // console.log(`will-quit windows: ${browserWindows.length}`);
-    // if (browserWindows.length > 0) {
-    //     const [width, height] = browserWindows[0].getContentSize();
-    //     saveSessionState({windowWidth: width, windowHeight: height});
-    // }
     handleSaveWindowDimensions();
 })
 
@@ -106,12 +102,6 @@ app.on('will-quit', () => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-    // const browserWindows = BrowserWindow.getAllWindows();
-    // console.log(`window-all-closed windows: ${browserWindows.length}`);
-    // if (browserWindows.length > 0) {
-    //     const [width, height] = browserWindows[0].getContentSize();
-    //     saveSessionState({windowWidth: width, windowHeight: height});
-    // }
     handleSaveWindowDimensions();
 
     if (process.platform !== 'darwin') {
@@ -131,10 +121,12 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+/**
+ * Attempts to save the window dimensions (x, y, width, height) when the window is closed
+ */
 function handleSaveWindowDimensions(): void {
     const browserWindows = BrowserWindow.getAllWindows();
     if (browserWindows.length > 0) {
-        const [width, height] = browserWindows[0].getContentSize();
-        saveWindowSize(width, height);
+        saveWindowDimensions(browserWindows[0].getBounds());
     }
 }

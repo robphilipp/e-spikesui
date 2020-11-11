@@ -33,10 +33,11 @@ import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
 import ServerSettings from "./serverSettings";
 import ServerSettingsEditor from "./ServerSettingsEditor";
-import {ApplicationSettings, saveSettingsAsync} from "./appSettings";
+import {ApplicationSettings} from "./appSettings";
 import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
 import TemplateSettingsEditor from "./TemplateSettingsEditor";
 import TemplateSettings from "./templateSettings";
+import {saveSettingsAsync} from "../repos/appSettingsRepo";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -85,16 +86,16 @@ function SettingsPanel(props: Props): JSX.Element {
         itheme,
         name,
         settingsPanelVisible,
-        palettes,
+        // palettes,
         serverSettings,
         kafkaSettings,
         templateSettings,
         networkDescriptionSettings,
-        onShowSettingsPanel,
+        // onShowSettingsPanel,
         onHideSettingsPanel,
         onChangeTheme,
         onChangeServerSettings,
-        onChangeKafkaSettings,
+        // onChangeKafkaSettings,
         onChangeTemplateSettings
         // onChangeNetworkDescriptionSettings
     } = props;
@@ -350,16 +351,16 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
  * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
  * and the third type is, obviously, the action.
  * @param dispatch The redux dispatcher
- * @param ownProps The components own properties
  * @return The updated dispatch-properties holding the event handlers
  */
-function mapDispatchToProps(dispatch: ThunkDispatch<any, any, ApplicationAction>, ownProps: OwnProps): DispatchProps {
+function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps {
     return {
         onShowSettingsPanel: () => dispatch(showSettingsPanel()),
         onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
         onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
         onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings)),
         onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings)),
+        // todo split into two methods, one for network description and one for environment
         onChangeTemplateSettings: (settings: TemplateSettings) => {
             dispatch(updateNetworkDescriptionTemplatePath(settings.networkDescription));
             // todo dispatch to environment settings

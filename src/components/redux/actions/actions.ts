@@ -1,4 +1,3 @@
-import {ThunkAction, ThunkDispatch} from "redux-thunk";
 import {SettingsAction} from "./settings";
 import {NetworkDescriptionAction} from "./networkDescription";
 import {Either} from "prelude-ts";

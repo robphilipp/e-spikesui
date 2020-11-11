@@ -2,7 +2,7 @@ import {
     loadTemplateOrInitialize,
     readNetworkDescription,
     saveNetworkDescription as persistNetworkDescription
-} from '../../network/networkDescription';
+} from '../../repos/networkDescriptionRepo';
 import {ThunkAction} from "redux-thunk";
 import {failedAction, ResponseAction, successAction} from "./actions";
 

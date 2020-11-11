@@ -162,7 +162,6 @@ function NetworkEditor(props: Props): JSX.Element {
             <IconButton
                 iconProps={{iconName: 'add'}}
                 onClick={() => onLoadTemplate(templatePath)}
-                // onClick={() => onTemplateLoaded(loadTemplateOrInitialize(template))}
             />
         </div>
     }

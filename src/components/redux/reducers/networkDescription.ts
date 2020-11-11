@@ -2,10 +2,9 @@
  * Holds the network description state
  */
 import {
-    KeyValues,
     NETWORK_DESCRIPTION_CHANGED, NETWORK_DESCRIPTION_LOADED,
     NETWORK_DESCRIPTION_SAVED,
-    NetworkDescriptionAction, NetworkDescriptionResult, SAVE_NETWORK_DESCRIPTION
+    NetworkDescriptionAction, NetworkDescriptionResult
 } from "../actions/networkDescription";
 
 /**
@@ -73,7 +72,7 @@ export function networkDescriptionReducer(
 
         case NETWORK_DESCRIPTION_SAVED:
             return action.result
-                .map(result => ({
+                .map((result: NetworkDescriptionResult) => ({
                     ...state,
                     modified: false,
                     path: result.path,

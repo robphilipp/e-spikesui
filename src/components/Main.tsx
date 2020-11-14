@@ -167,7 +167,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Save',
                             iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network',
-                            disabled: !networkDescriptionPath || !networkDescriptionModified || !useRouteMatch(AppPath.NETWORK_EDITOR),
+                            disabled: !networkDescriptionPath || !networkDescriptionModified || !useRouteMatch(AppPath.NETWORK_EDITOR) || networkDescriptionPath === networkDescriptionTemplatePath,
                             onClick: () => handleSaveNetworkDescription()
                         },
                         {
@@ -243,7 +243,7 @@ function Main(props: Props): JSX.Element {
     }
 
     function handleEditNetwork(): void {
-        history.push(`${AppPath.NETWORK_EDITOR}/${networkDescriptionPath}`);
+        history.push(`${AppPath.NETWORK_EDITOR}/${encodeURIComponent(networkDescriptionPath)}`);
     }
 
     /**
@@ -253,7 +253,7 @@ function Main(props: Props): JSX.Element {
      */
     function handleNewNetwork(): void {
         onLoadNetworkDescriptionTemplate(networkDescriptionTemplatePath)
-            .then(() => history.push(`${AppPath.NETWORK_EDITOR}/${networkDescriptionTemplatePath}`));
+            .then(() => history.push(`${AppPath.NETWORK_EDITOR}/${encodeURIComponent(networkDescriptionTemplatePath)}`));
     }
 
     /**
@@ -281,7 +281,7 @@ function Main(props: Props): JSX.Element {
      * dialog
      */
     function handleSaveNetworkDescription(): void {
-        if (networkDescriptionPath) {
+        if (networkDescriptionPath !== networkDescriptionTemplatePath) {
             onSaveNetworkDescription(networkDescriptionPath, networkDescription)
                 // todo add an alert
                 .then(() => console.log('saved'));
@@ -304,9 +304,9 @@ function Main(props: Props): JSX.Element {
         // })
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-            .then(retVal => onSaveNetworkDescription(retVal.filePath, networkDescription)
+            .then(response => onSaveNetworkDescription(response.filePath, networkDescription)
                 // todo handle the success and failure
-                .then(() => console.log('saved'))
+                .then(() => history.push(`${AppPath.NETWORK_EDITOR}/${encodeURIComponent(response.filePath)}`))
             );
     }
 

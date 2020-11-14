@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "../editor/MonacoEditor";
 import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
-import {RouteComponentProps, useHistory, useLocation, useParams, withRouter} from "react-router-dom";
+import {RouteComponentProps, useHistory, useParams, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -76,6 +76,9 @@ function NetworkEditor(props: Props): JSX.Element {
         basePath,
     } = props;
 
+    // when user refreshes when the router path is this editor, then we want to load the same
+    // network as before the refresh. to do this we use the path parameter holding the file path
+    // to the network description, and keep it consistent when loading from template
     const {networkDescriptionPath} = useParams<{[key: string]: string}>();
     const history = useHistory();
 
@@ -144,16 +147,19 @@ function NetworkEditor(props: Props): JSX.Element {
      */
     function handleSave(): void {
         const save = (path: string, desc: string) => onSave(path, desc);
-        // const save = (path: string, desc: string) => saveNetworkDescription(path, desc).ifRight(() => onSaved(path));
+        // if the state path is set and the path does not equal the template path, then the network
+        // description is from an existing file, and we can just save it. otherwise, we need to up a
+        // dialog so that the user can give the filename
         if (path && path !== templatePath) {
             // todo handle success and error
             save(path, network).then(() => console.log('saved'));
         } else {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-                .then(retVal => save(retVal.filePath, network));
+                .then(response => save(response.filePath, network)
+                    .then(() => history.push(`${basePath}/${encodeURIComponent(response.filePath)}`))
+                );
         }
-
     }
 
     /**
@@ -164,7 +170,7 @@ function NetworkEditor(props: Props): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <IconButton
                 iconProps={{iconName: 'add'}}
-                onClick={() => onLoadTemplate(templatePath).then(() => history.push(`${basePath}/${templatePath}`))}
+                onClick={() => onLoadTemplate(templatePath).then(() => history.push(`${basePath}/${encodeURIComponent(templatePath)}`))}
             />
         </div>
     }
@@ -269,9 +275,8 @@ export function editorThemeFrom(name: string): string {
 /**
  * react-redux function that maps the application state to the props used by the `App` component.
  * @param state The updated application state
- * @param ownProps The current properties of the `App` component
  */
-const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
+const mapStateToProps = (state: AppState): StateProps => ({
     network: state.networkDescription.description,
     modified: state.networkDescription.modified,
     path: state.networkDescription.path,

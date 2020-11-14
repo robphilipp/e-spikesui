@@ -24,18 +24,13 @@ export const SAVE_NETWORK_DESCRIPTION = 'save-network-description';
  */
 
 /**
- * The valid keys for the network description action responses
- */
-type NetworkDescriptionKeys = 'description' | 'path';
-
-/**
  * The definition of an action that is dispatched when the network description is loaded. This
  * can result in either a success (either.right) or a failure (either.left). When the result is
  * a success, then the right-side holds the network description. When the result is a failure,
  * then the left side holds the array of error messages.
  */
-export type NetworkDescriptionLoadedAction = ResponseAction<typeof NETWORK_DESCRIPTION_LOADED, NetworkDescriptionKeys, string>;
-export type NetworkDescriptionSavedAction = ResponseAction<typeof NETWORK_DESCRIPTION_SAVED, NetworkDescriptionKeys, string>;
+export type NetworkDescriptionLoadedAction = ResponseAction<typeof NETWORK_DESCRIPTION_LOADED, NetworkDescriptionResult, string[]>;
+export type NetworkDescriptionSavedAction = ResponseAction<typeof NETWORK_DESCRIPTION_SAVED, NetworkDescriptionResult, string[]>;
 
 /**
  * Action to be dispatched when network description has changed
@@ -56,7 +51,7 @@ export type ResponseActionType = typeof NETWORK_DESCRIPTION_LOADED |
 /**
  * The response type of the network description actions
  */
-export interface NetworkDescriptionResult extends Record<NetworkDescriptionKeys, string> {
+export interface NetworkDescriptionResult {
     description: string;
     path: string;
 }

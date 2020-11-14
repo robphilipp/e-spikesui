@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "../editor/MonacoEditor";
 import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
-import {RouteComponentProps, useParams, withRouter} from "react-router-dom";
+import {RouteComponentProps, useHistory, useLocation, useParams, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -35,6 +35,7 @@ interface Dimension {
 }
 
 interface OwnProps extends RouteComponentProps<never> {
+    basePath: string;
     itheme: ITheme;
     theme?: string;
 }
@@ -71,10 +72,12 @@ function NetworkEditor(props: Props): JSX.Element {
         onLoadNetworkDescription,
         onSave,
         modified,
-        path
+        path,
+        basePath,
     } = props;
 
     const {networkDescriptionPath} = useParams<{[key: string]: string}>();
+    const history = useHistory();
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
@@ -161,7 +164,7 @@ function NetworkEditor(props: Props): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <IconButton
                 iconProps={{iconName: 'add'}}
-                onClick={() => onLoadTemplate(templatePath)}
+                onClick={() => onLoadTemplate(templatePath).then(() => history.push(`${basePath}/${templatePath}`))}
             />
         </div>
     }

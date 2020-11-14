@@ -129,21 +129,32 @@ export function clearErrorMessages(): ErrorMessageClearedAction {
  * }
  */
 
-/**
- * The key type of the successful response action object
- */
-export type KeyType = string | number | symbol;
+// /**
+//  * The key type of the successful response action object
+//  */
+// export type KeyType = string | number | symbol;
 
 /**
  * Generic action to a response that is either a success of failure. For example, a call to load
  * the network description from a file can either succeed or fail. In this case, the response
  * action would be a `NETWORK_DESCRIPTION_LOADED` action type, and the ResponseAction would be
  * a `NetworkDescriptionLoadedAction`.
+ * @template A The action type
+ * @template K The key type, which must be a string, number, or symbol (`KeyType`)
+ * @template V The value type of the result
  */
-export interface ResponseAction<A, K extends KeyType, V> {
+export interface ResponseAction<A, S, E> {
     type: A;
-    result: Either<string[], Record<K, V>>
+    result: Either<E, S>
 }
+// export interface ResponseAction<A, K extends KeyType> {
+//     type: A;
+//     result: Either<string[], Record<K, unknown>>
+// }
+// export interface ResponseAction<A, K extends KeyType, V> {
+//     type: A;
+//     result: Either<string[], Record<K, V>>
+// }
 
 /**
  * When an action response was a failure, creates an action that represents that failure. Holds the response
@@ -154,12 +165,18 @@ export interface ResponseAction<A, K extends KeyType, V> {
  * @return The action that the response of an attempted action have been received. For
  * example, if the action was to build a network, then this is called if that request failed
  */
-export function failedAction<A, K extends KeyType, V>(actionType: A, messages: string[]): ResponseAction<A, K, V> {
+export function failedAction<A, S, E>(actionType: A, messages: E): ResponseAction<A, S, E> {
     return {
         type: actionType,
         result: Either.left(messages)
     }
 }
+// export function failedAction<A, K extends KeyType, V>(actionType: A, messages: string[]): ResponseAction<A, K, V> {
+//     return {
+//         type: actionType,
+//         result: Either.left(messages)
+//     }
+// }
 
 /**
  * When an action response was a success, creates an action that represents that success. Holds the response
@@ -170,10 +187,16 @@ export function failedAction<A, K extends KeyType, V>(actionType: A, messages: s
  * @return The action that the response of an attempted action have been received. For
  * example, if the action was to build a network, then this is called if that request succeeded.
  */
-export function successAction<A, K extends KeyType, V, R extends Record<K, V>>(actionType: A, result: R): ResponseAction<A, K, V> {
+export function successAction<A, S, E>(actionType: A, result: S): ResponseAction<A, S, E> {
     return {
         type: actionType,
         result: Either.right(result)
     }
 }
+// export function successAction<A, K extends KeyType, V, R extends Record<K, V>>(actionType: A, result: R): ResponseAction<A, K, V> {
+//     return {
+//         type: actionType,
+//         result: Either.right(result)
+//     }
+// }
 

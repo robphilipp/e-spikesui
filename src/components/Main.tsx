@@ -347,6 +347,7 @@ function Main(props: Props): JSX.Element {
                         path={`${AppPath.NETWORK_EDITOR}/:networkDescriptionPath`}
                         render={(renderProps) =>
                             <NetworkEditor
+                                basePath={AppPath.NETWORK_EDITOR}
                                 theme={editorThemeFrom(name)}
                                 itheme={props.itheme}
                                 {...renderProps}

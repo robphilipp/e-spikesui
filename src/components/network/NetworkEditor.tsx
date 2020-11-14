@@ -85,6 +85,10 @@ function NetworkEditor(props: Props): JSX.Element {
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
 
+    // the keyboard event listener holds a stale ref to the props, so we need to use a
+    // reference that is updated for the event listener to use
+    const keyboardEventRef = useRef({path, templatePath, network});
+
     // when component mounts, sets the initial dimension of the editor and registers to listen
     // to window resize events. when component unmounts, removes the window-resize event listener
     useEffect(
@@ -94,11 +98,14 @@ function NetworkEditor(props: Props): JSX.Element {
             }
 
             // listen to resize events so that the editor width and height can be updated
-            window.addEventListener('resize', () => handleWindowResize());
+            window.addEventListener('resize', handleWindowResize);
+            // todo stale refs to path, template path and description
+            window.addEventListener('keydown', handleKeyboardShortcut, true);
 
             return () => {
                 // stop listening to resize events
-                window.removeEventListener('resize', () => handleWindowResize());
+                window.removeEventListener('resize', handleWindowResize);
+                window.removeEventListener('keydown', handleKeyboardShortcut, true);
             }
         },
         []
@@ -114,6 +121,15 @@ function NetworkEditor(props: Props): JSX.Element {
             }
         },
         [networkDescriptionPath]
+    )
+
+    // the keyboard event listener holds a stale ref to the props, so we need to update
+    // the referenced values when they change
+    useEffect(
+        () => {
+            keyboardEventRef.current = {path, templatePath, network};
+        },
+        [path, templatePath, network]
     )
 
     /**
@@ -142,21 +158,38 @@ function NetworkEditor(props: Props): JSX.Element {
     }
 
     /**
+     * Handles keyboard events when the editor is focused
+     * @param event The keyboard event
+     */
+    function handleKeyboardShortcut(event: KeyboardEvent): void {
+        if (process.platform === 'darwin') {
+            if (event.metaKey && event.key.toLocaleLowerCase() === 's') {
+                const {path, templatePath, network} = keyboardEventRef.current;
+                handleSave(path, templatePath, network);
+            }
+        } else {
+            if (event.ctrlKey && event.key.toLocaleLowerCase() === 's') {
+                const {path, templatePath, network} = keyboardEventRef.current;
+                handleSave(path, templatePath, network);
+            }
+        }
+    }
+
+    /**
      * Handles saving the file when the path exists, otherwise opens a save-file dialog to allow
      * the user to set the path. Sends redux action when file has been saved.
      */
-    function handleSave(): void {
-        const save = (path: string, desc: string) => onSave(path, desc);
+    function handleSave(path: string, templatePath: string, network: string): void {
         // if the state path is set and the path does not equal the template path, then the network
         // description is from an existing file, and we can just save it. otherwise, we need to up a
         // dialog so that the user can give the filename
         if (path && path !== templatePath) {
             // todo handle success and error
-            save(path, network).then(() => console.log('saved'));
+            onSave(path, network).then(() => console.log('saved'));
         } else {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-                .then(response => save(response.filePath, network)
+                .then(response => onSave(response.filePath, network)
                     .then(() => history.push(`${basePath}/${encodeURIComponent(response.filePath)}`))
                 );
         }
@@ -184,7 +217,7 @@ function NetworkEditor(props: Props): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <IconButton
                 iconProps={{iconName: 'save'}}
-                onClick={() => handleSave()}
+                onClick={() => handleSave(path, templatePath, network)}
                 disabled={!(modified || path === templatePath)}
             />
         </div>

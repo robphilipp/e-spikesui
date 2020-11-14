@@ -1,6 +1,5 @@
 import {SettingsAction} from "./settings";
 import {NetworkDescriptionAction} from "./networkDescription";
-import {Either} from "prelude-ts";
 // import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 // import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
 // import {NetworkVisualizationAction} from "./networkVisualization";
@@ -58,14 +57,6 @@ export function setErrorMessages(messages: string[]): ErrorMessageSetAction {
         messages: messages
     };
 }
-// export function setErrorMessages(messages: string[]):
-//     ThunkAction<Promise<SetErrorMessageAction>, unknown, unknown, SetErrorMessageAction> {
-//     return (dispatch: ThunkDispatch<SetErrorMessageAction, unknown, SetErrorMessageAction>): Promise<SetErrorMessageAction> =>
-//         Promise.resolve().then(() => dispatch({
-//             type: SET_ERROR_MESSAGES,
-//             messages: messages
-//         }))
-// }
 
 /**
  * Clears the application-level error messages
@@ -76,12 +67,6 @@ export function clearErrorMessages(): ErrorMessageClearedAction {
         type: CLEAR_ERROR_MESSAGES
     };
 }
-// export function clearErrorMessages(): ThunkAction<Promise<ClearErrorMessageAction>, unknown, unknown, ClearErrorMessageAction> {
-//     return (dispatch: ThunkDispatch<ClearErrorMessageAction, unknown, ClearErrorMessageAction>): Promise<ClearErrorMessageAction> =>
-//         Promise.resolve().then(() => dispatch({
-//             type: CLEAR_ERROR_MESSAGES
-//         }))
-// }
 
 /*
  |
@@ -113,7 +98,7 @@ export function clearErrorMessages(): ErrorMessageClearedAction {
  *
  * // the result (you may want to export this as well) returned in the thunk
  * // action
- * export interface Result extends Record<Keys, string> {
+ * export interface Result {
  *   description: string;
  *   path: string;
  * }
@@ -124,15 +109,8 @@ export function clearErrorMessages(): ErrorMessageClearedAction {
  *   return dispatch => readFrom(path)
  *       // on success dispatch the success action, that takes the `Result` as the second parameter
  *       .then(description => dispatch(successAction(LOADED, {description, path})))
- *       // on failure, send the reason
- *       .catch(reason => dispatch(failedAction(LOADED, [reason.message])))
  * }
  */
-
-// /**
-//  * The key type of the successful response action object
-//  */
-// export type KeyType = string | number | symbol;
 
 /**
  * Generic action to a response that is either a success of failure. For example, a call to load
@@ -143,40 +121,10 @@ export function clearErrorMessages(): ErrorMessageClearedAction {
  * @template K The key type, which must be a string, number, or symbol (`KeyType`)
  * @template V The value type of the result
  */
-export interface ResponseAction<A, S, E> {
+export interface ResponseAction<A, S> {
     type: A;
-    result: Either<E, S>
+    result: S
 }
-// export interface ResponseAction<A, K extends KeyType> {
-//     type: A;
-//     result: Either<string[], Record<K, unknown>>
-// }
-// export interface ResponseAction<A, K extends KeyType, V> {
-//     type: A;
-//     result: Either<string[], Record<K, V>>
-// }
-
-/**
- * When an action response was a failure, creates an action that represents that failure. Holds the response
- * action type and the failure/error messages.
- * @param messages An array of error messages
- * @param actionType The response type, which determines the action that is created. For
- * example, if the action type is `NETWORK_BUILT`, then a NetworkBuiltAction is created
- * @return The action that the response of an attempted action have been received. For
- * example, if the action was to build a network, then this is called if that request failed
- */
-export function failedAction<A, S, E>(actionType: A, messages: E): ResponseAction<A, S, E> {
-    return {
-        type: actionType,
-        result: Either.left(messages)
-    }
-}
-// export function failedAction<A, K extends KeyType, V>(actionType: A, messages: string[]): ResponseAction<A, K, V> {
-//     return {
-//         type: actionType,
-//         result: Either.left(messages)
-//     }
-// }
 
 /**
  * When an action response was a success, creates an action that represents that success. Holds the response
@@ -187,16 +135,9 @@ export function failedAction<A, S, E>(actionType: A, messages: E): ResponseActio
  * @return The action that the response of an attempted action have been received. For
  * example, if the action was to build a network, then this is called if that request succeeded.
  */
-export function successAction<A, S, E>(actionType: A, result: S): ResponseAction<A, S, E> {
+export function successAction<A, S>(actionType: A, result: S): ResponseAction<A, S> {
     return {
         type: actionType,
-        result: Either.right(result)
+        result: result
     }
 }
-// export function successAction<A, K extends KeyType, V, R extends Record<K, V>>(actionType: A, result: R): ResponseAction<A, K, V> {
-//     return {
-//         type: actionType,
-//         result: Either.right(result)
-//     }
-// }
-

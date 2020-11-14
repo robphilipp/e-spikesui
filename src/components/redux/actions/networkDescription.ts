@@ -4,7 +4,7 @@ import {
     saveNetworkDescription as persistNetworkDescription
 } from '../../repos/networkDescriptionRepo';
 import {ThunkAction} from "redux-thunk";
-import {failedAction, ResponseAction, successAction} from "./actions";
+import {ResponseAction, successAction} from "./actions";
 
 /*
  |
@@ -14,8 +14,6 @@ import {failedAction, ResponseAction, successAction} from "./actions";
 export const NETWORK_DESCRIPTION_LOADED = 'network-description-loaded';
 export const NETWORK_DESCRIPTION_CHANGED = 'network-description-changed';
 export const NETWORK_DESCRIPTION_SAVED = 'network-description-saved';
-
-export const SAVE_NETWORK_DESCRIPTION = 'save-network-description';
 
 /*
  |
@@ -90,7 +88,6 @@ export function updateNetworkDescription(description: string): NetworkDescriptio
 export function loadNetworkDescriptionFrom(path: string): ThunkAction<Promise<NetworkDescriptionLoadedAction>, unknown, unknown, NetworkDescriptionLoadedAction> {
     return dispatch => readNetworkDescription(path)
         .then(description => dispatch(successAction(NETWORK_DESCRIPTION_LOADED, {description, path})))
-        .catch(reason => dispatch(failedAction(NETWORK_DESCRIPTION_LOADED, [reason])))
 }
 
 /**
@@ -102,7 +99,6 @@ export function loadNetworkDescriptionFrom(path: string): ThunkAction<Promise<Ne
 export function loadNetworkDescriptionFromTemplate(path: string): ThunkAction<Promise<NetworkDescriptionLoadedAction>, unknown, unknown, NetworkDescriptionLoadedAction> {
     return dispatch => loadTemplateOrInitialize(path)
         .then(description => dispatch(successAction(NETWORK_DESCRIPTION_LOADED, {description, path})))
-        .catch(reason => dispatch(failedAction(NETWORK_DESCRIPTION_LOADED, [reason])))
 }
 
 /**
@@ -115,5 +111,4 @@ export function loadNetworkDescriptionFromTemplate(path: string): ThunkAction<Pr
 export function saveNetworkDescription(path: string, description: string): ThunkAction<Promise<NetworkDescriptionSavedAction>, unknown, unknown, NetworkDescriptionSavedAction> {
     return dispatch => persistNetworkDescription(path, description)
         .then(() => dispatch(successAction(NETWORK_DESCRIPTION_SAVED, {description, path})))
-        .catch(reason => dispatch(failedAction(NETWORK_DESCRIPTION_SAVED, [reason])))
 }

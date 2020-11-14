@@ -99,7 +99,6 @@ function NetworkEditor(props: Props): JSX.Element {
 
             // listen to resize events so that the editor width and height can be updated
             window.addEventListener('resize', handleWindowResize);
-            // todo stale refs to path, template path and description
             window.addEventListener('keydown', handleKeyboardShortcut, true);
 
             return () => {
@@ -111,6 +110,9 @@ function NetworkEditor(props: Props): JSX.Element {
         []
     )
 
+    // when the network description file path from the router has changed, and is
+    // not equal to the current state path, or is empty, then load the network description,
+    // or a template
     useEffect(
         () => {
             const filePath = decodeURIComponent(networkDescriptionPath);

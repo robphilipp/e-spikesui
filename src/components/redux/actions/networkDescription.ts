@@ -27,8 +27,8 @@ export const NETWORK_DESCRIPTION_SAVED = 'network-description-saved';
  * a success, then the right-side holds the network description. When the result is a failure,
  * then the left side holds the array of error messages.
  */
-export type NetworkDescriptionLoadedAction = ResponseAction<typeof NETWORK_DESCRIPTION_LOADED, NetworkDescriptionResult, string[]>;
-export type NetworkDescriptionSavedAction = ResponseAction<typeof NETWORK_DESCRIPTION_SAVED, NetworkDescriptionResult, string[]>;
+export type NetworkDescriptionLoadedAction = ResponseAction<typeof NETWORK_DESCRIPTION_LOADED, NetworkDescriptionResult>;
+export type NetworkDescriptionSavedAction = ResponseAction<typeof NETWORK_DESCRIPTION_SAVED, NetworkDescriptionResult>;
 
 /**
  * Action to be dispatched when network description has changed

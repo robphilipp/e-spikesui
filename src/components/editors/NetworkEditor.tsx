@@ -231,7 +231,6 @@ function NetworkEditor(props: Props): JSX.Element {
             .then(response => {
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
-
     }
 
     /**

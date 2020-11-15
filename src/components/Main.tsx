@@ -29,9 +29,17 @@ import {
     NetworkDescriptionSavedAction,
 } from "./redux/actions/networkDescription";
 import {remote} from "electron";
+import EnvironmentEditor from './editors/EnvironmentEditor';
+import {
+    EnvironmentAction,
+    EnvironmentLoadedAction,
+    EnvironmentSavedAction, loadEnvironmentFrom,
+    loadEnvironmentFromTemplate, saveEnvironment
+} from "./redux/actions/environment";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
+    ENVIRONMENT_EDITOR = '/environment-editor',
     SIMULATION = '/simulation'
 }
 
@@ -51,12 +59,16 @@ interface StateProps {
     name: string;
     // the current map of the theme names and their associated color palettes
     palettes: HashMap<string, Palette>;
-    // network-description template
+    // network-description, path, template path, and modification state
     networkDescriptionTemplatePath: string;
-    //
     networkDescription: string;
     networkDescriptionPath: string;
     networkDescriptionModified: boolean;
+    // environment, path, template path, and modification state
+    environmentTemplatePath: string;
+    environment: string;
+    environmentPath: string;
+    environmentModified: boolean;
 }
 
 interface DispatchProps {
@@ -68,6 +80,10 @@ interface DispatchProps {
     onLoadNetworkDescriptionTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onSaveNetworkDescription: (path: string, description: string) => Promise<NetworkDescriptionSavedAction>;
+
+    onLoadEnvironmentTemplate: (path: string) => Promise<EnvironmentLoadedAction>;
+    onLoadEnvironment: (path: string) => Promise<EnvironmentLoadedAction>;
+    onSaveEnvironment: (path: string, codeSnippet: string) => Promise<EnvironmentSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -81,14 +97,22 @@ function Main(props: Props): JSX.Element {
         onHideSettingsPanel,
 
         networkDescriptionTemplatePath,
-
         networkDescription,
         networkDescriptionModified,
         networkDescriptionPath,
 
         onLoadNetworkDescriptionTemplate,
         onLoadNetworkDescription,
-        onSaveNetworkDescription
+        onSaveNetworkDescription,
+
+        environmentTemplatePath,
+        environment,
+        environmentPath,
+        environmentModified,
+
+        onLoadEnvironmentTemplate,
+        onLoadEnvironment,
+        onSaveEnvironment,
     } = props;
 
     // react-router history
@@ -157,7 +181,7 @@ function Main(props: Props): JSX.Element {
                         },
                         {
                             key: 'loadNetwork',
-                            text: 'Load',
+                            text: 'Load...',
                             iconProps: {iconName: 'upload'},
                             ariaLabel: 'Load Network',
                             onClick: () => handleLoadNetworkDescription()
@@ -189,16 +213,43 @@ function Main(props: Props): JSX.Element {
                 subMenuProps: {
                     items: [
                         {
+                            key: 'editEnvironment',
+                            text: 'Edit',
+                            iconProps: {iconName: 'homegroup'},
+                            ariaLabel: 'Edit Network Environment',
+                            onClick: () =>  handleEditEnvironment(),
+                        },
+                        {
+                            key: 'divider_2',
+                            itemType: ContextualMenuItemType.Divider
+                        },
+                        {
                             key: 'newEnvironment',
-                            text: 'New Environment',
+                            text: 'New',
                             iconProps: {iconName: 'add'},
-                            // onClick: () => props.history.push('spikes-chart')
+                            ariaLabel: 'New Environment',
+                            onClick: () => handleNewEnvironment()
                         },
                         {
                             key: 'loadEnvironment',
-                            text: 'Load Environment',
+                            text: 'Load...',
                             iconProps: {iconName: 'upload'},
-                            // onClick: () => props.history.push('spikes-chart')
+                            ariaLabel: 'Load Network Environment',
+                            onClick: () => handleLoadEnvironment()
+                        },
+                        {
+                            key: 'saveEnvironment',
+                            text: 'Save',
+                            iconProps: {iconName: 'upload'},
+                            ariaLabel: 'Save Network Environment',
+                            onClick: () => handleSaveEnvironment()
+                        },
+                        {
+                            key: 'saveEnvironment',
+                            text: 'Save As...',
+                            iconProps: {iconName: 'upload'},
+                            ariaLabel: 'Save Network Environment As',
+                            onClick: () => handleSaveEnvironmentAs()
                         },
                     ],
                 },
@@ -310,6 +361,49 @@ function Main(props: Props): JSX.Element {
             );
     }
 
+    function handleEditEnvironment(): void {
+        history.push(`${AppPath.ENVIRONMENT_EDITOR}/${encodeURIComponent(environmentPath)}`)
+    }
+
+    function handleNewEnvironment(): void {
+        onLoadEnvironmentTemplate(environmentTemplatePath)
+            .then(() => history.push((`${AppPath.ENVIRONMENT_EDITOR}/${encodeURIComponent(environmentTemplatePath)}`)));
+    }
+
+    function handleLoadEnvironment(): void {
+        remote.dialog
+            .showOpenDialog(
+                remote.getCurrentWindow(),
+                {
+                    title: 'Open...',
+                    filters: [{name: 'spikes-environment', extensions: ['env']}],
+                    properties: ['openFile']
+                })
+            .then(response => {
+                history.push(`${AppPath.ENVIRONMENT_EDITOR}/${encodeURIComponent(response.filePaths[0])}`);
+            })
+    }
+
+    function handleSaveEnvironment(): void {
+        if (environmentPath !== environmentTemplatePath) {
+            onSaveEnvironment(environmentPath, environment)
+                // todo add an alert
+                .then(() => console.log('saved'));
+        } else {
+            handleSaveEnvironmentAs();
+        }
+    }
+
+    function handleSaveEnvironmentAs(): void {
+        remote.dialog
+            .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+            .then(response => onSaveEnvironment(response.filePath, environment)
+                // todo handle the success and failure
+                .then(() => history.push(`${AppPath.ENVIRONMENT_EDITOR}/${encodeURIComponent(response.filePath)}`))
+            );
+
+    }
+
     return (
         <Stack>
             <StackItem>
@@ -354,6 +448,17 @@ function Main(props: Props): JSX.Element {
                             />
                         }
                     />
+                    <Route
+                        path={`${AppPath.ENVIRONMENT_EDITOR}/:environmentPath`}
+                        render={(renderProps) =>
+                            <EnvironmentEditor
+                                baseRouterPath={AppPath.ENVIRONMENT_EDITOR}
+                                theme={editorThemeFrom(name)}
+                                itheme={props.itheme}
+                                {...renderProps}
+                            />
+                        }
+                    />
                 </Switch>
             </StackItem>
         </Stack>
@@ -379,10 +484,17 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     itheme: state.settings.itheme,
     name: state.settings.name,
     palettes: state.settings.palettes,
+
     networkDescriptionTemplatePath: state.settings.networkDescription.templatePath,
     networkDescription: state.networkDescription.description,
     networkDescriptionPath: state.networkDescription.path,
-    networkDescriptionModified: state.networkDescription.modified
+    networkDescriptionModified: state.networkDescription.modified,
+
+    environmentTemplatePath: state.settings.environment.templatePath,
+    environment: state.environment.codeSnippet,
+    environmentPath: state.environment.path,
+    environmentModified: state.environment.modified,
+
 });
 
 /**
@@ -397,10 +509,14 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+
     onLoadNetworkDescriptionTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
     onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
     onSaveNetworkDescription: (path: string, description: string) => dispatch(persistNetworkDescription(path, description)),
 
+    onLoadEnvironmentTemplate: (path: string) => dispatch(loadEnvironmentFromTemplate(path)),
+    onLoadEnvironment: (path: string) => dispatch(loadEnvironmentFrom(path)),
+    onSaveEnvironment: (path: string, codeSnippet: string) => dispatch(saveEnvironment(path, codeSnippet)),
 });
 
 const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)

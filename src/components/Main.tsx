@@ -293,6 +293,9 @@ function Main(props: Props): JSX.Element {
         settingsPanelVisible ? onHideSettingsPanel() : onShowSettingsPanel();
     }
 
+    /**
+     * Handles editing the currently loaded network
+     */
     function handleEditNetwork(): void {
         history.push(`${AppPath.NETWORK_EDITOR}/${encodeURIComponent(networkDescriptionPath)}`);
     }
@@ -361,15 +364,28 @@ function Main(props: Props): JSX.Element {
             );
     }
 
+    /**
+     * Handles editing the currently loaded environment code-snippet
+     */
     function handleEditEnvironment(): void {
         history.push(`${AppPath.ENVIRONMENT_EDITOR}/${encodeURIComponent(environmentPath)}`)
     }
 
+    /**
+     * Handles the request to load a new environment (from template) by routing the request, along with the
+     * template file path to the environment code-snippet editor, which will load the environment template and display the
+     * new code snippet.
+     */
     function handleNewEnvironment(): void {
         onLoadEnvironmentTemplate(environmentTemplatePath)
             .then(() => history.push((`${AppPath.ENVIRONMENT_EDITOR}/${encodeURIComponent(environmentTemplatePath)}`)));
     }
 
+    /**
+     * Handles the request to load an existing environment code-snippet by routing the request, along with the
+     * environment code-snippet file path to the network editor, which will load the environment code-snippet
+     * and display the it.
+     */
     function handleLoadEnvironment(): void {
         remote.dialog
             .showOpenDialog(
@@ -384,6 +400,11 @@ function Main(props: Props): JSX.Element {
             })
     }
 
+    /**
+     * Handles saving the environment code-snippet to the current environment path.
+     * If the current environment code-snippet path is undefined, then revert to the 'save-as'
+     * dialog
+     */
     function handleSaveEnvironment(): void {
         if (environmentPath !== environmentTemplatePath) {
             onSaveEnvironment(environmentPath, environment)
@@ -394,6 +415,10 @@ function Main(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Handles saving the environment code-snippet file when the path is current set, or the user
+     * would like to save the file to a new name.
+     */
     function handleSaveEnvironmentAs(): void {
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})

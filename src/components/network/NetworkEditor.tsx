@@ -16,8 +16,9 @@ import {
     updateNetworkDescription
 } from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
-import {IconButton, ITheme, Stack, StackItem} from '@fluentui/react';
+import {IconButton, ITheme, Stack, StackItem, TooltipHost} from '@fluentui/react';
 import {remote} from "electron";
+import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 
 
 const customThemes = defaultCustomThemes();
@@ -35,7 +36,7 @@ interface Dimension {
 }
 
 interface OwnProps extends RouteComponentProps<never> {
-    basePath: string;
+    baseRouterPath: string;
     itheme: ITheme;
     theme?: string;
 }
@@ -73,13 +74,13 @@ function NetworkEditor(props: Props): JSX.Element {
         onSave,
         modified,
         path,
-        basePath,
+        baseRouterPath,
     } = props;
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path
     // to the network description, and keep it consistent when loading from template
-    const {networkDescriptionPath} = useParams<{[key: string]: string}>();
+    const {networkDescriptionPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
 
     const editorRef = useRef<HTMLDivElement>();
@@ -164,17 +165,31 @@ function NetworkEditor(props: Props): JSX.Element {
      * @param event The keyboard event
      */
     function handleKeyboardShortcut(event: KeyboardEvent): void {
-        if (process.platform === 'darwin') {
-            if (event.metaKey && event.key.toLocaleLowerCase() === 's') {
-                const {path, templatePath, network} = keyboardEventRef.current;
-                handleSave(path, templatePath, network);
+        keyboardShortcutFor(event).ifSome(shortcut => {
+            switch (shortcut) {
+                case KeyboardShortcut.NEW:
+                    handleNew();
+                    break;
+
+                case KeyboardShortcut.SAVE: {
+                    const {path, templatePath, network} = keyboardEventRef.current;
+                    handleSave(path, templatePath, network);
+                    break;
+                }
+
+                case KeyboardShortcut.LOAD:
+                    handleLoad();
+                    break;
+
+                default:
+                    /* nothing to do */
             }
-        } else {
-            if (event.ctrlKey && event.key.toLocaleLowerCase() === 's') {
-                const {path, templatePath, network} = keyboardEventRef.current;
-                handleSave(path, templatePath, network);
-            }
-        }
+        });
+    }
+
+    function handleNew(): void {
+        onLoadTemplate(templatePath)
+            .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(templatePath)}`))
     }
 
     /**
@@ -192,9 +207,28 @@ function NetworkEditor(props: Props): JSX.Element {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
                 .then(response => onSave(response.filePath, network)
-                    .then(() => history.push(`${basePath}/${encodeURIComponent(response.filePath)}`))
+                    .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
                 );
         }
+    }
+
+    /**
+     * Handle loading a network description from file by presenting the user with an open-file
+     * dialog.
+     */
+    function handleLoad(): void {
+        remote.dialog
+            .showOpenDialog(
+                remote.getCurrentWindow(),
+                {
+                    title: 'Open...',
+                    filters: [{name: 'spikes-network', extensions: ['boo']}],
+                    properties: ['openFile']
+                })
+            .then(response => {
+                history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
+            })
+
     }
 
     /**
@@ -203,10 +237,12 @@ function NetworkEditor(props: Props): JSX.Element {
      */
     function newButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <IconButton
-                iconProps={{iconName: 'add'}}
-                onClick={() => onLoadTemplate(templatePath).then(() => history.push(`${basePath}/${encodeURIComponent(templatePath)}`))}
-            />
+            <TooltipHost content="New network description from template">
+                <IconButton
+                    iconProps={{iconName: 'add'}}
+                    onClick={() => handleNew()}
+                />
+            </TooltipHost>
         </div>
     }
 
@@ -217,11 +253,29 @@ function NetworkEditor(props: Props): JSX.Element {
      */
     function saveButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <IconButton
-                iconProps={{iconName: 'save'}}
-                onClick={() => handleSave(path, templatePath, network)}
-                disabled={!(modified || path === templatePath)}
-            />
+            <TooltipHost content="Save network description">
+                <IconButton
+                    iconProps={{iconName: 'save'}}
+                    onClick={() => handleSave(path, templatePath, network)}
+                    disabled={!(modified || path === templatePath)}
+                />
+            </TooltipHost>
+        </div>
+    }
+
+    /**
+     * Presents the user with a open-file dialog for selecting a network description
+     * file.
+     * @return The load button for the sidebar
+     */
+    function loadButton(): JSX.Element {
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <TooltipHost content="Load network description">
+                <IconButton
+                    iconProps={{iconName: 'upload'}}
+                    onClick={() => handleLoad()}
+                />
+            </TooltipHost>
         </div>
     }
 
@@ -232,10 +286,12 @@ function NetworkEditor(props: Props): JSX.Element {
      */
     function buildButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <IconButton
-                iconProps={{iconName: 'homegroup'}}
-                disabled={modified || network === undefined || network.length < 31}
-            />
+            <TooltipHost content="Deploy network description to server">
+                <IconButton
+                    iconProps={{iconName: 'homegroup'}}
+                    disabled={modified || network === undefined || network.length < 31}
+                />
+            </TooltipHost>
         </div>
     }
 
@@ -260,6 +316,7 @@ function NetworkEditor(props: Props): JSX.Element {
                 <StackItem>
                     {newButton()}
                     {saveButton()}
+                    {loadButton()}
                     {buildButton()}
                 </StackItem>
                 <StackItem>

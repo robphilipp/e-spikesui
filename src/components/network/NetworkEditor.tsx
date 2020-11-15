@@ -187,6 +187,9 @@ function NetworkEditor(props: Props): JSX.Element {
         });
     }
 
+    /**
+     * Handles loading a new network from a template file.
+     */
     function handleNew(): void {
         onLoadTemplate(templatePath)
             .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(templatePath)}`))

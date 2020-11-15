@@ -84,23 +84,23 @@ export function clearErrorMessages(): ErrorMessageClearedAction {
  * export const CHANGED = 'changed';
  * export const SAVED = 'saved';
  *
+ * // the result (you may want to export this as well) returned in the thunk
+ * // action
+ * export interface Result {
+ *   description: string;
+ *   path: string;
+ * }
+ *
  * // loaded and saved are thunk action response (you may want to export
  * // this as well)
- * export type LoadedAction = ResponseAction<typeof LOADED, Keys, string>;
- * export type SavedAction = ResponseAction<typeof SAVED, Keys, string>;
+ * export type LoadedAction = ResponseAction<typeof LOADED, Result>;
+ * export type SavedAction = ResponseAction<typeof SAVED, Result>;
  *
  * // changed is a regular redux action (you may want to export this
  * // as well)
  * export interface UpdatedAction {
  *   type: typeof CHANGED;
  *   result: string;
- * }
- *
- * // the result (you may want to export this as well) returned in the thunk
- * // action
- * export interface Result {
- *   description: string;
- *   path: string;
  * }
  *
  * // and then one of the action creators

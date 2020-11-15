@@ -19,7 +19,7 @@ import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
-import NetworkEditor, {editorThemeFrom} from "./network/NetworkEditor";
+import NetworkEditor, {editorThemeFrom} from "./editors/NetworkEditor";
 import {registerSpikesLanguage} from "./language/spikes-language";
 import {
     loadNetworkDescriptionFromTemplate,

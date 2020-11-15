@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
-import MonacoEditor from "../editor/MonacoEditor";
-import {defaultCustomThemes, DefaultTheme} from '../editor/themes';
+import MonacoEditor from "./MonacoEditor";
+import {defaultCustomThemes, DefaultTheme} from './themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
 import {RouteComponentProps, useHistory, useParams, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";

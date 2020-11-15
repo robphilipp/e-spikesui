@@ -46,7 +46,7 @@ export function readNetworkDescription(path: string): Promise<string> {
 export function saveNetworkDescription(path: string, description: string): Promise<void> {
     return new Promise((resolve, reject) => {
         if (path === undefined || path === '') {
-            reject("File path missing");
+            reject("File path cannot be undefined or empty");
             return;
         }
         try {

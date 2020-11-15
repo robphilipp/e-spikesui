@@ -38,6 +38,7 @@ import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
 import TemplateSettingsEditor from "./TemplateSettingsEditor";
 import TemplateSettings from "./templateSettings";
 import {saveSettingsAsync} from "../repos/appSettingsRepo";
+import {EnvironmentSettings} from "./environmentSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -60,6 +61,7 @@ interface StateProps {
     kafkaSettings: KafkaSettings;
     templateSettings: TemplateSettings;
     networkDescriptionSettings: NetworkDescriptionSettings;
+    environmentSettings: EnvironmentSettings;
 }
 
 interface DispatchProps {
@@ -91,6 +93,7 @@ function SettingsPanel(props: Props): JSX.Element {
         kafkaSettings,
         templateSettings,
         networkDescriptionSettings,
+        environmentSettings,
         // onShowSettingsPanel,
         onHideSettingsPanel,
         onChangeTheme,
@@ -203,7 +206,8 @@ function SettingsPanel(props: Props): JSX.Element {
             themeName: name,
             server: serverSettings,
             kafka: kafkaSettings,
-            networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescription}
+            networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescription},
+            environment: {...environmentSettings, templatePath: templateSettings.environment},
         }
         setSaving(true);
         saveSettingsAsync(newSettings)
@@ -339,9 +343,10 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
         serverSettings: state.settings.server,
         kafkaSettings: state.settings.kafka,
         networkDescriptionSettings: state.settings.networkDescription,
+        environmentSettings: state.settings.environment,
         templateSettings: {
             networkDescription: state.settings.networkDescription.templatePath,
-            environment: ''
+            environment: state.settings.environment.templatePath,
         }
     }
 }

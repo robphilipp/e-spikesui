@@ -2,12 +2,14 @@ import ServerSettings from "./serverSettings";
 import {KafkaSettings} from "./kafkaSettings";
 import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
 import {readSettings, saveSettings} from "../repos/appSettingsRepo";
+import {EnvironmentSettings} from "./environmentSettings";
 
 export interface ApplicationSettings {
     themeName: string;
     server: ServerSettings;
     kafka: KafkaSettings;
     networkDescription: NetworkDescriptionSettings;
+    environment: EnvironmentSettings;
 }
 
 export const SETTINGS_PATH = '.spikes-ui'
@@ -26,6 +28,9 @@ export const DEFAULT_SETTINGS: ApplicationSettings = {
     },
     networkDescription: {
         templatePath: '.spikes-network-template',
+    },
+    environment: {
+        templatePath: '.spikes-environment-template',
     }
 }
 

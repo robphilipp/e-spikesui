@@ -11,6 +11,7 @@ import {KafkaSettings} from "../../settings/kafkaSettings";
 import {loadOrInitializeSetting} from "../../settings/appSettings";
 import ServerSettings from "../../settings/serverSettings";
 import {NetworkDescriptionSettings} from "../../settings/networkDescriptionSettings";
+import {EnvironmentSettings} from "../../settings/environmentSettings";
 
 /**
  * The state holding the application settings
@@ -22,6 +23,7 @@ export interface SettingsState {
     server: ServerSettings;
     kafka: KafkaSettings;
     networkDescription: NetworkDescriptionSettings;
+    environment: EnvironmentSettings;
 }
 
 /**
@@ -36,7 +38,8 @@ function initialSettings(): SettingsState {
         palettes: defaultPalettes,
         server: settings.server,
         kafka: settings.kafka,
-        networkDescription: settings.networkDescription
+        networkDescription: settings.networkDescription,
+        environment: settings.environment
     }
 }
 

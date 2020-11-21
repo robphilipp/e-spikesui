@@ -7,16 +7,16 @@ import fs from "fs";
  * @param path The path to the environment code-snippet template file
  * @return The a promise with the environment code-snippet template
  */
-export function loadEnvironmentOrInitialize(path: string): Promise<string> {
-    return readEnvironment(path)
+export function loadSensorsOrInitialize(path: string): Promise<string> {
+    return readSensors(path)
         .catch(err => {
             console.log(`Unable to read environment code-snippet template; path: ${path}; error: ${err.toString()}`);
-            return saveEnvironment(path, initialEnvironment)
+            return saveSensors(path, initialSensors)
                 .catch(err => {
                     // todo handle success and failure
                     console.log(`Unable to write environment code-snippet template to file; path: ${path}; error: ${err.toString()}`)
                 })
-                .then(() => initialEnvironment);
+                .then(() => initialSensors);
         })
 }
 
@@ -25,7 +25,7 @@ export function loadEnvironmentOrInitialize(path: string): Promise<string> {
  * @param path The path to the environment code-snippet.
  * @return A promise with the environment code-snippet
  */
-export function readEnvironment(path: string): Promise<string> {
+export function readSensors(path: string): Promise<string> {
     return new Promise((resolve, reject) => {
         try {
             const description = fs.readFileSync(path).toString();
@@ -42,7 +42,7 @@ export function readEnvironment(path: string): Promise<string> {
  * @param codeSnippet The environment code-snippet to save
  * @return A promise that the environment code-snippet was saved
  */
-export function saveEnvironment(path: string, codeSnippet: string): Promise<void> {
+export function saveSensors(path: string, codeSnippet: string): Promise<void> {
     return new Promise((resolve, reject) => {
         if (path === undefined || path === '') {
             reject("File path cannot be undefined or empty");
@@ -58,9 +58,9 @@ export function saveEnvironment(path: string, codeSnippet: string): Promise<void
 }
 
 
-const initialEnvironment = String.raw`// add a code snippet to simulate the environment that sends signals to the 
+const initialSensors = String.raw`// add a code snippet to simulate the environment that sends signals to the 
 // spikes neural network. The code snippet must return an rx-js Observable which emits
-// SensorOutput ({sensorName: string; neuronIds: Array<string>; signal: SignalIntensity;})
+// SensorOutput ({sensorName: string; neuronIds: Array<string>; signal: {units: "µV" | "mV", value: number};})
 // See https://rxjs-dev.firebaseapp.com/guide/observable
 return interval(100).pipe(
    filter(t => t % 3 === 0),

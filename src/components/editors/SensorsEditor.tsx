@@ -7,18 +7,17 @@ import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
 import {IconButton, ITheme, Stack, StackItem, TooltipHost} from '@fluentui/react';
 import {
-    EnvironmentLoadedAction,
-    EnvironmentSavedAction,
-    loadEnvironmentFrom,
-    loadEnvironmentFromTemplate,
-    saveEnvironment as persistEnvironment,
-    updateEnvironment,
-} from "../redux/actions/environment";
+    SensorsLoadedAction,
+    SensorsSavedAction,
+    loadSensorsFrom,
+    loadSensorsFromTemplate,
+    saveSensors as persistEnvironment,
+    updateSensors,
+} from "../redux/actions/sensors";
 import {useEffect, useRef, useState} from "react";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import {remote} from "electron";
 import MonacoEditor from "./MonacoEditor";
-import {SPIKES_LANGUAGE_ID} from "../language/spikes-language";
 
 
 const customThemes = defaultCustomThemes();
@@ -50,14 +49,14 @@ interface StateProps {
 
 interface DispatchProps {
     onChanged: (description: string) => void;
-    onLoadTemplate: (path: string) => Promise<EnvironmentLoadedAction>;
-    onLoadEnvironment: (path: string) => Promise<EnvironmentLoadedAction>;
-    onSave: (path: string, description: string) => Promise<EnvironmentSavedAction>;
+    onLoadTemplate: (path: string) => Promise<SensorsLoadedAction>;
+    onLoadEnvironment: (path: string) => Promise<SensorsLoadedAction>;
+    onSave: (path: string, description: string) => Promise<SensorsSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
 
-function EnvironmentEditor(props: Props): JSX.Element {
+function SensorsEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
         codeSnippet,
@@ -74,7 +73,7 @@ function EnvironmentEditor(props: Props): JSX.Element {
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path
     // to the environment code-snippet, and keep it consistent when loading from template
-    const {environmentPath} = useParams<{ [key: string]: string }>();
+    const {environmentPath: sensorsPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
 
     const editorRef = useRef<HTMLDivElement>();
@@ -110,14 +109,14 @@ function EnvironmentEditor(props: Props): JSX.Element {
     // or a template
     useEffect(
         () => {
-            const filePath = decodeURIComponent(environmentPath);
+            const filePath = decodeURIComponent(sensorsPath);
             if (filePath !== path || filePath === '') {
                 // todo handle success and failure
                 onLoadEnvironment(filePath)
                     .then(() => console.log("loaded"))
             }
         },
-        [environmentPath]
+        [sensorsPath]
     );
 
     // the keyboard event listener holds a stale ref to the props, so we need to update
@@ -361,12 +360,12 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onChanged: (codeSnippet: string) => dispatch(updateEnvironment(codeSnippet)),
-    onLoadTemplate: (path: string) => dispatch(loadEnvironmentFromTemplate(path)),
-    onLoadEnvironment: (path: string) => dispatch(loadEnvironmentFrom(path)),
+    onChanged: (codeSnippet: string) => dispatch(updateSensors(codeSnippet)),
+    onLoadTemplate: (path: string) => dispatch(loadSensorsFromTemplate(path)),
+    onLoadEnvironment: (path: string) => dispatch(loadSensorsFrom(path)),
     onSave: (path: string, description: string) => dispatch(persistEnvironment(path, description)),
 });
 
-const connectedEnvironmentEditor = connect(mapStateToProps, mapDispatchToProps)(EnvironmentEditor);
+const connectedEnvironmentEditor = connect(mapStateToProps, mapDispatchToProps)(SensorsEditor);
 
 export default withRouter(connectedEnvironmentEditor);

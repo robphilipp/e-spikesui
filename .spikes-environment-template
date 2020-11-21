@@ -1,6 +1,14 @@
-// add a code snippet to simulate the environment that sends signals to the 
+// add a code snippet to simulate the sensors that sends signals to the
 // spikes neural network. The code snippet must return an rx-js Observable which emits
-// SensorOutput ({sensorName: string; neuronIds: Array<string>; signal: SignalIntensity;})
+// SensorOutput (the sensor output has the following shape:
+// {
+//     sensorName: string;
+//     neuronIds: Array<string>;
+//     signal: {
+//         units: "µV" | "mV",
+//         value: number
+//     };
+// })
 // See https://rxjs-dev.firebaseapp.com/guide/observable
 return interval(100).pipe(
    filter(t => t % 3 === 0),

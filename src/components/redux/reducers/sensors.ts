@@ -1,25 +1,24 @@
-import {NetworkDescriptionState} from "./networkDescription";
-import {ENVIRONMENT_CHANGED, ENVIRONMENT_LOADED, ENVIRONMENT_SAVED, EnvironmentAction} from "../actions/environment";
+import {SENSORS_CHANGED, SENSORS_LOADED, SENSORS_SAVED, SensorsAction} from "../actions/sensors";
 
-export interface EnvironmentState {
+export interface SensorsState {
     // the code snippet that defines the environment and input signals and their
     // timing.
     codeSnippet?: string;
     // the original code-snippet, which is reset when the network is saved
     preSavedDescription?: string;
-    // flag when the network description has been modified, which is reset when the
+    // flag when the sensor description has been modified, which is reset when the
     // network is saved
     modified: boolean;
-    // the path to the current network description. when undefined then hasn't been
+    // the path to the current sensor description. when undefined then hasn't been
     // save or loaded from file (i.e. a new network description)
     path?: string;
 }
 
 /**
- * Loads the initial network-description and sets the initial state
- * @return {NetworkDescriptionState}
+ * Creates the initial sensors state
+ * @return The initial sensor state
  */
-function initialState(): EnvironmentState {
+function initialState(): SensorsState {
     return {
         codeSnippet: undefined,
         modified: false,
@@ -28,9 +27,9 @@ function initialState(): EnvironmentState {
     }
 }
 
-export function environmentReducer(state: EnvironmentState = initialState(), action: EnvironmentAction): EnvironmentState {
+export function sensorsReducer(state: SensorsState = initialState(), action: SensorsAction): SensorsState {
     switch (action.type) {
-        case ENVIRONMENT_LOADED:
+        case SENSORS_LOADED:
             return {
                 ...state,
                 codeSnippet: action.result.codeSnippet,
@@ -39,7 +38,7 @@ export function environmentReducer(state: EnvironmentState = initialState(), act
                 preSavedDescription: action.result.codeSnippet
             }
 
-        case ENVIRONMENT_CHANGED:
+        case SENSORS_CHANGED:
             return {
                 ...state,
                 codeSnippet: action.codeSnippet,
@@ -47,7 +46,7 @@ export function environmentReducer(state: EnvironmentState = initialState(), act
                 preSavedDescription: state.preSavedDescription === undefined ? state.codeSnippet : state.preSavedDescription
             }
 
-        case ENVIRONMENT_SAVED:
+        case SENSORS_SAVED:
             return {
                 ...state,
                 modified: false,

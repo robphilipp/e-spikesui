@@ -27,6 +27,11 @@ function initialState(): SensorsState {
     }
 }
 
+/**
+ * Reducer takes the current sensor state and an action and returns the new sensor state.
+ * @param state The current sensor state (optional and defaults to the initial state)
+ * @param action The sensor action based on which to update the state
+ */
 export function sensorsReducer(state: SensorsState = initialState(), action: SensorsAction): SensorsState {
     switch (action.type) {
         case SENSORS_LOADED:

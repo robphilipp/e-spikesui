@@ -10,7 +10,13 @@
 //     };
 // })
 // See https://rxjs-dev.firebaseapp.com/guide/observable
+function test(x) {
+   return 3 * x;
+}
+
+const factor = 3
+
 return interval(100).pipe(
    filter(t => t % 3 === 0),
-   map(t => `2 x ${t} = ${2 * t}`)
+   map(t => `${factor} x ${t} = ${factor * t}`)
 )

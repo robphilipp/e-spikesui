@@ -39,7 +39,7 @@ import {
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
-    SENSOR_EDITOR = '/environment-editor',
+    SENSOR_EDITOR = '/sensor-editor',
     SIMULATION = '/simulation'
 }
 
@@ -206,50 +206,50 @@ function Main(props: Props): JSX.Element {
                 },
             },
             {
-                key: 'environment',
-                name: 'Environment',
-                cacheKey: 'environment-cache-key',
+                key: 'sensor',
+                name: 'Sensor',
+                cacheKey: 'sensor-cache-key',
                 iconProps: {iconName: 'environment'},
                 subMenuProps: {
                     items: [
                         {
-                            key: 'editEnvironment',
+                            key: 'editSensor',
                             text: 'Edit',
                             iconProps: {iconName: 'homegroup'},
-                            ariaLabel: 'Edit Network Environment',
-                            onClick: () =>  handleEditEnvironment(),
+                            ariaLabel: 'Edit Network Sensor',
+                            onClick: () =>  handleEditSensor(),
                         },
                         {
                             key: 'divider_2',
                             itemType: ContextualMenuItemType.Divider
                         },
                         {
-                            key: 'newEnvironment',
+                            key: 'newSensor',
                             text: 'New',
                             iconProps: {iconName: 'add'},
-                            ariaLabel: 'New Environment',
-                            onClick: () => handleNewEnvironment()
+                            ariaLabel: 'New Sensor',
+                            onClick: () => handleNewSensor()
                         },
                         {
-                            key: 'loadEnvironment',
+                            key: 'loadSensor',
                             text: 'Load...',
                             iconProps: {iconName: 'upload'},
-                            ariaLabel: 'Load Network Environment',
-                            onClick: () => handleLoadEnvironment()
+                            ariaLabel: 'Load Network Sensor',
+                            onClick: () => handleLoadSensor()
                         },
                         {
-                            key: 'saveEnvironment',
+                            key: 'saveSensor',
                             text: 'Save',
                             iconProps: {iconName: 'upload'},
-                            ariaLabel: 'Save Network Environment',
-                            onClick: () => handleSaveEnvironment()
+                            ariaLabel: 'Save Network Sensor',
+                            onClick: () => handleSaveSensor()
                         },
                         {
-                            key: 'saveEnvironment',
+                            key: 'saveSensorAs',
                             text: 'Save As...',
                             iconProps: {iconName: 'upload'},
-                            ariaLabel: 'Save Network Environment As',
-                            onClick: () => handleSaveEnvironmentAs()
+                            ariaLabel: 'Save Network Sensor As',
+                            onClick: () => handleSaveSensorAs()
                         },
                     ],
                 },
@@ -367,7 +367,7 @@ function Main(props: Props): JSX.Element {
     /**
      * Handles editing the currently loaded environment code-snippet
      */
-    function handleEditEnvironment(): void {
+    function handleEditSensor(): void {
         history.push(`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(environmentPath)}`)
     }
 
@@ -376,7 +376,7 @@ function Main(props: Props): JSX.Element {
      * template file path to the environment code-snippet editor, which will load the environment template and display the
      * new code snippet.
      */
-    function handleNewEnvironment(): void {
+    function handleNewSensor(): void {
         onLoadEnvironmentTemplate(environmentTemplatePath)
             .then(() => history.push((`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(environmentTemplatePath)}`)));
     }
@@ -386,13 +386,13 @@ function Main(props: Props): JSX.Element {
      * environment code-snippet file path to the network editor, which will load the environment code-snippet
      * and display the it.
      */
-    function handleLoadEnvironment(): void {
+    function handleLoadSensor(): void {
         remote.dialog
             .showOpenDialog(
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{name: 'spikes-environment', extensions: ['env']}],
+                    filters: [{name: 'spikes-sensor', extensions: ['sensor']}],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -405,13 +405,13 @@ function Main(props: Props): JSX.Element {
      * If the current environment code-snippet path is undefined, then revert to the 'save-as'
      * dialog
      */
-    function handleSaveEnvironment(): void {
+    function handleSaveSensor(): void {
         if (environmentPath !== environmentTemplatePath) {
             onSaveEnvironment(environmentPath, environment)
                 // todo add an alert
                 .then(() => console.log('saved'));
         } else {
-            handleSaveEnvironmentAs();
+            handleSaveSensorAs();
         }
     }
 
@@ -419,7 +419,7 @@ function Main(props: Props): JSX.Element {
      * Handles saving the environment code-snippet file when the path is current set, or the user
      * would like to save the file to a new name.
      */
-    function handleSaveEnvironmentAs(): void {
+    function handleSaveSensorAs(): void {
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
             .then(response => onSaveEnvironment(response.filePath, environment)

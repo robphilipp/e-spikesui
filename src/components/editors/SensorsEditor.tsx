@@ -50,7 +50,7 @@ interface StateProps {
 interface DispatchProps {
     onChanged: (description: string) => void;
     onLoadTemplate: (path: string) => Promise<SensorsLoadedAction>;
-    onLoadEnvironment: (path: string) => Promise<SensorsLoadedAction>;
+    onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
     onSave: (path: string, description: string) => Promise<SensorsSavedAction>;
 }
 
@@ -63,7 +63,7 @@ function SensorsEditor(props: Props): JSX.Element {
         templatePath,
         onChanged,
         onLoadTemplate,
-        onLoadEnvironment,
+        onLoadSensor,
         onSave,
         modified,
         path,
@@ -73,7 +73,7 @@ function SensorsEditor(props: Props): JSX.Element {
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path
     // to the environment code-snippet, and keep it consistent when loading from template
-    const {environmentPath: sensorsPath} = useParams<{ [key: string]: string }>();
+    const {sensorsPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
 
     const editorRef = useRef<HTMLDivElement>();
@@ -84,7 +84,7 @@ function SensorsEditor(props: Props): JSX.Element {
     const keyboardEventRef = useRef({path, templatePath, codeSnippet});
 
     // when component mounts, sets the initial dimension of the editor and registers to listen
-    // to window resize events. when component unmounts, removes the window-resize event listener
+    // to window resize events. when component un-mounts, removes the window-resize event listener
     useEffect(
         () => {
             if (editorRef.current) {
@@ -112,7 +112,7 @@ function SensorsEditor(props: Props): JSX.Element {
             const filePath = decodeURIComponent(sensorsPath);
             if (filePath !== path || filePath === '') {
                 // todo handle success and failure
-                onLoadEnvironment(filePath)
+                onLoadSensor(filePath)
                     .then(() => console.log("loaded"))
             }
         },
@@ -210,7 +210,7 @@ function SensorsEditor(props: Props): JSX.Element {
     }
 
     /**
-     * Handle loading a network description from file by presenting the user with an open-file
+     * Handle loading a sensor description from file by presenting the user with an open-file
      * dialog.
      */
     function handleLoad(): void {
@@ -219,7 +219,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{name: 'spikes-environment', extensions: ['env']}],
+                    filters: [{name: 'spikes-sensor', extensions: ['sensor']}],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -362,7 +362,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onChanged: (codeSnippet: string) => dispatch(updateSensors(codeSnippet)),
     onLoadTemplate: (path: string) => dispatch(loadSensorsFromTemplate(path)),
-    onLoadEnvironment: (path: string) => dispatch(loadSensorsFrom(path)),
+    onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
     onSave: (path: string, description: string) => dispatch(persistEnvironment(path, description)),
 });
 

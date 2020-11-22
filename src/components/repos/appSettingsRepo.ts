@@ -39,7 +39,7 @@ export function saveSettings(settings: ApplicationSettings): Either<string, void
  * @param settings The application settings to save
  * @return A promise for saving the file
  */
-export function saveSettingsAsync(settings: ApplicationSettings): Promise<string> {
+export function saveSettingsAsync(settings: ApplicationSettings): Promise<void> {
     return new Promise((resolve, reject) => {
         saveSettings(settings)
             .ifRight(() => resolve())

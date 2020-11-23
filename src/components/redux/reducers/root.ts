@@ -9,7 +9,7 @@ export const rootReducer = combineReducers({
     application: applicationReducer,
     settings: settingsReducer,
     networkDescription: networkDescriptionReducer,
-    environment: sensorsReducer,
+    sensorDescription: sensorsReducer,
 });
 
 export type AppState = ReturnType<typeof rootReducer>

@@ -516,9 +516,9 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     networkDescriptionModified: state.networkDescription.modified,
 
     environmentTemplatePath: state.settings.environment.templatePath,
-    environment: state.environment.codeSnippet,
-    environmentPath: state.environment.path,
-    environmentModified: state.environment.modified,
+    environment: state.sensorDescription.codeSnippet,
+    environmentPath: state.sensorDescription.path,
+    environmentModified: state.sensorDescription.modified,
 
 });
 

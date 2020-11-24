@@ -9,7 +9,7 @@ export interface ApplicationSettings {
     server: ServerSettings;
     kafka: KafkaSettings;
     networkDescription: NetworkDescriptionSettings;
-    environment: EnvironmentSettings;
+    sensor: EnvironmentSettings;
 }
 
 export const SETTINGS_PATH = '.spikes-ui'
@@ -29,8 +29,8 @@ export const DEFAULT_SETTINGS: ApplicationSettings = {
     networkDescription: {
         templatePath: '.spikes-network-template',
     },
-    environment: {
-        templatePath: '.spikes-environment-template',
+    sensor: {
+        templatePath: '.spikes-sensor-template',
     }
 }
 

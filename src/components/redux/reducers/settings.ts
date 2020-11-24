@@ -39,7 +39,7 @@ function initialSettings(): SettingsState {
         server: settings.server,
         kafka: settings.kafka,
         networkDescription: settings.networkDescription,
-        environment: settings.environment
+        environment: settings.sensor
     }
 }
 

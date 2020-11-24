@@ -1,5 +1,5 @@
 /**
- * Settings about environment code-snippet files
+ * Settings about sensor code-snippet files
  */
 export interface EnvironmentSettings {
     // the path to the default environment code-snippet template that is used when

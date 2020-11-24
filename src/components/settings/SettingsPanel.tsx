@@ -207,7 +207,7 @@ function SettingsPanel(props: Props): JSX.Element {
             server: serverSettings,
             kafka: kafkaSettings,
             networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescription},
-            environment: {...environmentSettings, templatePath: templateSettings.environment},
+            sensor: {...environmentSettings, templatePath: templateSettings.environment},
         }
         setSaving(true);
         saveSettingsAsync(newSettings)

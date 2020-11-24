@@ -12,6 +12,11 @@ export interface SensorOutput {
     };
 }
 
+export interface CompilerResult {
+    neuronIds?: Array<string>;
+    observable: Observable<SensorOutput>;
+}
+
 // the observable can be run by subscribing to it; see how to put this into a separate web worker
 // todo add compile action, add the observable to the app state
 /**
@@ -37,7 +42,7 @@ export interface SensorOutput {
         map(time => randomSignal(sensorName, neuronIds)),
     )
  */
-export function compileSensorDescription(sensorDescription: string): Either<string, Observable<SensorOutput>> {
+export function compileSensorDescription(sensorDescription: string): Either<string, CompilerResult> {
     try {
         // attempts to compile the code
         const code = compiler.compileCode(sensorDescription);
@@ -51,14 +56,13 @@ export function compileSensorDescription(sensorDescription: string): Either<stri
             map: map,
             filter: filter,
             RegExp: RegExp,
-            // console: console
         };
         const tempVars = {};
 
         // executing the compiled sensor description yields an observable
-        const observable = code(context, tempVars);
+        const {neuronIds, observable} = code(context, tempVars);
         if (isObservable<SensorOutput>(observable)) {
-            return Either.right(observable);
+            return Either.right({neuronIds, observable});
         } else {
             return Either.left(
                 "Sensor description must return an Observable<{" +

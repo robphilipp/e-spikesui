@@ -58,18 +58,61 @@ export function saveSensors(path: string, codeSnippet: string): Promise<void> {
 }
 
 
-const initialSensors = String.raw`// add a code snippet to simulate the environment that sends signals to the 
-// spikes neural network. The code snippet must return an rx-js Observable which emits
-// SensorOutput ({sensorName: string; neuronIds: Array<string>; signal: {units: "µV" | "mV", value: number};})
+const initialSensors = String.raw`// Add a code snippet to simulate signals sent to input neurons. The code snippet
+// must return an object that holds an rx-js Observable of SensorOutput, and optionally, 
+// an array holding the input neurons to which the signals are sent. The result 
+// has the following shape:
+// {
+//    neuronIds?: Array<string>;
+//    observable: Observable<SensorOutput>;
+// }
+//
+// The SensorOutput has the following shape:
+// {
+//     sensorName: string;
+//     neuronIds: Array<string>;
+//     signal: {
+//         units: "µV" | "mV",
+//         value: number
+//     };
+// }
 // See https://rxjs-dev.firebaseapp.com/guide/observable
-function test(x) {
-    return 3 * x;
- }
- 
- const factor = 3
- 
- return interval(100).pipe(
-    filter(t => t % 3 === 0),
-    map(t => ${'\u0060'}${'\u0024'}{factor} x ${'\u0024'}{t} = ${'\u0024'}{factor * t}${'\u0060'})
- )
+
+function randomSignal(sensorName, neuronIds) {
+   const index = Math.floor(Math.random() * neuronIds.length);
+   return {
+      sensorName: sensorName,
+      neuronIds: [neuronIds[index]],
+      signal: {value: 1.05 * Math.random(), units: 'mV'}
+    //   signal: {value: 1.05, units: 'mV'}
+   }
+}
+
+const sensorName = 'test-sensors';
+const neuronIds = ['in-1', 'in-2', 'in-3', 'in-4'];
+
+const observable =  interval(50).pipe(
+   map(time => {
+       const output = randomSignal(sensorName, neuronIds);
+       console.log(output.signal.value);
+       return output;
+   }),
+)
+
+return {neuronIds, observable};
 `
+// const initialSensors = String.raw`// add a code snippet to simulate the environment that sends signals to the
+// // spikes neural network. The code snippet must return an rx-js Observable which emits
+// // SensorOutput ({sensorName: string; neuronIds: Array<string>; signal: {units: "µV" | "mV", value: number};})
+// // See https://rxjs-dev.firebaseapp.com/guide/observable
+// function test(x) {
+//     return 3 * x;
+//  }
+//
+//  const factor = 3
+//
+//  return interval(100).pipe(
+//     filter(t => t % 3 === 0),
+//     map(t => ${'\u0060'}${'\u0024'}{factor} x ${'\u0024'}{t} = ${'\u0024'}{factor * t}${'\u0060'})
+//  )
+// `

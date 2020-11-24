@@ -1,20 +1,29 @@
 import * as React from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {defaultCustomThemes, DefaultTheme} from './themes';
 import {RouteComponentProps, useHistory, useParams, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
-import {IconButton, ITheme, Stack, StackItem, TooltipHost} from '@fluentui/react';
 import {
-    SensorsLoadedAction,
-    SensorsSavedAction,
+    IconButton,
+    ITheme,
+    MessageBar,
+    MessageBarType,
+    Separator,
+    Stack,
+    StackItem,
+    TooltipHost
+} from '@fluentui/react';
+import {
     loadSensorsFrom,
     loadSensorsFromTemplate,
     saveSensors as persistEnvironment,
+    SensorsLoadedAction,
+    SensorsSavedAction,
     updateSensors,
 } from "../redux/actions/sensors";
-import {useEffect, useRef, useState} from "react";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import {remote} from "electron";
 import MonacoEditor from "./MonacoEditor";
@@ -99,6 +108,8 @@ function SensorsEditor(props: Props): JSX.Element {
     // a reference to the subscription to the observable used for testing
     const subscriptionRef = useRef<Subscription>();
 
+    const [message, setMessage] = useState<JSX.Element>();
+
     // when component mounts, sets the initial dimension of the editor and registers to listen
     // to window resize events. when component un-mounts, removes the window-resize event listener
     useEffect(
@@ -141,7 +152,9 @@ function SensorsEditor(props: Props): JSX.Element {
     useEffect(
         () => {
             keyboardEventRef.current = {path, templatePath, codeSnippet};
+
             setSensorObservable(undefined);
+            setExpressionState(ExpressionState.PRECOMPILED);
         },
         [path, templatePath, codeSnippet]
     );
@@ -250,15 +263,18 @@ function SensorsEditor(props: Props): JSX.Element {
      * returned observable to the observable ref
      */
     function handleCompile(): void {
+        setMessage(undefined);
         compileSensorDescription(codeSnippet)
-            .ifRight(observable => {
+            .ifRight(result => {
+                const {neuronIds, observable} = result;
+                console.log(neuronIds);
                 setSensorObservable(observable);
                 setExpressionState(ExpressionState.COMPILED);
             })
             .ifLeft(reason => {
                 console.log(reason);
-                setExpressionError(reason);
                 setExpressionState(ExpressionState.PRECOMPILED);
+                setMessage(errorMessage(reason));
             })
     }
 
@@ -347,9 +363,9 @@ function SensorsEditor(props: Props): JSX.Element {
      * Creates an evaluate button used to evaluate the sensor description
      * @return The button for evaluating the sensor description
      */
-    function evaluateButton(): JSX.Element {
+    function runSensorSimulationButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <TooltipHost content="Evaluate the sensor code">
+            <TooltipHost content="Run simulation of the sensor code">
                 <IconButton
                     iconProps={{iconName: 'sprint'}}
                     disabled={expressionState === ExpressionState.PRECOMPILED ||
@@ -366,9 +382,9 @@ function SensorsEditor(props: Props): JSX.Element {
      * Creates a stop button used to stop the evaluation of the sensor description code
      * @return The button for stopping the evaluation of the sensor description code
      */
-    function stopButton(): JSX.Element {
+    function stopSensorSimulationButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <TooltipHost content="Stop the sensor code evaluation">
+            <TooltipHost content="Stop the sensor code simulation">
                 <IconButton
                     iconProps={{iconName: 'stop'}}
                     disabled={expressionState !== ExpressionState.RUNNING}
@@ -378,6 +394,19 @@ function SensorsEditor(props: Props): JSX.Element {
         </div>
     }
 
+    function errorMessage(message: string): JSX.Element {
+        return (
+            <MessageBar
+                messageBarType={MessageBarType.error}
+                isMultiline={false}
+                onDismiss={() => setMessage(undefined)}
+                dismissButtonAriaLabel="Close"
+            >
+                {message}
+            </MessageBar>
+        )
+    }
+
     return (
         <div
             ref={editorRef}
@@ -385,6 +414,7 @@ function SensorsEditor(props: Props): JSX.Element {
             // set...but if it is, then you can use that.
             style={{height: window.innerHeight * 0.9, width: '100%'}}
         >
+            {message || <span/>}
             <div
                 style={{
                     marginLeft: 30,
@@ -400,9 +430,10 @@ function SensorsEditor(props: Props): JSX.Element {
                     {newButton()}
                     {saveButton()}
                     {loadButton()}
+                    <Separator/>
                     {compileButton()}
-                    {evaluateButton()}
-                    {stopButton()}
+                    {runSensorSimulationButton()}
+                    {stopSensorSimulationButton()}
                 </StackItem>
                 <StackItem>
                     <MonacoEditor
@@ -414,7 +445,7 @@ function SensorsEditor(props: Props): JSX.Element {
                         customThemes={customThemes}
                         value={codeSnippet}
                         options={editorOptions}
-                        onChange={(value: string) => onChanged(value)}
+                        onChange={onChanged}
                         editorDidMount={emptyFunction}
                     />
                 </StackItem>

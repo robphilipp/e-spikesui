@@ -29,6 +29,7 @@ import {remote} from "electron";
 import MonacoEditor from "./MonacoEditor";
 import {Observable, Subscription} from "rxjs";
 import {compileSensorDescription, SensorOutput} from "../sensors/compiler";
+import SensorSimulator from "../sensors/SensorSimulator";
 
 enum ExpressionState {
     PRECOMPILED = 'pre-compiled',
@@ -75,6 +76,7 @@ type Props = StateProps & DispatchProps & OwnProps;
 function SensorsEditor(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
+        itheme,
         codeSnippet,
         templatePath,
         onChanged,
@@ -94,6 +96,7 @@ function SensorsEditor(props: Props): JSX.Element {
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
+    const heightFractionRef = useRef(1.0);
 
     // the keyboard event listener holds a stale ref to the props, so we need to use a
     // reference that is updated for the event listener to use
@@ -107,6 +110,8 @@ function SensorsEditor(props: Props): JSX.Element {
     const [sensorObservable, setSensorObservable] = useState<Observable<SensorOutput>>();
     // a reference to the subscription to the observable used for testing
     const subscriptionRef = useRef<Subscription>();
+    const [showSimulation, setShowSimulation] = useState(false);
+
 
     const [message, setMessage] = useState<JSX.Element>();
 
@@ -166,7 +171,7 @@ function SensorsEditor(props: Props): JSX.Element {
     function editorDimensions(): Dimension {
         return {
             width: editorRef.current.offsetWidth,
-            height: editorRef.current.clientHeight
+            height: editorRef.current.clientHeight * heightFractionRef.current
         };
     }
 
@@ -283,12 +288,26 @@ function SensorsEditor(props: Props): JSX.Element {
             subscriptionRef.current?.unsubscribe();
             subscriptionRef.current = sensorObservable.subscribe(t => console.log(t));
             setExpressionState(ExpressionState.RUNNING);
+            handleShowSimulation();
         }
     }
 
     function handleStopSensorSimulation(): void {
         subscriptionRef.current?.unsubscribe();
         setExpressionState(ExpressionState.COMPILED);
+        handleHideSimulation();
+    }
+
+    function handleShowSimulation(): void {
+        heightFractionRef.current = 0.5;
+        setDimension(editorDimensions());
+        setShowSimulation(true);
+    }
+
+    function handleHideSimulation(): void {
+        heightFractionRef.current = 1.0;
+        setDimension(editorDimensions());
+        setShowSimulation(false);
     }
 
     /**
@@ -349,9 +368,9 @@ function SensorsEditor(props: Props): JSX.Element {
                 <IconButton
                     iconProps={{iconName: 'code'}}
                     disabled={(codeSnippet !== undefined && codeSnippet.length < 31) ||
-                        sensorObservable !== undefined ||
-                        expressionState === ExpressionState.RUNNING || 
-                        expressionState === ExpressionState.COMPILED
+                    sensorObservable !== undefined ||
+                    expressionState === ExpressionState.RUNNING ||
+                    expressionState === ExpressionState.COMPILED
                     }
                     onClick={handleCompile}
                 />
@@ -369,8 +388,8 @@ function SensorsEditor(props: Props): JSX.Element {
                 <IconButton
                     iconProps={{iconName: 'sprint'}}
                     disabled={expressionState === ExpressionState.PRECOMPILED ||
-                        expressionError !== undefined ||
-                        sensorObservable === undefined
+                    expressionError !== undefined ||
+                    sensorObservable === undefined
                     }
                     onClick={handleRunSensorSimulation}
                 />
@@ -435,20 +454,25 @@ function SensorsEditor(props: Props): JSX.Element {
                     {runSensorSimulationButton()}
                     {stopSensorSimulationButton()}
                 </StackItem>
-                <StackItem>
-                    <MonacoEditor
-                        editorId='spikes-env'
-                        width={dimension.width}
-                        height={dimension.height}
-                        language="javascript"
-                        theme={theme}
-                        customThemes={customThemes}
-                        value={codeSnippet}
-                        options={editorOptions}
-                        onChange={onChanged}
-                        editorDidMount={emptyFunction}
-                    />
-                </StackItem>
+                <Stack verticalFill>
+                    <StackItem>
+                        <MonacoEditor
+                            editorId='spikes-env'
+                            width={dimension.width}
+                            height={dimension.height}
+                            language="javascript"
+                            theme={theme}
+                            customThemes={customThemes}
+                            value={codeSnippet}
+                            options={editorOptions}
+                            onChange={onChanged}
+                            editorDidMount={emptyFunction}
+                        />
+                    </StackItem>
+                    {showSimulation && <StackItem>
+                        <SensorSimulator/>
+                    </StackItem>}
+                </Stack>
             </Stack>
         </div>
     )

@@ -11,6 +11,7 @@
 // {
 //     sensorName: string;
 //     neuronIds: Array<string>;
+//     time: number;
 //     signal: {
 //         units: "µV" | "mV",
 //         value: number
@@ -32,11 +33,7 @@ const sensorName = 'test-sensors';
 const neuronIds = ['in-1', 'in-2', 'in-3', 'in-4'];
 
 const observable =  interval(50).pipe(
-   map(time => {
-       const output = randomSignal(sensorName, neuronIds);
-       console.log(output.signal.value);
-       return output;
-   }),
+   map(() => randomSignal(sensorName, neuronIds)),
 )
 
 return {neuronIds, observable};

@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { useState } from 'react';
+import {Subscription} from "rxjs";
 
 interface Props {
-    sensorDescription: string;
+    subscription?: Subscription;
 }
 
-function SensorSimulator(props: Props): JSX.Element {
+export default function SensorSimulator(props: Props): JSX.Element {
     const {
-        sensorDescription
+        subscription
     } = props;
 
 
-    return <div/>
+    return <div>Some test text</div>
 }

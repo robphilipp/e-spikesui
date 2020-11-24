@@ -31,16 +31,18 @@ export interface CompilerResult {
         return {
             sensorName: sensorName,
             neuronIds: [neuronIds[index]],
-            signal: {value: 1.05, units: 'mV'}
+            signal: {value: 1.05 * Math.random(), units: 'mV'}
         }
     }
 
     const sensorName = 'test-sensors';
     const neuronIds = ['in-1', 'in-2', 'in-3', 'in-4'];
 
-    return interval(50).pipe(
-        map(time => randomSignal(sensorName, neuronIds)),
+    const observable =  interval(50).pipe(
+        map(() => randomSignal(sensorName, neuronIds)),
     )
+
+    return {neuronIds, observable};
  */
 export function compileSensorDescription(sensorDescription: string): Either<string, CompilerResult> {
     try {
@@ -49,7 +51,7 @@ export function compileSensorDescription(sensorDescription: string): Either<stri
 
         // exposes some basic javascript symbols
         compiler.expose('Math', 'console', 'String', 'Map', 'Set');
-        // adds additional sybols for rxjs and regular expressions, etc
+        // adds additional symbols for rxjs and regular expressions, etc
         const context = {
             interval: interval,
             pipe: pipe,

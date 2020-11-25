@@ -2,18 +2,32 @@ import {Either} from "prelude-ts";
 import {Observable, isObservable, interval, pipe} from "rxjs";
 import {map, filter} from 'rxjs/operators'
 import * as compiler from '@nx-js/compiler-util';
+import moment from "moment";
 
+/**
+ * The output from the sensor
+ */
 export interface SensorOutput {
+    // the name of the sensor
     sensorName: string;
+    // an array of neuron IDs to which this signal is sent
     neuronIds: Array<string>;
+    // the (optional) signal time (only really needed for simulating the sensor)
+    time?: number;
+    // the signal sent to the input neurons
     signal: {
+        value: number,
         units: "µV" | "mV",
-        value: number
     };
 }
 
+/**
+ * The result of compiling the sensor code snippet.
+ */
 export interface CompilerResult {
+    // an optional array of all the input neurons needed for simulating the sensor
     neuronIds?: Array<string>;
+    // the observable that generates the sensor signals for the input neurons
     observable: Observable<SensorOutput>;
 }
 
@@ -58,6 +72,8 @@ export function compileSensorDescription(sensorDescription: string): Either<stri
             map: map,
             filter: filter,
             RegExp: RegExp,
+            Date: Date,
+            moment: moment,
         };
         const tempVars = {};
 

@@ -2,9 +2,11 @@ import * as React from 'react';
 import {FormEvent, useEffect, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
 import {ChartData, regexFilter, Series, seriesFrom, RasterChart} from "stream-charts";
-import {Checkbox, ITheme, Stack, TextField} from "@fluentui/react";
+import {Checkbox, ITheme, Layer, Separator, Stack, TextField} from "@fluentui/react";
 
-const emptyFunction = () => {return;};
+const emptyFunction = () => {
+    return;
+};
 
 enum Control {
     TRACKER = 'tracker',
@@ -29,11 +31,12 @@ export default function SensorSimulation(props: Props): JSX.Element {
         observable,
         shouldSubscribe,
         itheme,
-        heightPerNeuron = 25,
+        heightPerNeuron = 20,
         onSubscribe = emptyFunction
     } = props;
 
-    const [neuronList, setNeuronList] = useState<Array<Series>>(seriesList(neuronIds));
+    // const [neuronList, setNeuronList] = useState<Array<Series>>(seriesList(neuronIds));
+    const [neuronList, setNeuronList] = useState<Array<Series>>([]);
     const [selectedControl, setSelectedControl] = useState<string>('');
     const [filterValue, setFilterValue] = useState<string>('');
     const [seriesFilter, setSeriesFilter] = useState<RegExp>(new RegExp(''));
@@ -63,10 +66,9 @@ export default function SensorSimulation(props: Props): JSX.Element {
      * unselected
      */
     function handleControlSelection(name: Control, checked: boolean): void {
-        if(checked) {
+        if (checked) {
             setSelectedControl(name);
-        }
-        else if(selectedControl === name) {
+        } else if (selectedControl === name) {
             setSelectedControl('');
         }
     }
@@ -80,58 +82,55 @@ export default function SensorSimulation(props: Props): JSX.Element {
         regexFilter(updatedFilter).ifSome((regex: RegExp) => setSeriesFilter(regex));
     }
 
-    if(neuronList.length === 0) {
+    if (neuronList.length === 0) {
         return <div/>;
     }
     return (
-        <Stack tokens={{childrenGap: 20}}>
-            <Stack horizontal tokens={{childrenGap: 20}}>
-                <div style={{paddingTop: 7}}>
+        <div style={{padding: 10}}>
+            <Stack tokens={{childrenGap: 20}}>
+                <Separator/>
+                <Stack horizontal tokens={{childrenGap: 20}}>
+                    <TextField
+                        prefix="Filter"
+                        suffix="RegEx"
+                        value={filterValue}
+                        onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
+                    />
                     <Checkbox
                         label="Tracker"
                         checked={selectedControl === Control.TRACKER}
                         onChange={(_: FormEvent<HTMLInputElement>, checked: boolean) => handleControlSelection(Control.TRACKER, checked)}
                     />
-                </div>
-                <div style={{paddingTop: 7}}>
                     <Checkbox
                         label="Tooltip"
                         checked={selectedControl === Control.TOOLTIP}
                         onChange={(_: FormEvent<HTMLInputElement>, checked: boolean) => handleControlSelection(Control.TOOLTIP, checked)}
                     />
-                </div>
-                <div style={{paddingTop: 7}}>
                     <Checkbox
                         label="Magnifier"
                         checked={selectedControl === Control.MAGNIFIER}
                         onChange={(_: FormEvent<HTMLInputElement>, checked: boolean) => handleControlSelection(Control.MAGNIFIER, checked)}
                     />
-                </div>
-                <TextField
-                    prefix="Filter"
-                    suffix="RegEx"
-                    value={filterValue}
-                    onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
-                />
+                </Stack>
+                <Stack.Item>
+                    <RasterChart
+                        height={neuronList.length * heightPerNeuron + 60}
+                        seriesList={neuronList}
+                        seriesObservable={observable}
+                        shouldSubscribe={shouldSubscribe}
+                        onSubscribe={subscription => onSubscribe(subscription)}
+                        timeWindow={5000}
+                        windowingTime={100}
+                        margin={{top: 15, right: 20, bottom: 30, left: 30}}
+                        tooltip={{visible: selectedControl === Control.TOOLTIP}}
+                        magnifier={{visible: selectedControl === Control.MAGNIFIER, magnification: 5}}
+                        tracker={{visible: selectedControl === Control.TRACKER}}
+                        filter={seriesFilter}
+                        backgroundColor={itheme.palette.white}
+                        svgStyle={{width: '95%'}}
+                    />
+                </Stack.Item>
             </Stack>
-            <Stack.Item>
-                <RasterChart
-                    height={neuronList.length * heightPerNeuron + 60}
-                    seriesList={neuronList}
-                    seriesObservable={observable}
-                    shouldSubscribe={shouldSubscribe}
-                    onSubscribe={subscription => onSubscribe(subscription)}
-                    timeWindow={5000}
-                    windowingTime={100}
-                    margin={{top: 30, right: 20, bottom: 30, left: 30}}
-                    tooltip={{visible: selectedControl === Control.TOOLTIP}}
-                    magnifier={{visible: selectedControl === Control.MAGNIFIER, magnification: 5}}
-                    tracker={{visible: selectedControl === Control.TRACKER}}
-                    filter={seriesFilter}
-                    backgroundColor={itheme.palette.white}
-                    svgStyle={{width: '95%'}}
-                />
-            </Stack.Item>
-        </Stack>
+        </div>
     );
 }

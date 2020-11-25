@@ -9,6 +9,8 @@ import {connect} from "react-redux";
 import {
     IconButton,
     ITheme,
+    Layer,
+    LayerHost,
     MessageBar,
     MessageBarType,
     Separator,
@@ -117,7 +119,6 @@ function SensorsEditor(props: Props): JSX.Element {
     // a reference to the subscription to the observable used for testing
     const subscriptionRef = useRef<Subscription>();
     const [showSimulation, setShowSimulation] = useState(false);
-
 
     const [message, setMessage] = useState<JSX.Element>();
 
@@ -314,17 +315,9 @@ function SensorsEditor(props: Props): JSX.Element {
                 }))
             );
             setChartObservable(observable);
-            // subscriptionRef.current?.unsubscribe();
-            // subscriptionRef.current = sensorObservable.subscribe(t => console.log(t));
             setExpressionState(ExpressionState.RUNNING);
             handleShowSimulation();
         }
-        // if (sensorObservable && ExpressionState.COMPILED) {
-        //     // subscriptionRef.current?.unsubscribe();
-        //     // subscriptionRef.current = sensorObservable.subscribe(t => console.log(t));
-        //     setExpressionState(ExpressionState.RUNNING);
-        //     handleShowSimulation();
-        // }
     }
 
     function handleStopSensorSimulation(): void {
@@ -509,18 +502,17 @@ function SensorsEditor(props: Props): JSX.Element {
                             onChange={onChanged}
                             editorDidMount={emptyFunction}
                         />
+                        {showSimulation && <LayerHost id='chart-layer'/>}
                     </StackItem>
-                    {showSimulation && <StackItem>
-                        <SensorSimulation
-                            itheme={itheme}
-                            neuronIds={neuronIds}
-                            observable={chartObservable}
-                            shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                            onSubscribe={subscription => subscriptionRef.current = subscription}
-                        />
-                    </StackItem>}
                 </Stack>
             </Stack>
+                {showSimulation && <Layer hostId="chart-layer"><SensorSimulation
+                        itheme={itheme}
+                        neuronIds={neuronIds}
+                        observable={chartObservable}
+                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                        onSubscribe={subscription => subscriptionRef.current = subscription}
+                    /></Layer>}
         </div>
     )
 

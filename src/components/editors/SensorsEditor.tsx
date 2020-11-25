@@ -423,6 +423,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 <IconButton
                     iconProps={{iconName: 'sprint'}}
                     disabled={expressionState === ExpressionState.PRECOMPILED ||
+                    expressionState === ExpressionState.RUNNING ||
                     expressionError !== undefined ||
                     sensorObservable === undefined
                     }

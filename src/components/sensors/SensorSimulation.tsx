@@ -123,7 +123,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     onSubscribe={subscription => onSubscribe(subscription)}
                     timeWindow={5000}
                     windowingTime={100}
-                    margin={{top: 30, right: 20, bottom: 30, left: 75}}
+                    margin={{top: 30, right: 20, bottom: 30, left: 30}}
                     tooltip={{visible: selectedControl === Control.TOOLTIP}}
                     magnifier={{visible: selectedControl === Control.MAGNIFIER, magnification: 5}}
                     tracker={{visible: selectedControl === Control.TRACKER}}

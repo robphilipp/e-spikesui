@@ -87,15 +87,8 @@ export default function SensorSimulation(props: Props): JSX.Element {
     }
     return (
         <div style={{padding: 10}}>
-            <Stack tokens={{childrenGap: 20}}>
-                <Separator/>
+            <Stack tokens={{childrenGap: 10}}>
                 <Stack horizontal tokens={{childrenGap: 20}}>
-                    <TextField
-                        prefix="Filter"
-                        suffix="RegEx"
-                        value={filterValue}
-                        onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
-                    />
                     <Checkbox
                         label="Tracker"
                         checked={selectedControl === Control.TRACKER}
@@ -121,7 +114,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         onSubscribe={subscription => onSubscribe(subscription)}
                         timeWindow={5000}
                         windowingTime={100}
-                        margin={{top: 15, right: 20, bottom: 30, left: 30}}
+                        margin={{top: 15, right: 20, bottom: 35, left: 30}}
                         tooltip={{visible: selectedControl === Control.TOOLTIP}}
                         magnifier={{visible: selectedControl === Control.MAGNIFIER, magnification: 5}}
                         tracker={{visible: selectedControl === Control.TRACKER}}
@@ -130,6 +123,14 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         svgStyle={{width: '95%'}}
                     />
                 </Stack.Item>
+                <Stack horizontal tokens={{childrenGap: 20}}>
+                    <TextField
+                        prefix="Filter"
+                        suffix="RegEx"
+                        value={filterValue}
+                        onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
+                    />
+                </Stack>
             </Stack>
         </div>
     );

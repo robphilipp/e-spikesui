@@ -316,23 +316,45 @@ function SensorsEditor(props: Props): JSX.Element {
             );
             setChartObservable(observable);
             setExpressionState(ExpressionState.RUNNING);
-            handleShowSimulation();
+            showSimulationLayer();
         }
     }
 
+    /**
+     * Handles stopping the sensor simulation, but keeps the simulation window open
+     */
     function handleStopSensorSimulation(): void {
         subscriptionRef.current?.unsubscribe();
-        setExpressionState(ExpressionState.COMPILED);
-        // handleHideSimulation();
+        // only want to set the expression state to compiled if it is running. it is possible
+        // that the simulation has been stopped (expression state is compiled), and then edited
+        // while the simulation window is open, and in that case, we want to leave the expression
+        // state as pre-compiled
+        if (expressionState === ExpressionState.RUNNING) {
+            setExpressionState(ExpressionState.COMPILED);
+        }
     }
 
-    function handleShowSimulation(): void {
+    /**
+     * Handles hiding the sensor simulation output. Stops the simulation if it is running.
+     */
+    function handleHideSimulation(): void {
+        handleStopSensorSimulation();
+        hideSimulationLayer();
+    }
+
+    /**
+     * Sets the state so that the sensor simulation window is visible
+     */
+    function showSimulationLayer(): void {
         heightFractionRef.current = 0.5;
         setDimension(editorDimensions());
         setShowSimulation(true);
     }
 
-    function handleHideSimulation(): void {
+    /**
+     * Sets the state so that the sensor simulation window is hidden
+     */
+    function hideSimulationLayer(): void {
         heightFractionRef.current = 1.0;
         setDimension(editorDimensions());
         setShowSimulation(false);
@@ -443,6 +465,21 @@ function SensorsEditor(props: Props): JSX.Element {
     }
 
     /**
+     * Creates the button to hide the sensor simulation layer.
+     * @return The button for hiding the sensor simulation layer.
+     */
+    function hideSimulationButton(): JSX.Element {
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <TooltipHost content="Hide the sensor simulation">
+                <IconButton
+                    iconProps={{iconName: 'minusCircle'}}
+                    onClick={handleHideSimulation}
+                />
+            </TooltipHost>
+        </div>
+    }
+
+    /**
      * Message bar for displaying errors
      * @param message The error message
      * @return A `MessageBar` with an error message
@@ -487,6 +524,7 @@ function SensorsEditor(props: Props): JSX.Element {
                     {compileButton()}
                     {runSensorSimulationButton()}
                     {stopSensorSimulationButton()}
+                    {showSimulation && hideSimulationButton()}
                 </StackItem>
                 <Stack>
                     <StackItem>
@@ -506,16 +544,19 @@ function SensorsEditor(props: Props): JSX.Element {
                     </StackItem>
                 </Stack>
             </Stack>
-                {showSimulation && <Layer hostId="chart-layer"><SensorSimulation
-                        itheme={itheme}
-                        neuronIds={neuronIds}
-                        observable={chartObservable}
-                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                        onSubscribe={subscription => subscriptionRef.current = subscription}
-                    /></Layer>}
+            {showSimulation &&
+            <Layer hostId="chart-layer">
+                <Separator>Sensor Simulation</Separator>
+                <SensorSimulation
+                    itheme={itheme}
+                    neuronIds={neuronIds}
+                    observable={chartObservable}
+                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                    onSubscribe={subscription => subscriptionRef.current = subscription}
+                />
+            </Layer>}
         </div>
     )
-
 }
 
 /*

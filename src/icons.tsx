@@ -19,7 +19,7 @@ import {
     faPlus,
     faTimes,
     faChevronDown,
-    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare, faExclamationCircle, faWaveSquare, faBrain, faCode
+    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare, faExclamationCircle, faWaveSquare, faBrain, faCode, faMinusCircle
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -60,6 +60,7 @@ export default function prepareIcons(): void {
             'add': <FontAwesomeIcon icon={faPlus}/>,
             'statuserrorfull': <FontAwesomeIcon icon={faTimes}/>,
             'close': <FontAwesomeIcon icon={faTimes}/>,
+            'minusCircle': <FontAwesomeIcon icon={faMinusCircle}/>,
             'cancel': <FontAwesomeIcon icon={faTimes}/>,
             'chevrondown': <FontAwesomeIcon icon={faChevronDown}/>,
             'completedsolid': <FontAwesomeIcon icon={faCheckCircle}/>,

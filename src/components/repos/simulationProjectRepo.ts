@@ -3,6 +3,7 @@ import fs from "fs";
 export interface SimulationProject {
     simulationName: string;
     timeFactor: number;
+    simulationDuration: number;
     networkFilePath: string;
     sensorFilePath: string;
 }
@@ -36,7 +37,7 @@ export function readSimulationProject(path: string): Promise<SimulationProject> 
  * @param project The simulation project
  * @return An empty promise
  */
-export function writeSimulationProject(path: string, project: SimulationProject): Promise<void> {
+export function saveSimulationProject(path: string, project: SimulationProject): Promise<void> {
     return new Promise((resolve, reject) => {
         fs.writeFile(path, JSON.stringify(project), (error) => {
             if (error) {

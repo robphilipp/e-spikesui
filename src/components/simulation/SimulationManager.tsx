@@ -4,17 +4,25 @@ import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
 import {withRouter} from "react-router-dom";
+import {SimulationProject} from "../repos/simulationProjectRepo";
+import {updateSimulationProject} from "../redux/actions/simulationProject";
 
 interface OwnProps {
 
 }
 
 interface StateProps {
-
+    simulationName?: string;
+    timeFactor: number;
+    simulationDuration: number;
+    networkDescriptionPath?: string;
+    sensorDescriptionPath?: string;
+    modified: boolean;
 }
 
 interface DispatchProps {
-
+    // onLoaded: (project: SimulationProject) => void;
+    onChanged: (project: SimulationProject) => void;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -35,10 +43,12 @@ function SimulationManager(props: Props): JSX.Element {
  * @param state The updated application state
  */
 const mapStateToProps = (state: AppState): StateProps => ({
-    // codeSnippet: state.sensorDescription.codeSnippet,
-    // modified: state.sensorDescription.modified,
-    // path: state.sensorDescription.path,
-    // templatePath: state.settings.environment.templatePath
+    simulationName: state.simulationProject.name,
+    timeFactor: state.simulationProject.timeFactor,
+    simulationDuration: state.simulationProject.simulationDuration,
+    networkDescriptionPath: state.simulationProject.networkDescriptionPath,
+    sensorDescriptionPath: state.simulationProject.sensorDescriptionPath,
+    modified: state.simulationProject.modified,
 });
 
 /**
@@ -49,7 +59,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    // onChanged: (codeSnippet: string) => dispatch(updateSensors(codeSnippet)),
+    onChanged: (project: SimulationProject) => dispatch(updateSimulationProject(project)),
     // onLoadTemplate: (path: string) => dispatch(loadSensorsFromTemplate(path)),
     // onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
     // onSave: (path: string, description: string) => dispatch(persistEnvironment(path, description)),

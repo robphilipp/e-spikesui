@@ -8,7 +8,7 @@ import {ThunkAction} from "redux-thunk";
 import {
     loadSensorsOrInitialize,
     readSensors,
-    saveSensors as persitEnvironment
+    saveSensors as persistEnvironment
 } from "../../repos/sensorRepo";
 
 export const SENSORS_LOADED = 'sensors-loaded';
@@ -65,6 +65,6 @@ export function loadSensorsFromTemplate(path: string): ThunkAction<Promise<Senso
 }
 
 export function saveSensors(path: string, codeSnippet: string): ThunkAction<Promise<SensorsSavedAction>, unknown, unknown, SensorsSavedAction> {
-    return dispatch => persitEnvironment(path, codeSnippet)
+    return dispatch => persistEnvironment(path, codeSnippet)
         .then(() => dispatch(successAction(SENSORS_SAVED, {codeSnippet, path})));
 }

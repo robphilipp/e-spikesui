@@ -1,6 +1,7 @@
 import {SettingsAction} from "./settings";
 import {NetworkDescriptionAction} from "./networkDescription";
 import {SensorsAction} from "./sensors";
+import {SimulationProjectAction} from "./simulationProject";
 // import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 // import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
 // import {NetworkVisualizationAction} from "./networkVisualization";
@@ -46,6 +47,7 @@ export type ApplicationAction = ErrorMessageSetAction
     // | NetworkVisualizationAction
     | NetworkDescriptionAction
     | SensorsAction
+    | SimulationProjectAction
     ;
 
 /**

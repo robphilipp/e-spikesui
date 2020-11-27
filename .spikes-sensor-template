@@ -1,31 +1,38 @@
 // Add a code snippet to simulate signals sent to input neurons. The code snippet
 // must return an object that holds an rx-js Observable of SensorOutput, and optionally, 
-// an array holding the input neurons to which the signals are sent. The result 
+// an array holding the input neurons to which signals are sent. The neuronIds array
+// is only necessary if you would like to run the sensor simulation to see the signal
+// time and values. The result 
 // has the following shape:
 // {
 //    neuronIds?: Array<string>;
 //    observable: Observable<SensorOutput>;
 // }
 //
-// The SensorOutput has the following shape:
+// The SensorOutput holds the sensor name, the IDs of the neurons to which the current
+// signal is being sent, an optional signal time (needed only for the simulation), and
+// the signal, which has a value and the units associated with that value. The sensor
+// output has the following shape:
 // {
 //     sensorName: string;
 //     neuronIds: Array<string>;
-//     time: number;
+//     time?: number;
 //     signal: {
 //         units: "µV" | "mV",
 //         value: number
 //     };
 // }
+//
 // See https://rxjs-dev.firebaseapp.com/guide/observable
 
 function randomSignal(sensorName, neuronIds) {
    const index = Math.floor(Math.random() * neuronIds.length);
    return {
       sensorName: sensorName,
+      time: moment().valueOf(),
       neuronIds: [neuronIds[index]],
       signal: {value: 1.05 * Math.random(), units: 'mV'}
-    //   signal: {value: 1.05, units: 'mV'}
+    //   signal: {value: 1.05, units: 'mV'} 
    }
 }
 
@@ -33,7 +40,7 @@ const sensorName = 'test-sensors';
 const neuronIds = ['in-1', 'in-2', 'in-3', 'in-4'];
 
 const observable =  interval(50).pipe(
-   map(() => randomSignal(sensorName, neuronIds)),
+   map(index => randomSignal(sensorName, neuronIds)),
 )
 
 return {neuronIds, observable};

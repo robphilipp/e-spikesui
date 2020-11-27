@@ -570,7 +570,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     codeSnippet: state.sensorDescription.codeSnippet,
     modified: state.sensorDescription.modified,
     path: state.sensorDescription.path,
-    templatePath: state.settings.environment.templatePath
+    templatePath: state.settings.sensorDescription.templatePath
 });
 
 /**
@@ -587,6 +587,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onSave: (path: string, description: string) => dispatch(persistEnvironment(path, description)),
 });
 
-const connectedEnvironmentEditor = connect(mapStateToProps, mapDispatchToProps)(SensorsEditor);
+const connectedSensorEditor = connect(mapStateToProps, mapDispatchToProps)(SensorsEditor);
 
-export default withRouter(connectedEnvironmentEditor);
+export default withRouter(connectedSensorEditor);

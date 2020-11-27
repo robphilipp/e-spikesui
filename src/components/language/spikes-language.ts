@@ -1,6 +1,6 @@
 import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import {spikesTokens} from "./spikes-tokens";
-import {spikesLanguage} from "./spikes_language-config";
+import {spikesLanguage} from "./spikes-language-config";
 import {spikesCompletions} from "./spikes-completions";
 import {spikesHovers} from "./spikes-hover";
 

@@ -36,6 +36,7 @@ import {
     SensorsSavedAction, loadSensorsFrom,
     loadSensorsFromTemplate, saveSensors
 } from "./redux/actions/sensors";
+import SimulationManager from "./simulation/SimulationManager";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -65,10 +66,10 @@ interface StateProps {
     networkDescriptionPath: string;
     networkDescriptionModified: boolean;
     // environment, path, template path, and modification state
-    environmentTemplatePath: string;
-    environment: string;
-    environmentPath: string;
-    environmentModified: boolean;
+    sensorDescriptionTemplatePath: string;
+    sensorDescription: string;
+    sensorDescriptionPath: string;
+    sensorDescriptionModified: boolean;
 }
 
 interface DispatchProps {
@@ -81,9 +82,9 @@ interface DispatchProps {
     onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onSaveNetworkDescription: (path: string, description: string) => Promise<NetworkDescriptionSavedAction>;
 
-    onLoadEnvironmentTemplate: (path: string) => Promise<SensorsLoadedAction>;
-    onLoadEnvironment: (path: string) => Promise<SensorsLoadedAction>;
-    onSaveEnvironment: (path: string, codeSnippet: string) => Promise<SensorsSavedAction>;
+    onLoadSensorDescriptionTemplate: (path: string) => Promise<SensorsLoadedAction>;
+    onLoadSensorDescription: (path: string) => Promise<SensorsLoadedAction>;
+    onSaveSensorDescription: (path: string, codeSnippet: string) => Promise<SensorsSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -105,14 +106,14 @@ function Main(props: Props): JSX.Element {
         onLoadNetworkDescription,
         onSaveNetworkDescription,
 
-        environmentTemplatePath,
-        environment,
-        environmentPath,
-        environmentModified,
+        sensorDescriptionTemplatePath,
+        sensorDescription,
+        sensorDescriptionPath,
+        sensorDescriptionModified,
 
-        onLoadEnvironmentTemplate,
-        onLoadEnvironment,
-        onSaveEnvironment,
+        onLoadSensorDescriptionTemplate,
+        onLoadSensorDescription,
+        onSaveSensorDescription,
     } = props;
 
     // react-router history
@@ -368,7 +369,7 @@ function Main(props: Props): JSX.Element {
      * Handles editing the currently loaded environment code-snippet
      */
     function handleEditSensor(): void {
-        history.push(`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(environmentPath)}`)
+        history.push(`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(sensorDescriptionPath)}`)
     }
 
     /**
@@ -377,8 +378,8 @@ function Main(props: Props): JSX.Element {
      * new code snippet.
      */
     function handleNewSensor(): void {
-        onLoadEnvironmentTemplate(environmentTemplatePath)
-            .then(() => history.push((`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(environmentTemplatePath)}`)));
+        onLoadSensorDescriptionTemplate(sensorDescriptionTemplatePath)
+            .then(() => history.push((`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(sensorDescriptionTemplatePath)}`)));
     }
 
     /**
@@ -406,8 +407,8 @@ function Main(props: Props): JSX.Element {
      * dialog
      */
     function handleSaveSensor(): void {
-        if (environmentPath !== environmentTemplatePath) {
-            onSaveEnvironment(environmentPath, environment)
+        if (sensorDescriptionPath !== sensorDescriptionTemplatePath) {
+            onSaveSensorDescription(sensorDescriptionPath, sensorDescription)
                 // todo add an alert
                 .then(() => console.log('saved'));
         } else {
@@ -422,7 +423,7 @@ function Main(props: Props): JSX.Element {
     function handleSaveSensorAs(): void {
         remote.dialog
             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-            .then(response => onSaveEnvironment(response.filePath, environment)
+            .then(response => onSaveSensorDescription(response.filePath, sensorDescription)
                 // todo handle the success and failure
                 .then(() => history.push(`${AppPath.SENSOR_EDITOR}/${encodeURIComponent(response.filePath)}`))
             );
@@ -459,8 +460,11 @@ function Main(props: Props): JSX.Element {
             <StackItem>
                 <Switch>
                     <Route
-                        path="/simulation"
-                        render={(renderProps) => <div>Simulation</div>}
+                        path={`${AppPath.SIMULATION}/:simulationProjectPath`}
+                        render={(renderProps) =>
+                            <SimulationManager
+                            />
+                        }
                     />
                     <Route
                         path={`${AppPath.NETWORK_EDITOR}/:networkDescriptionPath`}
@@ -515,10 +519,10 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     networkDescriptionPath: state.networkDescription.path,
     networkDescriptionModified: state.networkDescription.modified,
 
-    environmentTemplatePath: state.settings.environment.templatePath,
-    environment: state.sensorDescription.codeSnippet,
-    environmentPath: state.sensorDescription.path,
-    environmentModified: state.sensorDescription.modified,
+    sensorDescriptionTemplatePath: state.settings.sensorDescription.templatePath,
+    sensorDescription: state.sensorDescription.codeSnippet,
+    sensorDescriptionPath: state.sensorDescription.path,
+    sensorDescriptionModified: state.sensorDescription.modified,
 
 });
 
@@ -539,9 +543,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
     onSaveNetworkDescription: (path: string, description: string) => dispatch(persistNetworkDescription(path, description)),
 
-    onLoadEnvironmentTemplate: (path: string) => dispatch(loadSensorsFromTemplate(path)),
-    onLoadEnvironment: (path: string) => dispatch(loadSensorsFrom(path)),
-    onSaveEnvironment: (path: string, codeSnippet: string) => dispatch(saveSensors(path, codeSnippet)),
+    onLoadSensorDescriptionTemplate: (path: string) => dispatch(loadSensorsFromTemplate(path)),
+    onLoadSensorDescription: (path: string) => dispatch(loadSensorsFrom(path)),
+    onSaveSensorDescription: (path: string, codeSnippet: string) => dispatch(saveSensors(path, codeSnippet)),
 });
 
 const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)

@@ -27,7 +27,7 @@ import {
     changeServerSettings,
     changeTheme,
     hideSettingsPanel,
-    showSettingsPanel, updateNetworkDescriptionTemplatePath
+    showSettingsPanel, updateNetworkDescriptionTemplatePath, updateSensorDescriptionTemplatePath
 } from "../redux/actions/settings";
 import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
@@ -38,7 +38,7 @@ import {NetworkDescriptionSettings} from "./networkDescriptionSettings";
 import TemplateSettingsEditor from "./TemplateSettingsEditor";
 import TemplateSettings from "./templateSettings";
 import {saveSettingsAsync} from "../repos/appSettingsRepo";
-import {EnvironmentSettings} from "./environmentSettings";
+import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -61,7 +61,7 @@ interface StateProps {
     kafkaSettings: KafkaSettings;
     templateSettings: TemplateSettings;
     networkDescriptionSettings: NetworkDescriptionSettings;
-    environmentSettings: EnvironmentSettings;
+    environmentSettings: SensorDescriptionSettings;
 }
 
 interface DispatchProps {
@@ -206,8 +206,8 @@ function SettingsPanel(props: Props): JSX.Element {
             themeName: name,
             server: serverSettings,
             kafka: kafkaSettings,
-            networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescription},
-            sensor: {...environmentSettings, templatePath: templateSettings.environment},
+            networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescriptionPath},
+            sensorDescription: {...environmentSettings, templatePath: templateSettings.sensorDescriptionPath},
         }
         setSaving(true);
         saveSettingsAsync(newSettings)
@@ -343,10 +343,10 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
         serverSettings: state.settings.server,
         kafkaSettings: state.settings.kafka,
         networkDescriptionSettings: state.settings.networkDescription,
-        environmentSettings: state.settings.environment,
+        environmentSettings: state.settings.sensorDescription,
         templateSettings: {
-            networkDescription: state.settings.networkDescription.templatePath,
-            environment: state.settings.environment.templatePath,
+            networkDescriptionPath: state.settings.networkDescription.templatePath,
+            sensorDescriptionPath: state.settings.sensorDescription.templatePath,
         }
     }
 }
@@ -365,10 +365,9 @@ function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, Applicati
         onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
         onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings)),
         onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings)),
-        // todo split into two methods, one for network description and one for environment
         onChangeTemplateSettings: (settings: TemplateSettings) => {
-            dispatch(updateNetworkDescriptionTemplatePath(settings.networkDescription));
-            // todo dispatch to environment settings
+            dispatch(updateNetworkDescriptionTemplatePath(settings.networkDescriptionPath));
+            dispatch(updateSensorDescriptionTemplatePath(settings.sensorDescriptionPath));
         },
     }
 }

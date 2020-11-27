@@ -4,14 +4,14 @@ import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../.
 import {
     CHANGE_THEME,
     KAFKA_SETTINGS_CHANGED,
-    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED, SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED,
     SettingsAction
 } from "../actions/settings";
 import {KafkaSettings} from "../../settings/kafkaSettings";
 import {loadOrInitializeSetting} from "../../settings/appSettings";
 import ServerSettings from "../../settings/serverSettings";
 import {NetworkDescriptionSettings} from "../../settings/networkDescriptionSettings";
-import {EnvironmentSettings} from "../../settings/environmentSettings";
+import {SensorDescriptionSettings} from "../../settings/sensorDescriptionSettings";
 
 /**
  * The state holding the application settings
@@ -23,7 +23,7 @@ export interface SettingsState {
     server: ServerSettings;
     kafka: KafkaSettings;
     networkDescription: NetworkDescriptionSettings;
-    environment: EnvironmentSettings;
+    sensorDescription: SensorDescriptionSettings;
 }
 
 /**
@@ -39,7 +39,7 @@ function initialSettings(): SettingsState {
         server: settings.server,
         kafka: settings.kafka,
         networkDescription: settings.networkDescription,
-        environment: settings.sensor
+        sensorDescription: settings.sensorDescription,
     }
 }
 
@@ -69,7 +69,13 @@ export function settingsReducer(state = initialSettings(), action: SettingsActio
         case NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED:
             return {
                 ...state,
-                networkDescription: action.networkDescriptionSettings
+                networkDescription: action.networkDescriptionSettings,
+            };
+
+        case SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED:
+            return {
+                ...state,
+                sensorDescription: action.sensorDescriptionSettings,
             };
 
         default:

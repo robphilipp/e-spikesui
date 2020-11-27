@@ -2,7 +2,7 @@ import * as React from 'react';
 import {FormEvent, useEffect, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
 import {ChartData, regexFilter, Series, seriesFrom, RasterChart} from "stream-charts";
-import {Checkbox, ITheme, Layer, Separator, Stack, TextField} from "@fluentui/react";
+import {Checkbox, ITheme, Stack, TextField} from "@fluentui/react";
 
 const emptyFunction = () => {
     return;

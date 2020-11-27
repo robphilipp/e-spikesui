@@ -18,7 +18,8 @@
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
-    }
+    },
+    "import/ignore": ["node_modules"]
   },
   "overrides": [
     {

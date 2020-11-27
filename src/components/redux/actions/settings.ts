@@ -9,12 +9,14 @@
 import {KafkaSettings} from "../../settings/kafkaSettings";
 import ServerSettings from "../../settings/serverSettings";
 import {NetworkDescriptionSettings} from "../../settings/networkDescriptionSettings";
+import {SensorDescriptionSettings} from "../../settings/sensorDescriptionSettings";
 
 export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";
 export const SERVER_SETTINGS_CHANGED = "server-settings-changed";
 export const KAFKA_SETTINGS_CHANGED = "kafka-settings-changed";
 export const NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED = "network-description-template-path-changed";
+export const SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED = "sensor-description-template-path-changed";
 
 /*
  |
@@ -53,11 +55,17 @@ export interface NetworkDescriptionTemplatePathChangeAction {
     networkDescriptionSettings: NetworkDescriptionSettings;
 }
 
+export interface SensorDescriptionTemplatePathChangeAction {
+    type: typeof SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED;
+    sensorDescriptionSettings: SensorDescriptionSettings;
+}
+
 export type SettingsAction = ChangeThemeAction
     | SettingsPanelVisibleAction
     | ServerSettingsChangeAction
     | KafkaSettingsChangeAction
     | NetworkDescriptionTemplatePathChangeAction
+    | SensorDescriptionTemplatePathChangeAction
     ;
 
 
@@ -135,5 +143,17 @@ export function updateNetworkDescriptionTemplatePath(path: string): NetworkDescr
     return {
         type: NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED,
         networkDescriptionSettings: {templatePath: path}
+    }
+}
+
+/**
+ * Action to update the path to the sensor-description template
+ * @param path The new path to the template
+ * @return The action representing the change to the path
+ */
+export function updateSensorDescriptionTemplatePath(path: string): SensorDescriptionTemplatePathChangeAction {
+    return {
+        type: SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+        sensorDescriptionSettings: {templatePath: path}
     }
 }

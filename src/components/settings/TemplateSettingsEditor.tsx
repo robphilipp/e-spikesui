@@ -22,8 +22,8 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
         onChange
     } = props;
 
-    const [networkDescriptionError, setNetworkDescriptionError] = useState<string>(errorMessage(settings.networkDescription, Setting.NETWORK_DESCRIPTION));
-    const [environmentError, setEnvironmentError] = useState<string>(errorMessage(settings.environment, Setting.ENVIRONMENT));
+    const [networkDescriptionError, setNetworkDescriptionError] = useState<string>(errorMessage(settings.networkDescriptionPath, Setting.NETWORK_DESCRIPTION));
+    const [environmentError, setEnvironmentError] = useState<string>(errorMessage(settings.sensorDescriptionPath, Setting.ENVIRONMENT));
 
     /**
      * Returns an error message if the hostname or IP are not valid, and an empty string if the
@@ -44,9 +44,9 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
      * @param event The change event
      * @param path The file path of the network description template
      */
-    function handleNetworkDescriptionChange(event: FormEvent<HTMLInputElement>, path: string = settings.networkDescription): void {
+    function handleNetworkDescriptionChange(event: FormEvent<HTMLInputElement>, path: string = settings.networkDescriptionPath): void {
         setNetworkDescriptionError(errorMessage(path, Setting.NETWORK_DESCRIPTION))
-        onChange({...settings, networkDescription: path})
+        onChange({...settings, networkDescriptionPath: path})
     }
 
     /**
@@ -54,9 +54,9 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
      * @param event The change event
      * @param path The file path of the network environment template
      */
-    function handleEnvironmentChange(event: FormEvent<HTMLInputElement>, path: string = settings.environment): void {
+    function handleSensorDescriptionChange(event: FormEvent<HTMLInputElement>, path: string = settings.sensorDescriptionPath): void {
         setEnvironmentError(errorMessage(path, Setting.ENVIRONMENT))
-        onChange({...settings, environment: path})
+        onChange({...settings, sensorDescriptionPath: path})
     }
 
     return (
@@ -64,15 +64,15 @@ export default function TemplateSettingsEditor(props: Props): JSX.Element {
             <TextField
                 label="Network Description:"
                 onChange={handleNetworkDescriptionChange}
-                value={settings.networkDescription}
+                value={settings.networkDescriptionPath}
                 errorMessage={networkDescriptionError}
                 styles={{errorMessage: {color: theme.palette.redDark}}}
                 underlined
             />
             <TextField
-                label="Environment:"
-                onChange={handleEnvironmentChange}
-                value={`${settings.environment}`}
+                label="Sensor Description:"
+                onChange={handleSensorDescriptionChange}
+                value={`${settings.sensorDescriptionPath}`}
                 errorMessage={environmentError}
                 styles={{errorMessage: {color: theme.palette.redDark}}}
                 underlined

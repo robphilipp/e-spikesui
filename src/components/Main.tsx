@@ -36,7 +36,15 @@ import {
     SensorsSavedAction, loadSensorsFrom,
     loadSensorsFromTemplate, saveSensors
 } from "./redux/actions/sensors";
-import SimulationManager from "./simulation/SimulationManager";
+import SimulationManager, {NEW_PROJECT_PATH} from "./simulation/SimulationManager";
+import {
+    loadSimulationProject,
+    newSimulationProject,
+    ProjectCreatedAction,
+    ProjectLoadedAction,
+    ProjectSavedAction, saveSimulationProject
+} from "./redux/actions/simulationProject";
+import {SimulationProject} from "./repos/simulationProjectRepo";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -65,11 +73,14 @@ interface StateProps {
     networkDescription: string;
     networkDescriptionPath: string;
     networkDescriptionModified: boolean;
-    // environment, path, template path, and modification state
+    // sensor, path, template path, and modification state
     sensorDescriptionTemplatePath: string;
     sensorDescription: string;
     sensorDescriptionPath: string;
     sensorDescriptionModified: boolean;
+    // simulation project
+    simulationProjectPath: string;
+    simulationProjectModified: boolean;
 }
 
 interface DispatchProps {
@@ -85,6 +96,10 @@ interface DispatchProps {
     onLoadSensorDescriptionTemplate: (path: string) => Promise<SensorsLoadedAction>;
     onLoadSensorDescription: (path: string) => Promise<SensorsLoadedAction>;
     onSaveSensorDescription: (path: string, codeSnippet: string) => Promise<SensorsSavedAction>;
+
+    onCreateSimulationProject: () => ProjectCreatedAction;
+    onLoadSimulationProject: (path: string) => Promise<ProjectLoadedAction>;
+    onSaveSimulationProject: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -114,6 +129,12 @@ function Main(props: Props): JSX.Element {
         onLoadSensorDescriptionTemplate,
         onLoadSensorDescription,
         onSaveSensorDescription,
+
+        simulationProjectPath,
+        simulationProjectModified,
+        onCreateSimulationProject,
+        onLoadSimulationProject,
+        onSaveSimulationProject,
     } = props;
 
     // react-router history
@@ -143,7 +164,7 @@ function Main(props: Props): JSX.Element {
                             key: 'newSimulation',
                             text: 'New Simulation',
                             iconProps: {iconName: 'add'},
-                            onClick: () => history.push(AppPath.SIMULATION)
+                            onClick: handleNewSimulationProject
                         },
                         {
                             key: 'loadSimulation',
@@ -167,7 +188,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Edit',
                             iconProps: {iconName: 'homegroup'},
                             ariaLabel: 'Edit Network',
-                            onClick: () => handleEditNetwork()
+                            onClick: handleEditNetwork
                         },
                         {
                             key: 'divider_1',
@@ -178,14 +199,14 @@ function Main(props: Props): JSX.Element {
                             text: 'New',
                             iconProps: {iconName: 'add'},
                             ariaLabel: 'New Network',
-                            onClick: () => handleNewNetwork()
+                            onClick: handleNewNetwork
                         },
                         {
                             key: 'loadNetwork',
                             text: 'Load...',
                             iconProps: {iconName: 'upload'},
                             ariaLabel: 'Load Network',
-                            onClick: () => handleLoadNetworkDescription()
+                            onClick: handleLoadNetworkDescription
                         },
                         {
                             key: 'saveNetwork',
@@ -193,7 +214,7 @@ function Main(props: Props): JSX.Element {
                             iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network',
                             disabled: !networkDescriptionPath || !networkDescriptionModified || !useRouteMatch(AppPath.NETWORK_EDITOR) || networkDescriptionPath === networkDescriptionTemplatePath,
-                            onClick: () => handleSaveNetworkDescription()
+                            onClick: handleSaveNetworkDescription
                         },
                         {
                             key: 'saveNetworkAs',
@@ -201,7 +222,7 @@ function Main(props: Props): JSX.Element {
                             ariaLabel: 'Save Network As',
                             iconProps: {iconName: 'save'},
                             disabled: !useRouteMatch(AppPath.NETWORK_EDITOR),
-                            onClick: () => handleSaveNetworkDescriptionAs()
+                            onClick: handleSaveNetworkDescriptionAs
                         },
                     ],
                 },
@@ -218,7 +239,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Edit',
                             iconProps: {iconName: 'homegroup'},
                             ariaLabel: 'Edit Network Sensor',
-                            onClick: () =>  handleEditSensor(),
+                            onClick: handleEditSensor,
                         },
                         {
                             key: 'divider_2',
@@ -229,28 +250,28 @@ function Main(props: Props): JSX.Element {
                             text: 'New',
                             iconProps: {iconName: 'add'},
                             ariaLabel: 'New Sensor',
-                            onClick: () => handleNewSensor()
+                            onClick: handleNewSensor
                         },
                         {
                             key: 'loadSensor',
                             text: 'Load...',
                             iconProps: {iconName: 'upload'},
                             ariaLabel: 'Load Network Sensor',
-                            onClick: () => handleLoadSensor()
+                            onClick: handleLoadSensor
                         },
                         {
                             key: 'saveSensor',
                             text: 'Save',
                             iconProps: {iconName: 'upload'},
                             ariaLabel: 'Save Network Sensor',
-                            onClick: () => handleSaveSensor()
+                            onClick: handleSaveSensor
                         },
                         {
                             key: 'saveSensorAs',
                             text: 'Save As...',
                             iconProps: {iconName: 'upload'},
                             ariaLabel: 'Save Network Sensor As',
-                            onClick: () => handleSaveSensorAs()
+                            onClick: handleSaveSensorAs
                         },
                     ],
                 },
@@ -430,6 +451,11 @@ function Main(props: Props): JSX.Element {
 
     }
 
+    function handleNewSimulationProject(): void {
+        onCreateSimulationProject();
+        history.push(`${AppPath.SIMULATION}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
+    }
+
     return (
         <Stack>
             <StackItem>
@@ -463,6 +489,10 @@ function Main(props: Props): JSX.Element {
                         path={`${AppPath.SIMULATION}/:simulationProjectPath`}
                         render={(renderProps) =>
                             <SimulationManager
+                                baseRouterPath={AppPath.SIMULATION}
+                                theme={editorThemeFrom(name)}
+                                itheme={props.itheme}
+                                {...renderProps}
                             />
                         }
                     />
@@ -524,6 +554,8 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     sensorDescriptionPath: state.sensorDescription.path,
     sensorDescriptionModified: state.sensorDescription.modified,
 
+    simulationProjectPath: state.simulationProject.projectPath,
+    simulationProjectModified: state.simulationProject.modified
 });
 
 /**
@@ -546,6 +578,10 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onLoadSensorDescriptionTemplate: (path: string) => dispatch(loadSensorsFromTemplate(path)),
     onLoadSensorDescription: (path: string) => dispatch(loadSensorsFrom(path)),
     onSaveSensorDescription: (path: string, codeSnippet: string) => dispatch(saveSensors(path, codeSnippet)),
+
+    onCreateSimulationProject: () => dispatch(newSimulationProject()),
+    onLoadSimulationProject: (path: string) => dispatch(loadSimulationProject(path)),
+    onSaveSimulationProject: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
 });
 
 const connectedApp = connect(mapStateToProps, mapDispatchToProps)(Main)

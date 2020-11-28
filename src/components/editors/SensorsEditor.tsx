@@ -100,8 +100,8 @@ function SensorsEditor(props: Props): JSX.Element {
     } = props;
 
     // when user refreshes when the router path is this editor, then we want to load the same
-    // network as before the refresh. to do this we use the path parameter holding the file path
-    // to the environment code-snippet, and keep it consistent when loading from template
+    // sensor as before the refresh. to do this we use the path parameter holding the file path
+    // to the sensor code-snippet, and keep it consistent when loading from template
     const {sensorsPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
 
@@ -159,6 +159,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 // todo handle success and failure
                 onLoadSensor(filePath)
                     .then(() => console.log("loaded"))
+                    .catch(reason => setMessage(errorMessage(reason.message)))
             }
         },
         [sensorsPath]

@@ -1,4 +1,10 @@
-import {PROJECT_CHANGED, PROJECT_LOADED, PROJECT_SAVED, SimulationProjectAction} from "../actions/simulationProject";
+import {
+    PROJECT_CHANGED,
+    PROJECT_CREATED,
+    PROJECT_LOADED,
+    PROJECT_SAVED,
+    SimulationProjectAction
+} from "../actions/simulationProject";
 
 export interface SimulationProjectState {
     projectPath?: string;
@@ -38,6 +44,9 @@ export function simulationProjectReducer(
 ): SimulationProjectState {
 
     switch (action.type) {
+        case PROJECT_CREATED:
+            return initialState();
+
         case PROJECT_LOADED:
             return {
                 ...state,

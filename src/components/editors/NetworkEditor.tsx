@@ -16,10 +16,11 @@ import {
     updateNetworkDescription
 } from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
-import {IconButton, ITheme, Stack, StackItem, TooltipHost} from '@fluentui/react';
+import {IconButton, ITheme, MessageBar, MessageBarType, Stack, StackItem, TooltipHost} from '@fluentui/react';
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 
+export const NEW_NETWORK_PATH = '**new**';
 
 const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
@@ -90,6 +91,8 @@ function NetworkEditor(props: Props): JSX.Element {
     // reference that is updated for the event listener to use
     const keyboardEventRef = useRef({path, templatePath, network});
 
+    const [message, setMessage] = useState<JSX.Element>();
+
     // when component mounts, sets the initial dimension of the editor and registers to listen
     // to window resize events. when component unmounts, removes the window-resize event listener
     useEffect(
@@ -117,10 +120,23 @@ function NetworkEditor(props: Props): JSX.Element {
     useEffect(
         () => {
             const filePath = decodeURIComponent(networkDescriptionPath);
-            if (filePath !== path || filePath === '') {
-                // todo handle success and failure
+            // if (filePath !== path || filePath === '') {
+            //     // todo handle success and failure
+            //     onLoadNetworkDescription(filePath)
+            //         .then(() => console.log("loaded"))
+            // }
+            if (filePath === path) {
+                return;
+            }
+            if (filePath === NEW_NETWORK_PATH || filePath === 'undefined') {
+                onLoadTemplate(templatePath)
+                .then(() => console.log("loaded"))
+                .catch(reason => setMessage(errorMessage(reason.message)))
+            } else {
+            // todo handle success and failure
                 onLoadNetworkDescription(filePath)
                     .then(() => console.log("loaded"))
+                    .catch(reason => setMessage(errorMessage(reason.message)))
             }
         },
         [networkDescriptionPath]
@@ -297,6 +313,24 @@ function NetworkEditor(props: Props): JSX.Element {
         </div>
     }
 
+    /**
+     * Message bar for displaying errors
+     * @param message The error message
+     * @return A `MessageBar` with an error message
+     */
+    function errorMessage(message: string): JSX.Element {
+        return (
+            <MessageBar
+                messageBarType={MessageBarType.error}
+                isMultiline={false}
+                onDismiss={() => setMessage(undefined)}
+                dismissButtonAriaLabel="Close"
+            >
+                {message}
+            </MessageBar>
+        )
+    }
+
     return (
         <div
             ref={editorRef}
@@ -304,6 +338,7 @@ function NetworkEditor(props: Props): JSX.Element {
             // set...but if it is, then you can use that.
             style={{height: window.innerHeight * 0.9, width: '100%'}}
         >
+            {message || <span/>}
             <div
                 style={{
                     marginLeft: 30,

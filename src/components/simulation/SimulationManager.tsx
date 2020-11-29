@@ -35,6 +35,9 @@ import { DefaultTheme } from "../editors/themes";
 import { remote } from "electron";
 import { useEffect, useState } from "react";
 import { loadSensorsFrom, SensorsLoadedAction } from "../redux/actions/sensors";
+import { NEW_SENSOR_PATH } from "../editors/SensorsEditor";
+import { NEW_NETWORK_PATH } from "../editors/NetworkEditor";
+import { loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction } from "../redux/actions/networkDescription";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -65,7 +68,7 @@ interface DispatchProps {
     onSave: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
 
     onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
-
+    onLoadNetwork: (path: string) => Promise<NetworkDescriptionLoadedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -89,6 +92,7 @@ function SimulationManager(props: Props): JSX.Element {
         onChange,
         onSave,
         onLoadSensor,
+        onLoadNetwork,
     } = props;
 
     // when user refreshes when the router path is this simulation manager, then we want to load the same
@@ -140,7 +144,7 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     /**
-     * Handle loading a sensor description from file by presenting the user with an open-file
+     * Handle loading a network description from file by presenting the user with an open-file
      * dialog.
      */
     function handleLoadNetwork(): void {
@@ -153,7 +157,14 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                // history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
+                onLoadNetwork(response.filePaths[0])
+                    .then(action => onChange({
+                        simulationName,
+                        timeFactor,
+                        simulationDuration,
+                        networkFilePath: action.result.path,
+                        sensorFilePath: sensorDescriptionPath,
+                    }))
             })
     }
 
@@ -204,15 +215,30 @@ function SimulationManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Handles editing the network description, if specified, or a new network description, otherwise.
+     */
     function handleEditNetworkDescription(): void {
-
+        // when the sensor-description file path exists and isn't too short, then edit that file,
+        // otherwise, let edit a new file from the template
+        if (networkDescriptionPath && networkDescriptionPath.length > 2) {
+            history.push(`${networkRouterPath}/${encodeURIComponent(networkDescriptionPath)}`); 
+        } else {
+            history.push(`${networkRouterPath}/${encodeURIComponent(NEW_NETWORK_PATH)}`); 
+        }
     }
 
+    /**
+     * Handles editing the sensor description, if specified, or a new sensor description, otherwise.
+     */
     function handleEditSensorDescription(): void {
+        // when the sensor-description file path exists and isn't too short, then edit that file,
+        // otherwise, let edit a new file from the template
         if (sensorDescriptionPath && sensorDescriptionPath.length > 2) {
             history.push(`${sensorRouterPath}/${encodeURIComponent(sensorDescriptionPath)}`); 
+        } else {
+            history.push(`${sensorRouterPath}/${encodeURIComponent(NEW_SENSOR_PATH)}`); 
         }
-        // history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
     }
 
     /**
@@ -448,6 +474,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onSave: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
 
     onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
+    onLoadNetwork: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
 });
 
 const connectedSimulationManager = connect(mapStateToProps, mapDispatchToProps)(SimulationManager);

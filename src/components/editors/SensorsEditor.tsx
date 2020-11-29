@@ -36,6 +36,8 @@ import {map} from "rxjs/operators";
 import {ChartData, Datum} from "stream-charts";
 import moment from 'moment';
 
+export const NEW_SENSOR_PATH = '**new**';
+
 enum ExpressionState {
     PRE_COMPILED = 'pre-compiled',
     COMPILED = 'compiled',
@@ -155,8 +157,21 @@ function SensorsEditor(props: Props): JSX.Element {
     useEffect(
         () => {
             const filePath = decodeURIComponent(sensorsPath);
-            if (filePath !== path || filePath === '') {
-                // todo handle success and failure
+            // if (filePath !== path || filePath === '') {
+            //     // todo handle success and failure
+            //     onLoadSensor(filePath)
+            //         .then(() => console.log("loaded"))
+            //         .catch(reason => setMessage(errorMessage(reason.message)))
+            // }
+            if (filePath === path) {
+                return;
+            }
+            if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
+                onLoadTemplate(templatePath)
+                .then(() => console.log("loaded"))
+                .catch(reason => setMessage(errorMessage(reason.message)))
+            } else {
+            // todo handle success and failure
                 onLoadSensor(filePath)
                     .then(() => console.log("loaded"))
                     .catch(reason => setMessage(errorMessage(reason.message)))

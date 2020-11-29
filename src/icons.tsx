@@ -19,7 +19,7 @@ import {
     faPlus,
     faTimes,
     faChevronDown,
-    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare, faExclamationCircle, faWaveSquare, faBrain, faCode, faMinusCircle, 
+    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare, faExclamationCircle, faWaveSquare, faBrain, faCode, faMinusCircle, faChevronUp, faSyncAlt, 
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -65,6 +65,7 @@ export default function prepareIcons(): void {
             'minusCircle': <FontAwesomeIcon icon={faMinusCircle}/>,
             'cancel': <FontAwesomeIcon icon={faTimes}/>,
             'chevrondown': <FontAwesomeIcon icon={faChevronDown}/>,
+            'chevronup': <FontAwesomeIcon icon={faChevronUp}/>,
             'completedsolid': <FontAwesomeIcon icon={faCheckCircle}/>,
             'sortdown': <FontAwesomeIcon icon={faArrowDown}/>,
             'sortup': <FontAwesomeIcon icon={faArrowUp}/>,
@@ -77,7 +78,8 @@ export default function prepareIcons(): void {
             'environment': <FontAwesomeIcon icon={faWaveSquare}/>,
             'brain': <FontAwesomeIcon icon={faBrain}/>,
             'help': <FontAwesomeIcon icon={faQuestionCircle}/>,
-            'code': <FontAwesomeIcon icon={faCode}/>
+            'code': <FontAwesomeIcon icon={faCode}/>,
+            'reset': <FontAwesomeIcon icon={faSyncAlt}/>
         }
     });
 }

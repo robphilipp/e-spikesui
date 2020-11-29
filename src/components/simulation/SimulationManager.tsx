@@ -25,9 +25,11 @@ import {
     MessageBarType,
     PrimaryButton,
     Separator,
+    SpinButton,
     Stack,
     StackItem,
     Text,
+    TextField,
     TooltipHost
 } from "@fluentui/react";
 import { Card, ICardTokens, ICardSectionStyles, ICardSectionTokens } from '@uifabric/react-cards';
@@ -42,6 +44,10 @@ import { loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction } from "../r
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
+
+const durationRegex = /^[0-9]+ s$/
+const MIN_TIME_FACTOR = 1;
+const MAX_TIME_FACTOR = 20;
 
 interface OwnProps extends RouteComponentProps<never> {
     baseRouterPath: string;
@@ -222,9 +228,9 @@ function SimulationManager(props: Props): JSX.Element {
         // when the sensor-description file path exists and isn't too short, then edit that file,
         // otherwise, let edit a new file from the template
         if (networkDescriptionPath && networkDescriptionPath.length > 2) {
-            history.push(`${networkRouterPath}/${encodeURIComponent(networkDescriptionPath)}`); 
+            history.push(`${networkRouterPath}/${encodeURIComponent(networkDescriptionPath)}`);
         } else {
-            history.push(`${networkRouterPath}/${encodeURIComponent(NEW_NETWORK_PATH)}`); 
+            history.push(`${networkRouterPath}/${encodeURIComponent(NEW_NETWORK_PATH)}`);
         }
     }
 
@@ -235,9 +241,53 @@ function SimulationManager(props: Props): JSX.Element {
         // when the sensor-description file path exists and isn't too short, then edit that file,
         // otherwise, let edit a new file from the template
         if (sensorDescriptionPath && sensorDescriptionPath.length > 2) {
-            history.push(`${sensorRouterPath}/${encodeURIComponent(sensorDescriptionPath)}`); 
+            history.push(`${sensorRouterPath}/${encodeURIComponent(sensorDescriptionPath)}`);
         } else {
-            history.push(`${sensorRouterPath}/${encodeURIComponent(NEW_SENSOR_PATH)}`); 
+            history.push(`${sensorRouterPath}/${encodeURIComponent(NEW_SENSOR_PATH)}`);
+        }
+    }
+
+    function handleSimulationNameChange(name: string): void {
+        onChange({
+            simulationName: name,
+            timeFactor,
+            simulationDuration,
+            sensorFilePath: sensorDescriptionPath,
+            networkFilePath: networkDescriptionPath
+        })
+    }
+
+    function handleTimeFactorChange(factor: number): void {
+        const newTimeFactor = Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, factor));
+        if (newTimeFactor !== timeFactor) {
+            onChange({
+                simulationName,
+                timeFactor: newTimeFactor,
+                simulationDuration,
+                sensorFilePath: sensorDescriptionPath,
+                networkFilePath: networkDescriptionPath
+            })
+        }
+    }
+
+    function handleSimulationTimeChange(duration: number): void {
+        if (duration >= 1) {
+            onChange({
+                simulationName,
+                timeFactor,
+                simulationDuration: duration,
+                sensorFilePath: sensorDescriptionPath,
+                networkFilePath: networkDescriptionPath
+            })
+        }
+    }
+
+    function updateSimulationTime(value: string, amount: number): void {
+        if (value.match(durationRegex) !== null) {
+            const duration = parseInt(value.split(' ')[0]);
+            if (!isNaN(duration)) {
+                handleSimulationTimeChange(Math.floor(Math.max(1, duration + amount)));
+            }
         }
     }
 
@@ -297,10 +347,93 @@ function SimulationManager(props: Props): JSX.Element {
         </div>
     }
 
+    /**
+     * @return A card showing the sensor-description file with a button to select a different file or to
+     * edit the existing file.
+     */
+    function simulationCard(): JSX.Element {
+        return (
+            <Card aria-label="Simulation Parameters" horizontal tokens={{ childrenMargin: 12, boxShadow: "none"}}>
+                <Card.Item align="start" tokens={{margin: 20}}>
+                    <Icon
+                        iconName='sprint'
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
+                    />
+                </Card.Item>
+                <Card.Section grow>
+                    <Text
+                        variant="medium"
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 700 }}
+                    >
+                        Simulation Parameters
+                    </Text>
+                    <TextField
+                        label="Simulation Name"
+                        placeholder="Please enter name."
+                        onChange={(event, name) => handleSimulationNameChange(name)}
+                        value={simulationName}
+                        // errorMessage={errorMessage}
+                        styles={{ errorMessage: { color: itheme.palette.redDark } }}
+                        // underlined
+                    />
+                    <SpinButton
+                        label="Time Factor"
+                        min={1}
+                        max={20}
+                        value={`${timeFactor}`}
+                        incrementButtonIcon={{ iconName: 'chevronup' }}
+                        decrementButtonIcon={{ iconName: 'chevrondown' }}
+                        onIncrement={(value: string) => handleTimeFactorChange(parseInt(value) + 1)}
+                        onDecrement={(value: string) => handleTimeFactorChange(parseInt(value) - 1)}
+                    />
+                    <Text
+                        variant="small"
+                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                    >
+                        How many seconds does it take to simulate 1 second?
+                    </Text>
+                    <SpinButton
+                        label="Simulation Duration"
+                        min={1}
+                        max={20000}
+                        value={`${simulationDuration} s`}
+                        incrementButtonIcon={{ iconName: 'chevronup' }}
+                        decrementButtonIcon={{ iconName: 'chevrondown' }}
+                        onIncrement={(value: string) => updateSimulationTime(value, 10)}
+                        onDecrement={(value: string) => updateSimulationTime(value, -10)}
+                    />
+                    <Text
+                        variant="small"
+                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                    >
+                        Simulation duration in simulation time.
+                    </Text>
+                </Card.Section>
+                {/* <Card.Section
+                    styles={{ root: { alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}` } }}
+                    tokens={{ padding: '0px 0px 0px 12px' }}
+                >
+                    <IconButton
+                        iconProps={{ iconName: "sync" }}
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        onClick={handleEditSensorDescription}
+                    />
+                    <IconButton
+                        iconProps={{ iconName: "file" }}
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        onClick={handleLoadSensor}
+                    />
+                </Card.Section> */}
+            </Card>
+        )
+    }
+    /**
+     * @return Card showing the network-description file with buttons to select a new file or edit the current file
+     */
     function networkDescriptionCard(): JSX.Element {
         return (
-            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12 }}>
-                <Card.Item align="center">
+            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}>
+                <Card.Item align="start" tokens={{margin: 20}}>
                     <Icon
                         iconName='homegroup'
                         style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
@@ -342,10 +475,14 @@ function SimulationManager(props: Props): JSX.Element {
         )
     }
 
+    /**
+     * @return A card showing the sensor-description file with a button to select a different file or to
+     * edit the existing file.
+     */
     function sensorDescriptionCard(): JSX.Element {
         return (
-            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12 }}>
-                <Card.Item align="center">
+            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}>
+                <Card.Item align="start" tokens={{margin: 20}}>
                     <Icon
                         iconName='environment'
                         style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
@@ -389,6 +526,7 @@ function SimulationManager(props: Props): JSX.Element {
             </Card>
         )
     }
+
     /**
      * Message bar for displaying errors
      * @param message The error message
@@ -431,7 +569,8 @@ function SimulationManager(props: Props): JSX.Element {
                     {/*{stopSensorSimulationButton()}*/}
                     {/*{showSimulation && hideSimulationButton()}*/}
                 </StackItem>
-                <Stack tokens={{ childrenGap: 10, padding: 20 }}>
+                <Stack tokens={{ childrenGap: 10, padding: 20 }} grow>
+                    {simulationCard()}
                     {networkDescriptionCard()}
                     {sensorDescriptionCard()}
                 </Stack>

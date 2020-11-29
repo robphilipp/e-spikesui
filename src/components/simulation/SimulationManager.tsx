@@ -34,49 +34,16 @@ import { Card, ICardTokens, ICardSectionStyles, ICardSectionTokens } from '@uifa
 import { DefaultTheme } from "../editors/themes";
 import { remote } from "electron";
 import { useEffect, useState } from "react";
+import { loadSensorsFrom, SensorsLoadedAction } from "../redux/actions/sensors";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
 
-const siteTextStyles: ITextStyles = {
-    root: {
-        color: '#025F52',
-        fontWeight: FontWeights.semibold,
-    },
-};
-const descriptionTextStyles: ITextStyles = {
-    root: {
-        color: '#333333',
-        fontWeight: FontWeights.regular,
-    },
-};
-const helpfulTextStyles: ITextStyles = {
-    root: {
-        color: '#333333',
-        fontWeight: FontWeights.regular,
-    },
-};
-const iconStyles: IIconStyles = {
-    root: {
-        color: '#0078D4',
-        fontSize: 16,
-        fontWeight: FontWeights.regular,
-    },
-};
-const footerCardSectionStyles: ICardSectionStyles = {
-    root: {
-        alignSelf: 'stretch',
-        borderLeft: '1px solid #F3F2F1',
-    },
-};
-const sectionStackTokens: IStackTokens = { childrenGap: 20 };
-const cardTokens: ICardTokens = { childrenMargin: 12 };
-const footerCardSectionTokens: ICardSectionTokens = { padding: '0px 0px 0px 12px' };
-
-
 interface OwnProps extends RouteComponentProps<never> {
     baseRouterPath: string;
+    networkRouterPath: string;
+    sensorRouterPath: string;
     itheme: ITheme;
     theme?: string;
 }
@@ -96,6 +63,9 @@ interface DispatchProps {
     onLoad: (path: string) => Promise<ProjectLoadedAction>;
     onChange: (project: SimulationProject) => void;
     onSave: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
+
+    onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
+
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -105,6 +75,8 @@ function SimulationManager(props: Props): JSX.Element {
         theme = DefaultTheme.DARK,
         itheme,
         baseRouterPath,
+        networkRouterPath,
+        sensorRouterPath,
         projectPath,
         simulationName,
         timeFactor,
@@ -116,6 +88,7 @@ function SimulationManager(props: Props): JSX.Element {
         onLoad,
         onChange,
         onSave,
+        onLoadSensor,
     } = props;
 
     // when user refreshes when the router path is this simulation manager, then we want to load the same
@@ -155,7 +128,14 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                // history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
+                onLoadSensor(response.filePaths[0])
+                    .then(action => onChange({
+                        simulationName,
+                        timeFactor,
+                        simulationDuration,
+                        networkFilePath: networkDescriptionPath,
+                        sensorFilePath: action.result.path,
+                    }));
             })
     }
 
@@ -169,7 +149,7 @@ function SimulationManager(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{ name: 'spikes-network', extensions: ['network'] }],
+                    filters: [{ name: 'spikes-network', extensions: ['boo'] }],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -225,11 +205,14 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     function handleEditNetworkDescription(): void {
-        
+
     }
 
     function handleEditSensorDescription(): void {
-
+        if (sensorDescriptionPath && sensorDescriptionPath.length > 2) {
+            history.push(`${sensorRouterPath}/${encodeURIComponent(sensorDescriptionPath)}`); 
+        }
+        // history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
     }
 
     /**
@@ -290,94 +273,94 @@ function SimulationManager(props: Props): JSX.Element {
 
     function networkDescriptionCard(): JSX.Element {
         return (
-            <Card aria-label="Network Description File" horizontal tokens={{childrenMargin: 12}}>
-            <Card.Item align="center" grow>
-                <Icon 
-                    iconName='homegroup'
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16}}
-                />
-            </Card.Item>
-            <Card.Section>
-                <Text 
-                    variant="medium" 
-                    style={{color: itheme.palette.themePrimary, fontWeight: 700}}
-                >
-                    Network Description
+            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12 }}>
+                <Card.Item align="center">
+                    <Icon
+                        iconName='homegroup'
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
+                    />
+                </Card.Item>
+                <Card.Section grow>
+                    <Text
+                        variant="medium"
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 700 }}
+                    >
+                        Network Description
                 </Text>
-                <Text 
-                    variant="medium" 
-                    style={{color: itheme.palette.neutralPrimary, fontWeight: 400}}
-                >
-                    {networkDescriptionPath || '(none selected'}
+                    <Text
+                        variant="medium"
+                        style={{ color: itheme.palette.neutralPrimary, fontWeight: 400 }}
+                    >
+                        {networkDescriptionPath || '(none selected'}
+                    </Text>
+                    <Text
+                        variant="small"
+                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                    >
+                        Select or edit a network description file
                 </Text>
-                <Text 
-                    variant="small" 
-                    style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
-                >
-                    Select the network description file
-                </Text>
-            </Card.Section>
-            <Card.Section styles={{root: {alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}`}}} tokens={{padding: '0px 0px 0px 12px'}}>
-                <IconButton 
-                    iconProps={{iconName: "edit"}} 
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                    onClick={handleEditNetworkDescription}
-                />
-                <IconButton 
-                    iconProps={{iconName: "file"}} 
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                    onClick={handleLoadNetwork}
-                />
-            </Card.Section>
-        </Card>
+                </Card.Section>
+                <Card.Section styles={{ root: { alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}` } }} tokens={{ padding: '0px 0px 0px 12px' }}>
+                    <IconButton
+                        iconProps={{ iconName: "edit" }}
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        onClick={handleEditNetworkDescription}
+                    />
+                    <IconButton
+                        iconProps={{ iconName: "file" }}
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        onClick={handleLoadNetwork}
+                    />
+                </Card.Section>
+            </Card>
         )
     }
 
     function sensorDescriptionCard(): JSX.Element {
         return (
-            <Card aria-label="Network Description File" horizontal tokens={{childrenMargin: 12}}>
-            <Card.Item align="center" grow>
-                <Icon 
-                    iconName='environment'
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16}}
-                />
-            </Card.Item>
-            <Card.Section>
-                <Text 
-                    variant="medium" 
-                    style={{color: itheme.palette.themePrimary, fontWeight: 700}}
-                >
-                    Sensor Description
+            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12 }}>
+                <Card.Item align="center">
+                    <Icon
+                        iconName='environment'
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
+                    />
+                </Card.Item>
+                <Card.Section grow>
+                    <Text
+                        variant="medium"
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 700 }}
+                    >
+                        Sensor Description
                 </Text>
-                <Text 
-                    variant="medium" 
-                    style={{color: itheme.palette.neutralPrimary, fontWeight: 400}}
-                >
-                    {sensorDescriptionPath || '(none selected'}
+                    <Text
+                        variant="medium"
+                        style={{ color: itheme.palette.neutralPrimary, fontWeight: 400 }}
+                    >
+                        {sensorDescriptionPath || '(none selected'}
+                    </Text>
+                    <Text
+                        variant="small"
+                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                    >
+                        Select or edit a sensor description file
                 </Text>
-                <Text 
-                    variant="small" 
-                    style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
+                </Card.Section>
+                <Card.Section
+                    styles={{ root: { alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}` } }}
+                    tokens={{ padding: '0px 0px 0px 12px' }}
                 >
-                    Select the sensor description file
-                </Text>
-            </Card.Section>
-            <Card.Section 
-                styles={{root: {alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}`}}} 
-                tokens={{padding: '0px 0px 0px 12px'}}
-            >
-                <IconButton 
-                    iconProps={{iconName: "edit"}} 
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                    onClick={handleEditSensorDescription}
-                />
-                <IconButton 
-                    iconProps={{iconName: "file"}} 
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                    onClick={handleLoadSensor}
-                />
-            </Card.Section>
-        </Card>
+                    <IconButton
+                        iconProps={{ iconName: "edit" }}
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        onClick={handleEditSensorDescription}
+                    />
+                    <IconButton
+                        iconProps={{ iconName: "file" }}
+                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        onClick={handleLoadSensor}
+                    />
+                </Card.Section>
+            </Card>
         )
     }
     /**
@@ -463,6 +446,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onChange: (project: SimulationProject) => dispatch(updateSimulationProject(project)),
     onLoad: (path: string) => dispatch(loadSimulationProject(path)),
     onSave: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
+
+    onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
 });
 
 const connectedSimulationManager = connect(mapStateToProps, mapDispatchToProps)(SimulationManager);

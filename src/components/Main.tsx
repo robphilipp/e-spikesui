@@ -490,6 +490,8 @@ function Main(props: Props): JSX.Element {
                         render={(renderProps) =>
                             <SimulationManager
                                 baseRouterPath={AppPath.SIMULATION}
+                                networkRouterPath={AppPath.NETWORK_EDITOR}
+                                sensorRouterPath={AppPath.SENSOR_EDITOR}
                                 theme={editorThemeFrom(name)}
                                 itheme={props.itheme}
                                 {...renderProps}

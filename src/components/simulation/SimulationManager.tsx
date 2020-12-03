@@ -45,7 +45,7 @@ export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
 
-const durationRegex = /^[0-9]+ s$/
+const durationRegex = /^[0-9]+[ ]*s*$/
 const MIN_TIME_FACTOR = 1;
 const MAX_TIME_FACTOR = 20;
 
@@ -126,6 +126,7 @@ function SimulationManager(props: Props): JSX.Element {
 
     function handleNewProject(): void {
         onCreate();
+        history.push(`${baseRouterPath}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
     }
 
     function handleLoadSensor(): void {
@@ -184,11 +185,11 @@ function SimulationManager(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{ name: 'spikes-sensor', extensions: ['sensor'] }],
+                    filters: [{ name: 'spikes-sensor', extensions: ['spikes'] }],
                     properties: ['openFile']
                 })
             .then(response => {
-                // history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
+                history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
     }
 
@@ -268,6 +269,12 @@ function SimulationManager(props: Props): JSX.Element {
                 networkFilePath: networkDescriptionPath
             })
         }
+    }
+
+    function handleValidateTimeFactor(value: string): string {
+        const timeFactor = Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, parseInt(value)));
+        // handleTimeFactorChange(timeFactor);
+        return timeFactor.toString();
     }
 
     function handleSimulationTimeChange(duration: number): void {
@@ -369,11 +376,12 @@ function SimulationManager(props: Props): JSX.Element {
                     </Text>
                     <TextField
                         label="Simulation Name"
-                        placeholder="Please enter name."
+                        // placeholder="Please enter name."
                         onChange={(event, name) => handleSimulationNameChange(name)}
                         value={simulationName}
                         // errorMessage={errorMessage}
                         styles={{ errorMessage: { color: itheme.palette.redDark } }}
+                        // onKeyPress={handleKeyPress}
                         // underlined
                     />
                     <SpinButton
@@ -381,16 +389,18 @@ function SimulationManager(props: Props): JSX.Element {
                         min={1}
                         max={20}
                         value={`${timeFactor}`}
+                        onValidate={handleValidateTimeFactor}
                         incrementButtonIcon={{ iconName: 'chevronup' }}
                         decrementButtonIcon={{ iconName: 'chevrondown' }}
                         onIncrement={(value: string) => handleTimeFactorChange(parseInt(value) + 1)}
                         onDecrement={(value: string) => handleTimeFactorChange(parseInt(value) - 1)}
+                        onBlur={event => handleTimeFactorChange(parseInt(event.currentTarget.value))}
                     />
                     <Text
                         variant="small"
                         style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
                     >
-                        How many seconds does it take to simulate 1 second?
+                        How many seconds in real time does it take to simulate 1 second?
                     </Text>
                     <SpinButton
                         label="Simulation Duration"
@@ -401,6 +411,7 @@ function SimulationManager(props: Props): JSX.Element {
                         decrementButtonIcon={{ iconName: 'chevrondown' }}
                         onIncrement={(value: string) => updateSimulationTime(value, 10)}
                         onDecrement={(value: string) => updateSimulationTime(value, -10)}
+                        onBlur={event => updateSimulationTime(event.currentTarget.value, 0)}
                     />
                     <Text
                         variant="small"

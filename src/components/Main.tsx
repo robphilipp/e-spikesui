@@ -286,7 +286,7 @@ function Main(props: Props): JSX.Element {
      * @return The menu item properties
      */
     function farMenuItems(visibility: (visible: boolean) => void): Array<ICommandBarItemProps> {
-        return [
+        const baseItems = [
             {
                 key: 'settings',
                 name: 'Settings',
@@ -306,6 +306,19 @@ function Main(props: Props): JSX.Element {
                 // onClick: () => settingVisibilityManager(true)
             }
         ];
+
+        if (simulationProjectPath !== undefined && simulationProjectPath !== NEW_PROJECT_PATH) {
+            baseItems.unshift({
+                key: 'simulation',
+                name: 'Simulation',
+                ariaLabel: 'Simulation',
+                iconProps: {iconName: 'brain'},
+                iconOnly: true,
+                onClick: () => history.push(`${AppPath.SIMULATION}/${encodeURIComponent(simulationProjectPath)}`)
+            })
+        }
+
+        return baseItems;
     }
 
     /**

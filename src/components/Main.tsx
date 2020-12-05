@@ -395,7 +395,7 @@ function Main(props: Props): JSX.Element {
      * would like to save the file to a new name.
      */
     function handleSaveNetworkDescriptionAs(): void {
-        // todo hold on to this for a bit; when enableRemoteModule is false, then must use
+        // TODO hold on to this for a bit; when enableRemoteModule is false, then must use
         //      IPC methods to open the dialog, etc
         // ipcRenderer.send('save-network-description');
         // ipcRenderer.once('save-network-description-path', (event, arg) => {
@@ -482,6 +482,9 @@ function Main(props: Props): JSX.Element {
         history.push(`${AppPath.SIMULATION}/${encodeURIComponent(simulationProjectPath)}`);
     }
 
+    /**
+     * Handles creating a new simulation project
+     */
     function handleNewSimulationProject(): void {
         onCreateSimulationProject();
         history.push(`${AppPath.SIMULATION}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
@@ -539,7 +542,6 @@ function Main(props: Props): JSX.Element {
                         path={`${AppPath.SIMULATION}/:simulationProjectPath`}
                         render={(renderProps) =>
                             <SimulationManager
-                                // baseRouterPath={AppPath.SIMULATION}
                                 networkRouterPath={AppPath.NETWORK_EDITOR}
                                 sensorRouterPath={AppPath.SENSOR_EDITOR}
                                 theme={editorThemeFrom(name)}
@@ -549,10 +551,9 @@ function Main(props: Props): JSX.Element {
                         }
                     />
                     <Route
-                        path={`${AppPath.NETWORK_EDITOR}/:networkDescriptionPath`}
+                        path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
                         render={(renderProps) =>
                             <NetworkEditor
-                                baseRouterPath={AppPath.NETWORK_EDITOR}
                                 theme={editorThemeFrom(name)}
                                 itheme={props.itheme}
                                 {...renderProps}
@@ -563,7 +564,6 @@ function Main(props: Props): JSX.Element {
                         path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
                         render={(renderProps) =>
                             <SensorsEditor
-                                baseRouterPath={AppPath.SENSOR_EDITOR}
                                 theme={editorThemeFrom(name)}
                                 itheme={props.itheme}
                                 {...renderProps}
@@ -587,6 +587,7 @@ function Main(props: Props): JSX.Element {
  * react-redux function that maps the application state to the props used by the `App` component.
  * @param state The updated application state
  * @param ownProps The current properties of the `App` component
+ * @return the state props for this component
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     ...ownProps,

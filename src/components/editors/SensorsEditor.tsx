@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import {defaultCustomThemes, DefaultTheme} from './themes';
-import {RouteComponentProps, useHistory, useParams, withRouter} from "react-router-dom";
+import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -35,6 +35,7 @@ import SensorSimulation from "../sensors/SensorSimulation";
 import {map} from "rxjs/operators";
 import {ChartData, Datum} from "stream-charts";
 import moment from 'moment';
+import { baseRouterPathFrom } from '../router/router';
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -59,7 +60,6 @@ interface Dimension {
 }
 
 interface OwnProps extends RouteComponentProps<never> {
-    baseRouterPath: string;
     itheme: ITheme;
     theme?: string;
 }
@@ -67,7 +67,7 @@ interface OwnProps extends RouteComponentProps<never> {
 interface StateProps {
     codeSnippet: string;
     modified: boolean;
-    path?: string;
+    sensorDescriptionPath?: string;
     templatePath?: string;
 }
 
@@ -97,8 +97,7 @@ function SensorsEditor(props: Props): JSX.Element {
         onLoadSensor,
         onSave,
         modified,
-        path,
-        baseRouterPath,
+        sensorDescriptionPath,
     } = props;
 
     // when user refreshes when the router path is this editor, then we want to load the same
@@ -106,6 +105,9 @@ function SensorsEditor(props: Props): JSX.Element {
     // to the sensor code-snippet, and keep it consistent when loading from template
     const {sensorsPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
+    const {path} = useRouteMatch();
+
+    const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
@@ -161,7 +163,7 @@ function SensorsEditor(props: Props): JSX.Element {
             //         .then(() => console.log("loaded"))
             //         .catch(reason => setMessage(errorMessage(reason.message)))
             // }
-            if (filePath === path) {
+            if (filePath === sensorDescriptionPath) {
                 return;
             }
             if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
@@ -188,8 +190,16 @@ function SensorsEditor(props: Props): JSX.Element {
             setSensorObservable(undefined);
             setExpressionState(ExpressionState.PRE_COMPILED);
         },
-        [path, templatePath, codeSnippet]
+        [sensorDescriptionPath, templatePath, codeSnippet]
     );
+
+    // recalculate the base path when the path changes (note that the base path won't change)
+    useEffect(
+        () => {
+            setBaseRouterPath(baseRouterPathFrom(path));
+        },
+        [path]
+    )
 
     /**
      * calculates the editors dimensions based on the `<div>`'s width and height
@@ -229,7 +239,7 @@ function SensorsEditor(props: Props): JSX.Element {
 
                 case KeyboardShortcut.SAVE: {
                     // const {path, templatePath, codeSnippet} = keyboardEventRef.current;
-                    handleSave(path, templatePath, codeSnippet);
+                    handleSave(sensorDescriptionPath, templatePath, codeSnippet);
                     break;
                 }
 
@@ -395,8 +405,8 @@ function SensorsEditor(props: Props): JSX.Element {
             <TooltipHost content="Save network environment">
                 <IconButton
                     iconProps={{iconName: 'save'}}
-                    onClick={() => handleSave(path, templatePath, codeSnippet)}
-                    disabled={!(modified || path === templatePath)}
+                    onClick={() => handleSave(sensorDescriptionPath, templatePath, codeSnippet)}
+                    disabled={!(modified || sensorDescriptionPath === templatePath)}
                 />
             </TooltipHost>
         </div>
@@ -524,7 +534,7 @@ function SensorsEditor(props: Props): JSX.Element {
                     color: props.itheme.palette.themeSecondary
                 }}
             >
-                {path === undefined || path === templatePath ? '[new file]' : path}{modified ? '*' : ''}
+                {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ? '[new file]' : sensorDescriptionPath}{modified ? '*' : ''}
             </div>
             <Stack horizontal>
                 <StackItem>
@@ -583,7 +593,7 @@ function SensorsEditor(props: Props): JSX.Element {
 const mapStateToProps = (state: AppState): StateProps => ({
     codeSnippet: state.sensorDescription.codeSnippet,
     modified: state.sensorDescription.modified,
-    path: state.sensorDescription.path,
+    sensorDescriptionPath: state.sensorDescription.path,
     templatePath: state.settings.sensorDescription.templatePath
 });
 

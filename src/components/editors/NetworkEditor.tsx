@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "./MonacoEditor";
 import {defaultCustomThemes, DefaultTheme} from './themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
-import {RouteComponentProps, useHistory, useParams, withRouter} from "react-router-dom";
+import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -19,6 +19,7 @@ import {connect} from "react-redux";
 import {IconButton, ITheme, MessageBar, MessageBarType, Stack, StackItem, TooltipHost} from '@fluentui/react';
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
+import { baseRouterPathFrom } from '../router/router';
 
 export const NEW_NETWORK_PATH = '**new**';
 
@@ -37,7 +38,6 @@ interface Dimension {
 }
 
 interface OwnProps extends RouteComponentProps<never> {
-    baseRouterPath: string;
     itheme: ITheme;
     theme?: string;
 }
@@ -45,7 +45,7 @@ interface OwnProps extends RouteComponentProps<never> {
 interface StateProps {
     network: string;
     modified: boolean;
-    path?: string;
+    networkDescriptionPath?: string;
     templatePath?: string;
 }
 
@@ -74,15 +74,17 @@ function NetworkEditor(props: Props): JSX.Element {
         onLoadNetworkDescription,
         onSave,
         modified,
-        path,
-        baseRouterPath,
+        networkDescriptionPath,
     } = props;
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path
     // to the network description, and keep it consistent when loading from template
-    const {networkDescriptionPath} = useParams<{ [key: string]: string }>();
+    const {networkPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
+    const {path} = useRouteMatch();
+
+    const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
@@ -119,13 +121,13 @@ function NetworkEditor(props: Props): JSX.Element {
     // or a template
     useEffect(
         () => {
-            const filePath = decodeURIComponent(networkDescriptionPath);
+            const filePath = decodeURIComponent(networkPath);
             // if (filePath !== path || filePath === '') {
             //     // todo handle success and failure
             //     onLoadNetworkDescription(filePath)
             //         .then(() => console.log("loaded"))
             // }
-            if (filePath === path) {
+            if (filePath === networkDescriptionPath) {
                 return;
             }
             if (filePath === NEW_NETWORK_PATH || filePath === 'undefined') {
@@ -139,8 +141,17 @@ function NetworkEditor(props: Props): JSX.Element {
                     .catch(reason => setMessage(errorMessage(reason.message)))
             }
         },
-        [networkDescriptionPath]
+        [networkPath]
     )
+
+    // recalculate the base path when the path changes (note that the base path won't change)
+    useEffect(
+        () => {
+            setBaseRouterPath(baseRouterPathFrom(path));
+        },
+        [path]
+    )
+    
 
     // // the keyboard event listener holds a stale ref to the props, so we need to update
     // // the referenced values when they change
@@ -189,7 +200,7 @@ function NetworkEditor(props: Props): JSX.Element {
 
                 case KeyboardShortcut.SAVE: {
                     // const {path, templatePath, network} = keyboardEventRef.current;
-                    handleSave(path, templatePath, network);
+                    handleSave(networkDescriptionPath, templatePath, network);
                     break;
                 }
 
@@ -274,8 +285,8 @@ function NetworkEditor(props: Props): JSX.Element {
             <TooltipHost content="Save network description">
                 <IconButton
                     iconProps={{iconName: 'save'}}
-                    onClick={() => handleSave(path, templatePath, network)}
-                    disabled={!(modified || path === templatePath)}
+                    onClick={() => handleSave(networkDescriptionPath, templatePath, network)}
+                    disabled={!(modified || networkDescriptionPath === templatePath)}
                 />
             </TooltipHost>
         </div>
@@ -348,7 +359,7 @@ function NetworkEditor(props: Props): JSX.Element {
                     color: props.itheme.palette.themeSecondary
                 }}
             >
-                {path === undefined || path === templatePath ? '[new file]' : path}{modified ? '*' : ''}
+                {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ? '[new file]' : networkDescriptionPath}{modified ? '*' : ''}
             </div>
             <Stack horizontal>
                 <StackItem>
@@ -409,7 +420,7 @@ export function editorThemeFrom(name: string): string {
 const mapStateToProps = (state: AppState): StateProps => ({
     network: state.networkDescription.description,
     modified: state.networkDescription.modified,
-    path: state.networkDescription.path,
+    networkDescriptionPath: state.networkDescription.path,
     templatePath: state.settings.networkDescription.templatePath
 });
 

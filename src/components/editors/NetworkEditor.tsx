@@ -89,7 +89,7 @@ function NetworkEditor(props: Props): JSX.Element {
 
     // the keyboard event listener holds a stale ref to the props, so we need to use a
     // reference that is updated for the event listener to use
-    const keyboardEventRef = useRef({path, templatePath, network});
+    // const keyboardEventRef = useRef({path, templatePath, network});
 
     const [message, setMessage] = useState<JSX.Element>();
 
@@ -103,12 +103,12 @@ function NetworkEditor(props: Props): JSX.Element {
 
             // listen to resize events so that the editor width and height can be updated
             window.addEventListener('resize', handleWindowResize);
-            window.addEventListener('keydown', handleKeyboardShortcut, true);
+            // window.addEventListener('keydown', handleKeyboardShortcut, true);
 
             return () => {
                 // stop listening to resize events
                 window.removeEventListener('resize', handleWindowResize);
-                window.removeEventListener('keydown', handleKeyboardShortcut, true);
+                // window.removeEventListener('keydown', handleKeyboardShortcut, true);
             }
         },
         []
@@ -142,14 +142,14 @@ function NetworkEditor(props: Props): JSX.Element {
         [networkDescriptionPath]
     )
 
-    // the keyboard event listener holds a stale ref to the props, so we need to update
-    // the referenced values when they change
-    useEffect(
-        () => {
-            keyboardEventRef.current = {path, templatePath, network};
-        },
-        [path, templatePath, network]
-    )
+    // // the keyboard event listener holds a stale ref to the props, so we need to update
+    // // the referenced values when they change
+    // useEffect(
+    //     () => {
+    //         keyboardEventRef.current = {path, templatePath, network};
+    //     },
+    //     [path, templatePath, network]
+    // )
 
     /**
      * calculates the editors dimensions based on the `<div>`'s width and height
@@ -180,15 +180,15 @@ function NetworkEditor(props: Props): JSX.Element {
      * Handles keyboard events when the editor is focused
      * @param event The keyboard event
      */
-    function handleKeyboardShortcut(event: KeyboardEvent): void {
-        keyboardShortcutFor(event).ifSome(shortcut => {
+    function handleKeyboardShortcut(event: React.KeyboardEvent<HTMLDivElement>): void {
+        keyboardShortcutFor(event.nativeEvent).ifSome(shortcut => {
             switch (shortcut) {
                 case KeyboardShortcut.NEW:
                     handleNew();
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    const {path, templatePath, network} = keyboardEventRef.current;
+                    // const {path, templatePath, network} = keyboardEventRef.current;
                     handleSave(path, templatePath, network);
                     break;
                 }
@@ -337,6 +337,7 @@ function NetworkEditor(props: Props): JSX.Element {
             // can't just set a fraction for the height because the parent height may not be
             // set...but if it is, then you can use that.
             style={{height: window.innerHeight * 0.9, width: '100%'}}
+            onKeyDown={handleKeyboardShortcut}
         >
             {message || <span/>}
             <div

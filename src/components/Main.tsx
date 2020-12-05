@@ -137,9 +137,10 @@ function Main(props: Props): JSX.Element {
         onSaveSimulationProject,
     } = props;
 
-    // react-router history
+    // react-router
     const history = useHistory();
     // const location = useLocation();
+    const networkEditorRouteMatch = useRouteMatch(AppPath.NETWORK_EDITOR);
 
     // register spikes language with the monaco editor when the component mounts
     useEffect(() => {
@@ -161,6 +162,17 @@ function Main(props: Props): JSX.Element {
                 subMenuProps: {
                     items: [
                         {
+                            key: 'editSimulation',
+                            text: 'Edit',
+                            iconProps: {iconName: 'brain'},
+                            ariaLabel: 'Edit Network',
+                            onClick: handleEditSimulationProject
+                        },
+                        {
+                            key: 'divider_simulation_1',
+                            itemType: ContextualMenuItemType.Divider
+                        },
+                        {
                             key: 'newSimulation',
                             text: 'New Simulation',
                             iconProps: {iconName: 'add'},
@@ -170,7 +182,7 @@ function Main(props: Props): JSX.Element {
                             key: 'loadSimulation',
                             text: 'Load Simulation',
                             iconProps: {iconName: 'upload'},
-                            onClick: () => history.push(AppPath.SIMULATION)
+                            onClick: handleLoadSimulationProject
                         },
                     ],
                 },
@@ -213,7 +225,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Save',
                             iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network',
-                            disabled: !networkDescriptionPath || !networkDescriptionModified || !useRouteMatch(AppPath.NETWORK_EDITOR) || networkDescriptionPath === networkDescriptionTemplatePath,
+                            disabled: !networkDescriptionPath || !networkDescriptionModified || !networkEditorRouteMatch || networkDescriptionPath === networkDescriptionTemplatePath,
                             onClick: handleSaveNetworkDescription
                         },
                         {
@@ -221,7 +233,7 @@ function Main(props: Props): JSX.Element {
                             text: 'Save As...',
                             ariaLabel: 'Save Network As',
                             iconProps: {iconName: 'save'},
-                            disabled: !useRouteMatch(AppPath.NETWORK_EDITOR),
+                            disabled: !networkEditorRouteMatch,
                             onClick: handleSaveNetworkDescriptionAs
                         },
                     ],
@@ -237,7 +249,7 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'editSensor',
                             text: 'Edit',
-                            iconProps: {iconName: 'homegroup'},
+                            iconProps: {iconName: 'environment'},
                             ariaLabel: 'Edit Network Sensor',
                             onClick: handleEditSensor,
                         },
@@ -303,15 +315,14 @@ function Main(props: Props): JSX.Element {
                 ariaLabel: 'Help',
                 iconProps: {iconName: 'help'},
                 iconOnly: true,
-                // onClick: () => settingVisibilityManager(true)
             }
         ];
 
         if (simulationProjectPath !== undefined && simulationProjectPath !== NEW_PROJECT_PATH) {
             baseItems.unshift({
                 key: 'simulation',
-                name: 'Simulation',
-                ariaLabel: 'Simulation',
+                name: simulationProjectPath,
+                ariaLabel: 'Simulation Project Editor',
                 iconProps: {iconName: 'brain'},
                 iconOnly: true,
                 onClick: () => history.push(`${AppPath.SIMULATION}/${encodeURIComponent(simulationProjectPath)}`)
@@ -464,9 +475,35 @@ function Main(props: Props): JSX.Element {
 
     }
 
+    /**
+     * Handles editing the currently loaded network
+     */
+    function handleEditSimulationProject(): void {
+        history.push(`${AppPath.SIMULATION}/${encodeURIComponent(simulationProjectPath)}`);
+    }
+
     function handleNewSimulationProject(): void {
         onCreateSimulationProject();
         history.push(`${AppPath.SIMULATION}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
+    }
+
+    /**
+     * Handles the request to load an existing network by routing the request, along with the
+     * network description file path to the network editor, which will load the network description
+     * and display the it.
+     */
+    function handleLoadSimulationProject(): void {
+        remote.dialog
+            .showOpenDialog(
+                remote.getCurrentWindow(),
+                {
+                    title: 'Open...',
+                    filters: [{name: 'spikes-project', extensions: ['spikes']}],
+                    properties: ['openFile']
+                })
+            .then(response => {
+                history.push(`${AppPath.SIMULATION}/${encodeURIComponent(response.filePaths[0])}`);
+            })
     }
 
     return (
@@ -502,7 +539,7 @@ function Main(props: Props): JSX.Element {
                         path={`${AppPath.SIMULATION}/:simulationProjectPath`}
                         render={(renderProps) =>
                             <SimulationManager
-                                baseRouterPath={AppPath.SIMULATION}
+                                // baseRouterPath={AppPath.SIMULATION}
                                 networkRouterPath={AppPath.NETWORK_EDITOR}
                                 sensorRouterPath={AppPath.SENSOR_EDITOR}
                                 theme={editorThemeFrom(name)}

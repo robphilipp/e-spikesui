@@ -3,7 +3,7 @@ import { AppState } from "../redux/reducers/root";
 import { ThunkDispatch } from "redux-thunk";
 import { ApplicationAction } from "../redux/actions/actions";
 import { connect } from "react-redux";
-import { RouteComponentProps, useHistory, useParams, withRouter } from "react-router-dom";
+import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
 import { SimulationProject } from "../repos/simulationProjectRepo";
 import {
     loadSimulationProject, newSimulationProject, ProjectLoadedAction, ProjectSavedAction, ProjectUpdatedAction,
@@ -32,14 +32,16 @@ import {
     TextField,
     TooltipHost
 } from "@fluentui/react";
-import { Card, ICardTokens, ICardSectionStyles, ICardSectionTokens } from '@uifabric/react-cards';
+import { Card } from '@uifabric/react-cards';
 import { DefaultTheme } from "../editors/themes";
 import { remote } from "electron";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadSensorsFrom, SensorsLoadedAction } from "../redux/actions/sensors";
 import { NEW_SENSOR_PATH } from "../editors/SensorsEditor";
 import { NEW_NETWORK_PATH } from "../editors/NetworkEditor";
 import { loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction } from "../redux/actions/networkDescription";
+import { baseRouterPathFrom } from "../router/router";
+import { KeyboardShortcut, keyboardShortcutFor } from "../editors/keyboardShortcuts";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -50,7 +52,6 @@ const MIN_TIME_FACTOR = 1;
 const MAX_TIME_FACTOR = 20;
 
 interface OwnProps extends RouteComponentProps<never> {
-    baseRouterPath: string;
     networkRouterPath: string;
     sensorRouterPath: string;
     itheme: ITheme;
@@ -83,7 +84,6 @@ function SimulationManager(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
         itheme,
-        baseRouterPath,
         networkRouterPath,
         sensorRouterPath,
         projectPath,
@@ -106,8 +106,10 @@ function SimulationManager(props: Props): JSX.Element {
     // to the project, and keep it consistent when loading a project
     const { simulationProjectPath } = useParams<{ [key: string]: string }>();
     const history = useHistory();
+    const { path } = useRouteMatch();
 
     const [message, setMessage] = useState<JSX.Element>();
+    const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     // when the environment code-snippet file path from the router has changed, and is
     // not equal to the current state path, or is empty, then load the environment code-snippet,
@@ -115,7 +117,7 @@ function SimulationManager(props: Props): JSX.Element {
     useEffect(
         () => {
             const filePath = decodeURIComponent(simulationProjectPath);
-            if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH) {
+            if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH && !modified) {
                 onLoad(filePath)
                     .then(() => console.log("loaded"))
                     .catch(reason => setMessage(errorMessage(reason.message)))
@@ -123,6 +125,15 @@ function SimulationManager(props: Props): JSX.Element {
         },
         [simulationProjectPath]
     );
+
+    // when the path changes, we need to recalculate the base router path, even though
+    // that really shouldn't change
+    useEffect(
+        () => {
+            setBaseRouterPath(baseRouterPathFrom(path));
+        },
+        [path]
+    )
 
     function handleNewProject(): void {
         onCreate();
@@ -299,6 +310,33 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     /**
+ * Handles keyboard events when the editor is focused
+ * @param event The keyboard event
+ */
+    function handleKeyboardShortcut(event: React.KeyboardEvent<HTMLDivElement>): void {
+        keyboardShortcutFor(event.nativeEvent).ifSome(shortcut => {
+            switch (shortcut) {
+                case KeyboardShortcut.NEW:
+                    handleNewProject();
+                    break;
+
+                case KeyboardShortcut.SAVE: {
+                    // const {path, templatePath, codeSnippet} = keyboardEventRef.current;
+                    handleSaveProject();
+                    break;
+                }
+
+                case KeyboardShortcut.LOAD:
+                    handleLoadProject();
+                    break;
+
+                default:
+                /* nothing to do */
+            }
+        });
+    }
+
+    /**
      * Create a button to create a new network
      * @return a button to create a new network
      */
@@ -360,8 +398,11 @@ function SimulationManager(props: Props): JSX.Element {
      */
     function simulationCard(): JSX.Element {
         return (
-            <Card aria-label="Simulation Parameters" horizontal tokens={{ childrenMargin: 12, boxShadow: "none"}}>
-                <Card.Item align="start" tokens={{margin: 20}}>
+            <Card
+                aria-label="Simulation Parameters"
+                horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}
+            >
+                <Card.Item align="start" tokens={{ margin: 20 }}>
                     <Icon
                         iconName='sprint'
                         style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
@@ -376,13 +417,11 @@ function SimulationManager(props: Props): JSX.Element {
                     </Text>
                     <TextField
                         label="Simulation Name"
-                        // placeholder="Please enter name."
+                        placeholder="description name"
                         onChange={(event, name) => handleSimulationNameChange(name)}
                         value={simulationName}
-                        // errorMessage={errorMessage}
+                        autoFocus
                         styles={{ errorMessage: { color: itheme.palette.redDark } }}
-                        // onKeyPress={handleKeyPress}
-                        // underlined
                     />
                     <SpinButton
                         label="Time Factor"
@@ -444,7 +483,7 @@ function SimulationManager(props: Props): JSX.Element {
     function networkDescriptionCard(): JSX.Element {
         return (
             <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}>
-                <Card.Item align="start" tokens={{margin: 20}}>
+                <Card.Item align="start" tokens={{ margin: 20 }}>
                     <Icon
                         iconName='homegroup'
                         style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
@@ -493,7 +532,7 @@ function SimulationManager(props: Props): JSX.Element {
     function sensorDescriptionCard(): JSX.Element {
         return (
             <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}>
-                <Card.Item align="start" tokens={{margin: 20}}>
+                <Card.Item align="start" tokens={{ margin: 20 }}>
                     <Icon
                         iconName='environment'
                         style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
@@ -556,38 +595,42 @@ function SimulationManager(props: Props): JSX.Element {
         )
     }
 
-    return <div>
-        {message || <span />}
+    return (
         <div
-            style={{
-                marginLeft: 30,
-                marginBottom: 8,
-                height: 15,
-                color: props.itheme.palette.themeSecondary
-            }}
+            onKeyDown={handleKeyboardShortcut}
         >
-            {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
-        </div>
-        <div>
-            <Stack horizontal>
-                <StackItem>
-                    {newButton()}
-                    {saveButton()}
-                    {loadButton()}
-                    <Separator />
-                    {/*{compileButton()}*/}
-                    {/*{runSensorSimulationButton()}*/}
-                    {/*{stopSensorSimulationButton()}*/}
-                    {/*{showSimulation && hideSimulationButton()}*/}
-                </StackItem>
-                <Stack tokens={{ childrenGap: 10, padding: 20 }} grow>
-                    {simulationCard()}
-                    {networkDescriptionCard()}
-                    {sensorDescriptionCard()}
+            {message || <span />}
+            <div
+                style={{
+                    marginLeft: 30,
+                    marginBottom: 8,
+                    height: 15,
+                    color: props.itheme.palette.themeSecondary
+                }}
+            >
+                {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
+            </div>
+            <div>
+                <Stack horizontal>
+                    <StackItem>
+                        {newButton()}
+                        {saveButton()}
+                        {loadButton()}
+                        <Separator />
+                        {/*{compileButton()}*/}
+                        {/*{runSensorSimulationButton()}*/}
+                        {/*{stopSensorSimulationButton()}*/}
+                        {/*{showSimulation && hideSimulationButton()}*/}
+                    </StackItem>
+                    <Stack tokens={{ childrenGap: 10, padding: 20 }} grow>
+                        {simulationCard()}
+                        {networkDescriptionCard()}
+                        {sensorDescriptionCard()}
+                    </Stack>
                 </Stack>
-            </Stack>
+            </div>
         </div>
-    </div>;
+    );
 }
 
 /*

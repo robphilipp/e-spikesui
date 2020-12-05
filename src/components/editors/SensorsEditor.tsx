@@ -113,7 +113,7 @@ function SensorsEditor(props: Props): JSX.Element {
 
     // the keyboard event listener holds a stale ref to the props, so we need to use a
     // reference that is updated for the event listener to use
-    const keyboardEventRef = useRef({path, templatePath, codeSnippet});
+    // const keyboardEventRef = useRef({path, templatePath, codeSnippet});
 
     // manages the state of the code snippet (i.e. pre-compiled, compiled, running), and the 
     // compile-time errors
@@ -140,12 +140,10 @@ function SensorsEditor(props: Props): JSX.Element {
 
             // listen to resize events so that the editor width and height can be updated
             window.addEventListener('resize', handleWindowResize);
-            window.addEventListener('keydown', handleKeyboardShortcut, true);
 
             return () => {
                 // stop listening to resize events
                 window.removeEventListener('resize', handleWindowResize);
-                window.removeEventListener('keydown', handleKeyboardShortcut, true);
             }
         },
         []
@@ -185,7 +183,7 @@ function SensorsEditor(props: Props): JSX.Element {
     // we need to set the observableRef back to an undefined
     useEffect(
         () => {
-            keyboardEventRef.current = {path, templatePath, codeSnippet};
+            // keyboardEventRef.current = {path, templatePath, codeSnippet};
 
             setSensorObservable(undefined);
             setExpressionState(ExpressionState.PRE_COMPILED);
@@ -222,15 +220,15 @@ function SensorsEditor(props: Props): JSX.Element {
      * Handles keyboard events when the editor is focused
      * @param event The keyboard event
      */
-    function handleKeyboardShortcut(event: KeyboardEvent): void {
-        keyboardShortcutFor(event).ifSome(shortcut => {
+    function handleKeyboardShortcut(event: React.KeyboardEvent<HTMLDivElement>): void {
+        keyboardShortcutFor(event.nativeEvent).ifSome(shortcut => {
             switch (shortcut) {
                 case KeyboardShortcut.NEW:
                     handleNew();
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    const {path, templatePath, codeSnippet} = keyboardEventRef.current;
+                    // const {path, templatePath, codeSnippet} = keyboardEventRef.current;
                     handleSave(path, templatePath, codeSnippet);
                     break;
                 }
@@ -244,7 +242,6 @@ function SensorsEditor(props: Props): JSX.Element {
             }
         });
     }
-
 
     /**
      * Handles loading a new network from a template file.
@@ -516,6 +513,7 @@ function SensorsEditor(props: Props): JSX.Element {
             // can't just set a fraction for the height because the parent height may not be
             // set...but if it is, then you can use that.
             style={{height: window.innerHeight * 0.9, width: '100%'}}
+            onKeyDown={handleKeyboardShortcut}
         >
             {message || <span/>}
             <div

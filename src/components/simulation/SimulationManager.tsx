@@ -80,6 +80,12 @@ interface DispatchProps {
 
 type Props = StateProps & DispatchProps & OwnProps;
 
+/**
+ * Manages the project settings and the simulation. The project settings included the network
+ * description, the sensor description, the simulation name, time-factor, and duration.
+ * @param props The props from the parent and redux
+ * @return The simulation project editor and manager
+ */
 function SimulationManager(props: Props): JSX.Element {
     const {
         theme = DefaultTheme.DARK,
@@ -135,11 +141,17 @@ function SimulationManager(props: Props): JSX.Element {
         [path]
     )
 
+    /**
+     * Handles creating a new project with default settings.
+     */
     function handleNewProject(): void {
         onCreate();
         history.push(`${baseRouterPath}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
     }
 
+    /**
+     * Handles loading the sensor description from file
+     */
     function handleLoadSensor(): void {
         remote.dialog
             .showOpenDialog(
@@ -259,6 +271,10 @@ function SimulationManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Handles changes to the simulation name
+     * @param name The new name of the simulation
+     */
     function handleSimulationNameChange(name: string): void {
         onChange({
             simulationName: name,
@@ -269,6 +285,10 @@ function SimulationManager(props: Props): JSX.Element {
         })
     }
 
+    /**
+     * Handles changes to the simulation time-factor
+     * @param factor The new time factor
+     */
     function handleTimeFactorChange(factor: number): void {
         const newTimeFactor = Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, factor));
         if (newTimeFactor !== timeFactor) {
@@ -282,12 +302,19 @@ function SimulationManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Handles validating the simulation time factor
+     * @param value The new time factor (should be a number in the interval [1, 20])
+     */
     function handleValidateTimeFactor(value: string): string {
         const timeFactor = Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, parseInt(value)));
-        // handleTimeFactorChange(timeFactor);
         return timeFactor.toString();
     }
 
+    /**
+     * Handles changes to the duration of the simulation
+     * @param duration The duration of the simulation in seconds
+     */
     function handleSimulationTimeChange(duration: number): void {
         if (duration >= 1) {
             onChange({
@@ -300,6 +327,11 @@ function SimulationManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Updates the simulation duration by the specified amount
+     * @param value The current duration (as a string from the text field)
+     * @param amount The amount to add to the current duration
+     */
     function updateSimulationTime(value: string, amount: number): void {
         if (value.match(durationRegex) !== null) {
             const duration = parseInt(value.split(' ')[0]);
@@ -310,9 +342,9 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     /**
- * Handles keyboard events when the editor is focused
- * @param event The keyboard event
- */
+     * Handles keyboard events when the editor is focused
+     * @param event The keyboard event
+     */
     function handleKeyboardShortcut(event: React.KeyboardEvent<HTMLDivElement>): void {
         keyboardShortcutFor(event.nativeEvent).ifSome(shortcut => {
             switch (shortcut) {
@@ -368,6 +400,9 @@ function SimulationManager(props: Props): JSX.Element {
         </div>
     }
 
+    /**
+     * @return `true` if the simulation project can be saved; `false` otherwise
+     */
     function canSave(): boolean {
         const validProject = networkDescriptionPath !== undefined &&
             sensorDescriptionPath != undefined &&

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { AppState } from "../redux/reducers/root";
 import { ThunkDispatch } from "redux-thunk";
-import { ApplicationAction } from "../redux/actions/actions";
+import { ApplicationAction, clearErrorMessages, ErrorMessageClearedAction, ErrorMessageSetAction, setErrorMessages } from "../redux/actions/actions";
 import { connect } from "react-redux";
 import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
 import { SimulationProject } from "../repos/simulationProjectRepo";
@@ -76,6 +76,7 @@ interface DispatchProps {
 
     onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
     onLoadNetwork: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    // onSetError: (messages: Array<string>) => ErrorMessageSetAction;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -105,6 +106,7 @@ function SimulationManager(props: Props): JSX.Element {
         onSave,
         onLoadSensor,
         onLoadNetwork,
+        // onSetError,
     } = props;
 
     // when user refreshes when the router path is this simulation manager, then we want to load the same
@@ -126,7 +128,7 @@ function SimulationManager(props: Props): JSX.Element {
             if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH && !modified) {
                 onLoad(filePath)
                     .then(() => console.log("loaded"))
-                    .catch(reason => setMessage(errorMessage(reason.message)))
+                    .catch(reason => setMessage(errorMessage(<div>{reason.message}</div>)))
             }
         },
         [simulationProjectPath]
@@ -162,14 +164,19 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                onLoadSensor(response.filePaths[0])
+                onLoadSensor(response.filePaths[0]+'a')
                     .then(action => onChange({
                         simulationName,
                         timeFactor,
                         simulationDuration,
                         networkFilePath: networkDescriptionPath,
                         sensorFilePath: action.result.path,
-                    }));
+                    }))
+                    .catch(reason => setMessage(errorMessage(<>
+                        <div><b>Unable to load sensor file</b></div>
+                        <div>Path: {response.filePaths[0]}</div>
+                        <div>Response: {reason}</div>
+                    </>)));
             })
     }
 
@@ -195,6 +202,7 @@ function SimulationManager(props: Props): JSX.Element {
                         networkFilePath: action.result.path,
                         sensorFilePath: sensorDescriptionPath,
                     }))
+                    .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
             })
     }
 
@@ -214,7 +222,8 @@ function SimulationManager(props: Props): JSX.Element {
             .then(response => {
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
-    }
+            .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
+        }
 
     /**
      * Handles saving the file when the path exists, otherwise opens a save-file dialog to allow
@@ -235,12 +244,14 @@ function SimulationManager(props: Props): JSX.Element {
         if (projectPath && projectPath !== NEW_PROJECT_PATH) {
             // todo handle success and error
             onSave(projectPath, project)
-                .then(() => console.log('saved'));
-        } else {
+                .then(() => console.log('saved'))
+                .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
+            } else {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), { title: "Save As..." })
                 .then(response => onSave(response.filePath, project)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
+                    .catch(reason => setMessage(errorMessage(<div>{reason}</div>)))
                 );
         }
     }
@@ -617,18 +628,30 @@ function SimulationManager(props: Props): JSX.Element {
      * @param message The error message
      * @return A `MessageBar` with an error message
      */
-    function errorMessage(message: string): JSX.Element {
+    function errorMessage(content: JSX.Element): JSX.Element {
         return (
             <MessageBar
                 messageBarType={MessageBarType.error}
-                isMultiline={false}
+                isMultiline={true}
                 onDismiss={() => setMessage(undefined)}
                 dismissButtonAriaLabel="Close"
             >
-                {message}
+                {content}
             </MessageBar>
         )
     }
+    // function errorMessage(message: Array<string>): JSX.Element {
+    //     return (
+    //         <MessageBar
+    //             messageBarType={MessageBarType.error}
+    //             isMultiline={true}
+    //             onDismiss={() => setMessage(undefined)}
+    //             dismissButtonAriaLabel="Close"
+    //         >
+    //             {message.map(line => (<div>{line}</div>))}
+    //         </MessageBar>
+    //     )
+    // }
 
     return (
         <div
@@ -703,6 +726,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
 
     onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
     onLoadNetwork: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
+
+    // onSetError: (messages: Array<string>) => dispatch(setErrorMessages(messages)),
 });
 
 const connectedSimulationManager = connect(mapStateToProps, mapDispatchToProps)(SimulationManager);

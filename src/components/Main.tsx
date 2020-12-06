@@ -512,10 +512,16 @@ function Main(props: Props): JSX.Element {
     return (
         <Stack>
             <StackItem>
+                <CommandBar
+                    items={menuItems()}
+                    farItems={farMenuItems(handleSettingsPanelVisibility)}
+                />
+            </StackItem>
+            <StackItem>
                 {props.errorMessages.map(messages => (
                     <MessageBar
                         key="error-messages"
-                        messageBarType={MessageBarType.blocked}
+                        messageBarType={MessageBarType.error}
                         isMultiline={false}
                         truncated={true}
                         theme={props.itheme}
@@ -526,12 +532,6 @@ function Main(props: Props): JSX.Element {
                         {messages}
                     </MessageBar>
                 )).getOrElse((<div/>))}
-            </StackItem>
-            <StackItem>
-                <CommandBar
-                    items={menuItems()}
-                    farItems={farMenuItems(handleSettingsPanelVisibility)}
-                />
             </StackItem>
             <StackItem grow>
                 <SettingsPanel/>

@@ -39,7 +39,8 @@ export type ResponseActionType = typeof SENSORS_LOADED
 
 export type SensorsAction = SensorsLoadedAction
     | SensorsUpdatedAction
-    | SensorsSavedAction;
+    | SensorsSavedAction
+    ;
 
 /*
  |

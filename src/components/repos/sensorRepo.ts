@@ -1,7 +1,8 @@
 import fs from "fs";
+import { setErrorMessages } from "../redux/actions/actions";
 
 /**
- * Loads the environment code-snippet template from its default location. The template is
+ * Loads the sensor code-snippet template from its default location. The template is
  * used for creating a new environment code-snippet. If no environment code-snippet-template
  * file exists, then creates one using the `initialEnvironment` string.
  * @param path The path to the environment code-snippet template file
@@ -10,12 +11,9 @@ import fs from "fs";
 export function loadSensorsOrInitialize(path: string): Promise<string> {
     return readSensors(path)
         .catch(err => {
-            console.log(`Unable to read environment code-snippet template; path: ${path}; error: ${err.toString()}`);
+            // console.log(`Unable to read environment code-snippet template; path: ${path}; error: ${err.toString()}`);
             return saveSensors(path, initialSensors)
-                .catch(err => {
-                    // todo handle success and failure
-                    console.log(`Unable to write environment code-snippet template to file; path: ${path}; error: ${err.toString()}`)
-                })
+                .catch(err => `Unable load sensor code-snippet, and failed to write initial sensor code-snippet to file; path: ${path}; error: ${err.toString()}`)
                 .then(() => initialSensors);
         })
 }
@@ -45,7 +43,7 @@ export function readSensors(path: string): Promise<string> {
 export function saveSensors(path: string, codeSnippet: string): Promise<void> {
     return new Promise((resolve, reject) => {
         if (path === undefined || path === '') {
-            reject("File path cannot be undefined or empty");
+            reject(`Unable to save sensor because file path is undefined or empty`);
             return;
         }
         try {

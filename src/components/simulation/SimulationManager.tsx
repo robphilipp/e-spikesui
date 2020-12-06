@@ -164,7 +164,7 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                onLoadSensor(response.filePaths[0]+'a')
+                onLoadSensor(response.filePaths[0])
                     .then(action => onChange({
                         simulationName,
                         timeFactor,

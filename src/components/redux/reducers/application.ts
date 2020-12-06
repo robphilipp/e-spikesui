@@ -1,14 +1,15 @@
-import {ApplicationAction, CLEAR_ERROR_MESSAGES, SET_ERROR_MESSAGES} from "../actions/actions";
+import {ApplicationAction, CLEAR_MESSAGE, FeedbackMessage, SET_MESSAGE} from "../actions/actions";
 import {SETTINGS_PANEL_VISIBLE} from "../actions/settings";
 import {Option} from "prelude-ts";
 
 interface ApplicationState {
-    errorMessages: Option<string[]>;
+    // errorMessages: Option<JSX.Element>;
+    message: Option<FeedbackMessage>;
     settingsPanelVisible: boolean;
 }
 
 const initialState: ApplicationState = {
-    errorMessages: Option.none<string[]>(),
+    message: Option.none<FeedbackMessage>(),
     settingsPanelVisible: false
 };
 
@@ -20,16 +21,16 @@ const initialState: ApplicationState = {
  */
 export function applicationReducer(state = initialState, action: ApplicationAction): ApplicationState {
     switch (action.type) {
-        case CLEAR_ERROR_MESSAGES:
+        case CLEAR_MESSAGE:
             return {
                 ...state,
-                errorMessages: Option.none<string[]>()
+                message: Option.none<FeedbackMessage>()
             };
 
-        case SET_ERROR_MESSAGES:
+        case SET_MESSAGE:
             return {
                 ...state,
-                errorMessages: Option.some<string[]>(action.messages)
+                message: action.message
             };
 
         case SETTINGS_PANEL_VISIBLE:

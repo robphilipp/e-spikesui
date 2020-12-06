@@ -2,17 +2,25 @@ import {SettingsAction} from "./settings";
 import {NetworkDescriptionAction} from "./networkDescription";
 import {SensorsAction} from "./sensors";
 import {SimulationProjectAction} from "./simulationProject";
+import { MessageBarType } from "@fluentui/react";
+import {Option} from "prelude-ts";
+
 // import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 // import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
 // import {NetworkVisualizationAction} from "./networkVisualization";
+
+export interface FeedbackMessage {
+    messageType: MessageBarType;
+    messageContent: JSX.Element;
+}
 
 /*
  |
  | Action names (for use by actions, redux action creators, and reducers)
  |
  */
-export const SET_ERROR_MESSAGES = "set-error-messages";
-export const CLEAR_ERROR_MESSAGES = "clear-error-messages";
+export const SET_MESSAGE = "set-messages";
+export const CLEAR_MESSAGE = "clear-messages";
 
 /*
  |
@@ -22,23 +30,23 @@ export const CLEAR_ERROR_MESSAGES = "clear-error-messages";
 /**
  * The definition of an action that is dispatched when the error messages should be cleared
  */
-export interface ErrorMessageClearedAction {
-    type: typeof CLEAR_ERROR_MESSAGES
+export interface MessageClearedAction {
+    type: typeof CLEAR_MESSAGE
 }
 
 /**
  * The definition of an action that is dispatched when the error messages should be set
  */
-export interface ErrorMessageSetAction {
-    type: typeof SET_ERROR_MESSAGES;
-    messages: string[];
+export interface MessageSetAction {
+    type: typeof SET_MESSAGE;
+    message: Option<FeedbackMessage>;
 }
 
 /**
  * Lists all the actions that are part of the application action
  */
-export type ApplicationAction = ErrorMessageSetAction
-    | ErrorMessageClearedAction
+export type ApplicationAction = MessageSetAction
+    | MessageClearedAction
     // | NetworkManagementAction
     | SettingsAction
     // | NetworkBuiltAction
@@ -55,10 +63,25 @@ export type ApplicationAction = ErrorMessageSetAction
  * @param messages An array of error messages
  * @return An action to that the error message has been set
  */
-export function setErrorMessages(messages: string[]): ErrorMessageSetAction {
+export function setErrorMessage(message: JSX.Element): MessageSetAction {
+    return setMessage(MessageBarType.error, message);
+}
+
+export function setSuccessMessage(message: JSX.Element): MessageSetAction {
+    return setMessage(MessageBarType.success, message);
+}
+
+export function setInfoMessage(message: JSX.Element): MessageSetAction {
+    return setMessage(MessageBarType.info, message);
+}
+
+export function setMessage(messageType: MessageBarType, message: JSX.Element): MessageSetAction {
     return {
-        type: SET_ERROR_MESSAGES,
-        messages: messages
+        type: SET_MESSAGE,
+        message: Option.of({
+            messageType: messageType,
+            messageContent: message
+        })
     };
 }
 
@@ -66,9 +89,9 @@ export function setErrorMessages(messages: string[]): ErrorMessageSetAction {
  * Clears the application-level error messages
  * @return An action that the error message has been cleared
  */
-export function clearErrorMessages(): ErrorMessageClearedAction {
+export function clearMessage(): MessageClearedAction {
     return {
-        type: CLEAR_ERROR_MESSAGES
+        type: CLEAR_MESSAGE
     };
 }
 

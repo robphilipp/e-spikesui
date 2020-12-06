@@ -15,7 +15,7 @@ import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
-import {ApplicationAction, clearErrorMessages} from "./redux/actions/actions";
+import {ApplicationAction, clearMessage, FeedbackMessage, setErrorMessage} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
@@ -58,7 +58,7 @@ interface OwnProps extends RouteComponentProps<never> {
 
 interface StateProps {
     // holds an error message
-    errorMessages: Option<string[]>;
+    message: Option<FeedbackMessage>;
 
     // determines if the application settings panel is visible
     settingsPanelVisible: boolean;
@@ -84,7 +84,9 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    onClearErrorMessages: () => void;
+    onSetErrorMessage: (message: JSX.Element) => void;
+    onClearMessage: () => void;
+
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
     onChangeTheme: (theme: string) => void;
@@ -111,6 +113,10 @@ function Main(props: Props): JSX.Element {
         settingsPanelVisible,
         onShowSettingsPanel,
         onHideSettingsPanel,
+
+        message,
+        onSetErrorMessage,
+        onClearMessage,
 
         networkDescriptionTemplatePath,
         networkDescription,
@@ -518,18 +524,18 @@ function Main(props: Props): JSX.Element {
                 />
             </StackItem>
             <StackItem>
-                {props.errorMessages.map(messages => (
+                {message.map(feedback => (
                     <MessageBar
-                        key="error-messages"
-                        messageBarType={MessageBarType.error}
+                        key="feedback-messages"
+                        messageBarType={feedback.messageType}
                         isMultiline={false}
                         truncated={true}
                         theme={props.itheme}
-                        onDismiss={props.onClearErrorMessages}
+                        onDismiss={onClearMessage}
                         dismissButtonAriaLabel="Close"
                         overflowButtonAriaLabel="See more"
                     >
-                        {messages}
+                        {feedback.messageContent}
                     </MessageBar>
                 )).getOrElse((<div/>))}
             </StackItem>
@@ -591,7 +597,7 @@ function Main(props: Props): JSX.Element {
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     ...ownProps,
-    errorMessages: state.application.errorMessages,
+    message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
     itheme: state.settings.itheme,
     name: state.settings.name,
@@ -619,7 +625,9 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onClearErrorMessages: () => dispatch(clearErrorMessages()),
+    onSetErrorMessage: (message: JSX.Element) => dispatch(setErrorMessage(message)),
+    onClearMessage: () => dispatch(clearMessage()),
+
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
     onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),

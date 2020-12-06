@@ -1,5 +1,5 @@
 import fs from "fs";
-import { setErrorMessages } from "../redux/actions/actions";
+import { setErrorMessage } from "../redux/actions/actions";
 
 /**
  * Loads the sensor code-snippet template from its default location. The template is

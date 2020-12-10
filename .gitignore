@@ -99,3 +99,6 @@ dist/
 *.boo
 *.sensor
 *.spikes
+
+# local history (vscode plugin Local History)
+.history/

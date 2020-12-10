@@ -9,7 +9,7 @@ test('should be able to combine regular expressions', () => {
 });
 
 test('should be able to do grouping', () => {
-    const middle: RegExp = /\([a-z]{3}\s*=\s*[a-zA-Z0-9 .\-_]+\)/;
+    const middle = /\([a-z]{3}\s*=\s*[a-zA-Z0-9 .\-_]+\)/;
 // const newGroupRegex: RegExp = new RegExp(/GRP\s*=\s*\[\s*(\([a-z]{3}\s*=\s*[a-zA-Z0-9 .\-_]+\)\s*,\s*)*\s*\($/);
     const combined = regexFrom("GRP\\s*=\\s*\\[\\s*(", middle, "\\s*,\\s*)*\\s*\\($");
     expect(combined.source).toEqual(/GRP\s*=\s*\[\s*(\([a-z]{3}\s*=\s*[a-zA-Z0-9 .\-_]+\)\s*,\s*)*\s*\($/.source);

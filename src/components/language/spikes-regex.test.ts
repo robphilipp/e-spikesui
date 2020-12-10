@@ -14,8 +14,6 @@ import {
     stripText, valueRe,
 } from "./spikes-regex";
 
-// import regexFrom from "./regex-combiner";
-//
 test('strip a comment', () => {
     expect(stripText(`// this is a comment
     `)).toEqual("");

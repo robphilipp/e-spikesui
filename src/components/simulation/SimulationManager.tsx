@@ -1,29 +1,7 @@
-import * as React from "react";
-import { AppState } from "../redux/reducers/root";
-import { ThunkDispatch } from "redux-thunk";
-import { ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage } from "../redux/actions/actions";
-import { connect } from "react-redux";
-import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
-import { SimulationProject } from "../repos/simulationProjectRepo";
 import {
-    loadSimulationProject, newSimulationProject, ProjectLoadedAction, ProjectSavedAction, ProjectUpdatedAction,
-    saveSimulationProject, SimulationProjectResult,
-    updateSimulationProject
-} from "../redux/actions/simulationProject";
-import {
-    ActionButton,
-    DefaultButton,
-    FontWeights,
     Icon,
     IconButton,
-    IIconStyles,
-    IStackTokens,
-    ITextStyles,
     ITheme,
-    Link,
-    MessageBar,
-    MessageBarType,
-    PrimaryButton,
     Separator,
     SpinButton,
     Stack,
@@ -33,15 +11,27 @@ import {
     TooltipHost
 } from "@fluentui/react";
 import { Card } from '@uifabric/react-cards';
-import { DefaultTheme } from "../editors/themes";
 import { remote } from "electron";
-import { useEffect, useRef, useState } from "react";
-import { loadSensorsFrom, SensorsLoadedAction } from "../redux/actions/sensors";
-import { NEW_SENSOR_PATH } from "../editors/SensorsEditor";
-import { NEW_NETWORK_PATH } from "../editors/NetworkEditor";
-import { loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction } from "../redux/actions/networkDescription";
-import { baseRouterPathFrom } from "../router/router";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
+import { ThunkDispatch } from "redux-thunk";
 import { KeyboardShortcut, keyboardShortcutFor } from "../editors/keyboardShortcuts";
+import { NEW_NETWORK_PATH } from "../editors/NetworkEditor";
+import { NEW_SENSOR_PATH } from "../editors/SensorsEditor";
+import { DefaultTheme } from "../editors/themes";
+import { ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage } from "../redux/actions/actions";
+import { loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction } from "../redux/actions/networkDescription";
+import { loadSensorsFrom, SensorsLoadedAction } from "../redux/actions/sensors";
+import {
+    loadSimulationProject, newSimulationProject, ProjectLoadedAction, ProjectSavedAction,
+    saveSimulationProject,
+    updateSimulationProject
+} from "../redux/actions/simulationProject";
+import { AppState } from "../redux/reducers/root";
+import { SimulationProject } from "../repos/simulationProjectRepo";
+import { baseRouterPathFrom } from "../router/router";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -131,7 +121,7 @@ function SimulationManager(props: Props): JSX.Element {
                 onLoad(filePath)
                     .then(() => console.log("loaded"))
                     .catch(reason => onSetError(<div>{reason.message}</div>))
-                    // .catch(reason => setMessage(errorMessage(<div>{reason.message}</div>)))
+                // .catch(reason => setMessage(errorMessage(<div>{reason.message}</div>)))
             }
         },
         [simulationProjectPath]
@@ -233,8 +223,8 @@ function SimulationManager(props: Props): JSX.Element {
                 <div><b>Unable to load simulation project file</b></div>
                 <div>Response: {reason}</div>
             </>));
-    // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
-        }
+        // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
+    }
 
     /**
      * Handles saving the file when the path exists, otherwise opens a save-file dialog to allow
@@ -256,8 +246,8 @@ function SimulationManager(props: Props): JSX.Element {
             // todo handle success and error
             onSave(projectPath, project)
                 .catch(reason => onSetError(<div>{reason}</div>));
-                // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
-            } else {
+            // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
+        } else {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), { title: "Save As..." })
                 .then(response => onSave(response.filePath, project)

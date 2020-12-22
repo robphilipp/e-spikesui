@@ -10,12 +10,10 @@ import { setErrorMessage } from "../redux/actions/actions";
  */
 export function loadSensorsOrInitialize(path: string): Promise<string> {
     return readSensors(path)
-        .catch(err => {
-            // console.log(`Unable to read environment code-snippet template; path: ${path}; error: ${err.toString()}`);
-            return saveSensors(path, initialSensors)
-                .catch(err => `Unable load sensor code-snippet, and failed to write initial sensor code-snippet to file; path: ${path}; error: ${err.toString()}`)
-                .then(() => initialSensors);
-        })
+        .catch(() => saveSensors(path, initialSensors)
+            .catch(err => `Unable load sensor code-snippet, and failed to write initial sensor code-snippet to file; path: ${path}; error: ${err.toString()}`)
+            .then(() => initialSensors)
+        )
 }
 
 /**

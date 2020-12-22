@@ -92,17 +92,17 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     <Checkbox
                         label="Tracker"
                         checked={selectedControl === Control.TRACKER}
-                        onChange={(_: FormEvent<HTMLInputElement>, checked: boolean) => handleControlSelection(Control.TRACKER, checked)}
+                        onChange={(_, checked: boolean) => handleControlSelection(Control.TRACKER, checked)}
                     />
                     <Checkbox
                         label="Tooltip"
                         checked={selectedControl === Control.TOOLTIP}
-                        onChange={(_: FormEvent<HTMLInputElement>, checked: boolean) => handleControlSelection(Control.TOOLTIP, checked)}
+                        onChange={(_, checked: boolean) => handleControlSelection(Control.TOOLTIP, checked)}
                     />
                     <Checkbox
                         label="Magnifier"
                         checked={selectedControl === Control.MAGNIFIER}
-                        onChange={(_: FormEvent<HTMLInputElement>, checked: boolean) => handleControlSelection(Control.MAGNIFIER, checked)}
+                        onChange={(_, checked: boolean) => handleControlSelection(Control.MAGNIFIER, checked)}
                     />
                 </Stack>
                 <Stack.Item>
@@ -111,7 +111,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         seriesList={neuronList}
                         seriesObservable={observable}
                         shouldSubscribe={shouldSubscribe}
-                        onSubscribe={subscription => onSubscribe(subscription)}
+                        onSubscribe={onSubscribe}
                         timeWindow={5000}
                         windowingTime={100}
                         margin={{top: 15, right: 20, bottom: 35, left: 30}}

@@ -1,11 +1,11 @@
 import * as React from 'react'
-import {useEffect, useRef, useState} from 'react'
-import {defaultCustomThemes, DefaultTheme} from './themes';
-import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
-import {AppState} from "../redux/reducers/root";
-import {ThunkDispatch} from "redux-thunk";
-import {ApplicationAction} from "../redux/actions/actions";
-import {connect} from "react-redux";
+import { useEffect, useRef, useState } from 'react'
+import { defaultCustomThemes, DefaultTheme } from './themes';
+import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
+import { AppState } from "../redux/reducers/root";
+import { ThunkDispatch } from "redux-thunk";
+import { ApplicationAction } from "../redux/actions/actions";
+import { connect } from "react-redux";
 import {
     IconButton,
     ITheme,
@@ -15,7 +15,6 @@ import {
     MessageBarType,
     Separator,
     Stack,
-    StackItem,
     TooltipHost
 } from '@fluentui/react';
 import {
@@ -26,14 +25,14 @@ import {
     SensorsSavedAction,
     updateSensors,
 } from "../redux/actions/sensors";
-import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
-import {remote} from "electron";
+import { KeyboardShortcut, keyboardShortcutFor } from "./keyboardShortcuts";
+import { remote } from "electron";
 import MonacoEditor from "./MonacoEditor";
-import {Observable, Subscription} from "rxjs";
-import {compileSensorDescription, SensorOutput} from "../sensors/compiler";
+import { Observable, Subscription } from "rxjs";
+import { compileSensorDescription, SensorOutput } from "../sensors/compiler";
 import SensorSimulation from "../sensors/SensorSimulation";
-import {map} from "rxjs/operators";
-import {ChartData, Datum} from "stream-charts";
+import { map } from "rxjs/operators";
+import { ChartData, Datum } from "stream-charts";
 import moment from 'moment';
 import { baseRouterPathFrom } from '../router/router';
 
@@ -46,7 +45,7 @@ enum ExpressionState {
 }
 
 const customThemes = defaultCustomThemes();
-const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
+const editorOptions = { selectOnLineNumbers: true, scrollBeyondLastLine: false };
 const emptyFunction = () => {
     return;
 }
@@ -103,14 +102,14 @@ function SensorsEditor(props: Props): JSX.Element {
     // when user refreshes when the router path is this editor, then we want to load the same
     // sensor as before the refresh. to do this we use the path parameter holding the file path
     // to the sensor code-snippet, and keep it consistent when loading from template
-    const {sensorsPath} = useParams<{ [key: string]: string }>();
+    const { sensorsPath } = useParams<{ [key: string]: string }>();
     const history = useHistory();
-    const {path} = useRouteMatch();
+    const { path } = useRouteMatch();
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     const editorRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
+    const [dimension, setDimension] = useState<Dimension>({ width: 50, height: 50 });
     const heightFractionRef = useRef(1.0);
 
     // the keyboard event listener holds a stale ref to the props, so we need to use a
@@ -168,10 +167,10 @@ function SensorsEditor(props: Props): JSX.Element {
             }
             if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
                 onLoadTemplate(templatePath)
-                .then(() => console.log("loaded"))
-                .catch(reason => setMessage(errorMessage(reason.message)))
+                    .then(() => console.log("loaded"))
+                    .catch(reason => setMessage(errorMessage(reason.message)))
             } else {
-            // todo handle success and failure
+                // todo handle success and failure
                 onLoadSensor(filePath)
                     .then(() => console.log("loaded"))
                     .catch(reason => setMessage(errorMessage(reason.message)))
@@ -274,7 +273,7 @@ function SensorsEditor(props: Props): JSX.Element {
             onSave(path, network).then(() => console.log('saved'));
         } else {
             remote.dialog
-                .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+                .showSaveDialog(remote.getCurrentWindow(), { title: "Save As..." })
                 .then(response => onSave(response.filePath, network)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
                 );
@@ -291,7 +290,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{name: 'spikes-sensor', extensions: ['sensor']}],
+                    filters: [{ name: 'spikes-sensor', extensions: ['sensor'] }],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -307,7 +306,7 @@ function SensorsEditor(props: Props): JSX.Element {
         setMessage(undefined);
         compileSensorDescription(codeSnippet)
             .ifRight(result => {
-                const {neuronIds, observable} = result;
+                const { neuronIds, observable } = result;
                 setSensorObservable(observable);
                 setNeuronIds(neuronIds);
                 setExpressionState(ExpressionState.COMPILED);
@@ -330,7 +329,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 map(output => ({
                     maxTime: output.time - now,
                     newPoints: new Map<string, Array<Datum>>(
-                        output.neuronIds.map(id => [id, [{time: output.time - now, value: output.signal.value}]])
+                        output.neuronIds.map(id => [id, [{ time: output.time - now, value: output.signal.value }]])
                     )
                 }))
             );
@@ -385,10 +384,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return a button to create a new network
      */
     function newButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="New network environment from template">
                 <IconButton
-                    iconProps={{iconName: 'add'}}
+                    iconProps={{ iconName: 'add' }}
                     onClick={() => handleNew()}
                 />
             </TooltipHost>
@@ -401,10 +400,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The save-button component
      */
     function saveButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="Save network environment">
                 <IconButton
-                    iconProps={{iconName: 'save'}}
+                    iconProps={{ iconName: 'save' }}
                     onClick={() => handleSave(sensorDescriptionPath, templatePath, codeSnippet)}
                     disabled={!(modified || sensorDescriptionPath === templatePath)}
                 />
@@ -418,10 +417,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The load button for the sidebar
      */
     function loadButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="Load network environment">
                 <IconButton
-                    iconProps={{iconName: 'upload'}}
+                    iconProps={{ iconName: 'upload' }}
                     onClick={handleLoad}
                 />
             </TooltipHost>
@@ -433,14 +432,15 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for compiling the sensor description
      */
     function compileButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="Compile the sensor code">
                 <IconButton
-                    iconProps={{iconName: 'code'}}
-                    disabled={(codeSnippet !== undefined && codeSnippet.length < 31) ||
-                    sensorObservable !== undefined ||
-                    expressionState === ExpressionState.RUNNING ||
-                    expressionState === ExpressionState.COMPILED
+                    iconProps={{ iconName: 'code' }}
+                    disabled={
+                        (codeSnippet !== undefined && codeSnippet.length < 31) ||
+                        sensorObservable !== undefined ||
+                        expressionState === ExpressionState.RUNNING ||
+                        expressionState === ExpressionState.COMPILED
                     }
                     onClick={handleCompile}
                 />
@@ -453,14 +453,15 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for evaluating the sensor description
      */
     function runSensorSimulationButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="Run simulation of the sensor code">
                 <IconButton
-                    iconProps={{iconName: 'sprint'}}
-                    disabled={expressionState === ExpressionState.PRE_COMPILED ||
-                    expressionState === ExpressionState.RUNNING ||
-                    expressionError !== undefined ||
-                    sensorObservable === undefined
+                    iconProps={{ iconName: 'sprint' }}
+                    disabled={
+                        expressionState === ExpressionState.PRE_COMPILED ||
+                        expressionState === ExpressionState.RUNNING ||
+                        expressionError !== undefined ||
+                        sensorObservable === undefined
                     }
                     onClick={handleRunSensorSimulation}
                 />
@@ -473,10 +474,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for stopping the evaluation of the sensor description code
      */
     function stopSensorSimulationButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="Stop the sensor code simulation">
                 <IconButton
-                    iconProps={{iconName: 'stop'}}
+                    iconProps={{ iconName: 'stop' }}
                     disabled={expressionState !== ExpressionState.RUNNING}
                     onClick={handleStopSensorSimulation}
                 />
@@ -489,10 +490,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for hiding the sensor simulation layer.
      */
     function hideSimulationButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
             <TooltipHost content="Hide the sensor simulation">
                 <IconButton
-                    iconProps={{iconName: 'minusCircle'}}
+                    iconProps={{ iconName: 'minusCircle' }}
                     onClick={handleHideSimulation}
                 />
             </TooltipHost>
@@ -522,10 +523,10 @@ function SensorsEditor(props: Props): JSX.Element {
             ref={editorRef}
             // can't just set a fraction for the height because the parent height may not be
             // set...but if it is, then you can use that.
-            style={{height: window.innerHeight * 0.9, width: '100%'}}
+            style={{ height: window.innerHeight * 0.9, width: '100%' }}
             onKeyDown={handleKeyboardShortcut}
         >
-            {message || <span/>}
+            {message || <span />}
             <div
                 style={{
                     marginLeft: 30,
@@ -537,18 +538,18 @@ function SensorsEditor(props: Props): JSX.Element {
                 {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ? '[new file]' : sensorDescriptionPath}{modified ? '*' : ''}
             </div>
             <Stack horizontal>
-                <StackItem>
+                <Stack.Item>
                     {newButton()}
                     {saveButton()}
                     {loadButton()}
-                    <Separator/>
+                    <Separator />
                     {compileButton()}
                     {runSensorSimulationButton()}
                     {stopSensorSimulationButton()}
                     {showSimulation && hideSimulationButton()}
-                </StackItem>
+                </Stack.Item>
                 <Stack>
-                    <StackItem>
+                    <Stack.Item>
                         <MonacoEditor
                             editorId='spikes-env'
                             width={dimension.width}
@@ -561,21 +562,21 @@ function SensorsEditor(props: Props): JSX.Element {
                             onChange={onChanged}
                             editorDidMount={emptyFunction}
                         />
-                        {showSimulation && <LayerHost id='chart-layer'/>}
-                    </StackItem>
+                        {showSimulation && <LayerHost id='chart-layer' />}
+                    </Stack.Item>
                 </Stack>
             </Stack>
             {showSimulation &&
-            <Layer hostId="chart-layer">
-                <Separator>Sensor Simulation</Separator>
-                <SensorSimulation
-                    itheme={itheme}
-                    neuronIds={neuronIds}
-                    observable={chartObservable}
-                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                    onSubscribe={subscription => subscriptionRef.current = subscription}
-                />
-            </Layer>}
+                <Layer hostId="chart-layer">
+                    <Separator>Sensor Simulation</Separator>
+                    <SensorSimulation
+                        itheme={itheme}
+                        neuronIds={neuronIds}
+                        observable={chartObservable}
+                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                        onSubscribe={subscription => subscriptionRef.current = subscription}
+                    />
+                </Layer>}
         </div>
     )
 }

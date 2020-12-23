@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { useEffect, useRef, useState } from 'react'
-import { defaultCustomThemes, DefaultTheme } from './themes';
-import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
-import { AppState } from "../redux/reducers/root";
-import { ThunkDispatch } from "redux-thunk";
-import { ApplicationAction } from "../redux/actions/actions";
-import { connect } from "react-redux";
+import {useEffect, useRef, useState} from 'react'
+import {defaultCustomThemes, DefaultTheme} from './themes';
+import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
+import {AppState} from "../redux/reducers/root";
+import {ThunkDispatch} from "redux-thunk";
+import {ApplicationAction} from "../redux/actions/actions";
+import {connect} from "react-redux";
 import {
     IconButton,
     ITheme,
@@ -25,16 +25,22 @@ import {
     SensorsSavedAction,
     updateSensors,
 } from "../redux/actions/sensors";
-import { KeyboardShortcut, keyboardShortcutFor } from "./keyboardShortcuts";
-import { remote } from "electron";
+import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
+import {remote} from "electron";
 import MonacoEditor from "./MonacoEditor";
-import { Observable, Subscription } from "rxjs";
-import { compileSensorDescription, SensorOutput } from "../sensors/compiler";
+import {Observable, Subscription} from "rxjs";
+import {SensorOutput} from "../sensors/compiler";
 import SensorSimulation from "../sensors/SensorSimulation";
-import { map } from "rxjs/operators";
-import { ChartData, Datum } from "stream-charts";
+import {map} from "rxjs/operators";
+import {ChartData, Datum} from "stream-charts";
 import moment from 'moment';
-import { baseRouterPathFrom } from '../router/router';
+import {baseRouterPathFrom} from '../router/router';
+import {spawn, Worker} from 'threads';
+import {Observable as FnsObservable} from 'observable-fns';
+import {ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
+import {ObservablePromise} from "threads/dist/observable-promise";
+
+type SimulationType = (((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>);
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -112,10 +118,6 @@ function SensorsEditor(props: Props): JSX.Element {
     const [dimension, setDimension] = useState<Dimension>({ width: 50, height: 50 });
     const heightFractionRef = useRef(1.0);
 
-    // the keyboard event listener holds a stale ref to the props, so we need to use a
-    // reference that is updated for the event listener to use
-    // const keyboardEventRef = useRef({path, templatePath, codeSnippet});
-
     // manages the state of the code snippet (i.e. pre-compiled, compiled, running), and the 
     // compile-time errors
     const [expressionState, setExpressionState] = useState<ExpressionState>(ExpressionState.PRE_COMPILED);
@@ -124,12 +126,13 @@ function SensorsEditor(props: Props): JSX.Element {
     const [sensorObservable, setSensorObservable] = useState<Observable<SensorOutput>>();
     const [chartObservable, setChartObservable] = useState<Observable<ChartData>>();
     const [neuronIds, setNeuronIds] = useState<Array<string>>();
-    // const [sensorObservable, setSensorObservable] = useState<Observable<SensorOutput>>();
     // a reference to the subscription to the observable used for testing
     const subscriptionRef = useRef<Subscription>();
     const [showSimulation, setShowSimulation] = useState(false);
 
     const [message, setMessage] = useState<JSX.Element>();
+
+    const simulationRef = useRef<SimulationType>();
 
     // when component mounts, sets the initial dimension of the editor and registers to listen
     // to window resize events. when component un-mounts, removes the window-resize event listener
@@ -156,12 +159,6 @@ function SensorsEditor(props: Props): JSX.Element {
     useEffect(
         () => {
             const filePath = decodeURIComponent(sensorsPath);
-            // if (filePath !== path || filePath === '') {
-            //     // todo handle success and failure
-            //     onLoadSensor(filePath)
-            //         .then(() => console.log("loaded"))
-            //         .catch(reason => setMessage(errorMessage(reason.message)))
-            // }
             if (filePath === sensorDescriptionPath) {
                 return;
             }
@@ -184,8 +181,6 @@ function SensorsEditor(props: Props): JSX.Element {
     // we need to set the observableRef back to an undefined
     useEffect(
         () => {
-            // keyboardEventRef.current = {path, templatePath, codeSnippet};
-
             setSensorObservable(undefined);
             setExpressionState(ExpressionState.PRE_COMPILED);
         },
@@ -237,7 +232,6 @@ function SensorsEditor(props: Props): JSX.Element {
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    // const {path, templatePath, codeSnippet} = keyboardEventRef.current;
                     handleSave(sensorDescriptionPath, templatePath, codeSnippet);
                     break;
                 }
@@ -292,7 +286,8 @@ function SensorsEditor(props: Props): JSX.Element {
                     title: 'Open...',
                     filters: [{ name: 'spikes-sensor', extensions: ['sensor'] }],
                     properties: ['openFile']
-                })
+                }
+            )
             .then(response => {
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
@@ -302,21 +297,51 @@ function SensorsEditor(props: Props): JSX.Element {
      * Handles compiling and evaluating the sensor description code-snippet. The compiled code snippet
      * is for simulating the sensor code so that it can be tested.
      */
-    function handleCompile(): void {
+    // worker needs to be set as a reference so that the run method can be called
+    async function handleCompile(): Promise<void> {
         setMessage(undefined);
-        compileSensorDescription(codeSnippet)
-            .ifRight(result => {
-                const { neuronIds, observable } = result;
-                setSensorObservable(observable);
-                setNeuronIds(neuronIds);
-                setExpressionState(ExpressionState.COMPILED);
-            })
-            .ifLeft(reason => {
-                console.log(reason);
-                setExpressionState(ExpressionState.PRE_COMPILED);
-                setMessage(errorMessage(reason));
-            })
+        const simulation = await spawn(new Worker('./workers/simulationWorker'));
+        const ids = await simulation.compile(codeSnippet)
+        console.log(ids);
+        const fnsObs: FnsObservable<SensorOutput> = simulation.observable();
+        const observable = new Observable<SensorOutput>(observer => {
+            simulation.run().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
+        });
+
+        simulationRef.current = simulation;
+        setSensorObservable(observable);
+        setNeuronIds(ids);
+        setExpressionState(ExpressionState.COMPILED);
+        console.log('done')
+
+        // compileSensorDescription(codeSnippet)
+        //     .ifRight(result => {
+        //         const { neuronIds, observable } = result;
+        //         setSensorObservable(observable);
+        //         setNeuronIds(neuronIds);
+        //         setExpressionState(ExpressionState.COMPILED);
+        //     })
+        //     .ifLeft(reason => {
+        //         console.log(reason);
+        //         setExpressionState(ExpressionState.PRE_COMPILED);
+        //         setMessage(errorMessage(reason));
+        //     })
     }
+    // function handleCompile(): void {
+    //     setMessage(undefined);
+    //     compileSensorDescription(codeSnippet)
+    //         .ifRight(result => {
+    //             const { neuronIds, observable } = result;
+    //             setSensorObservable(observable);
+    //             setNeuronIds(neuronIds);
+    //             setExpressionState(ExpressionState.COMPILED);
+    //         })
+    //         .ifLeft(reason => {
+    //             console.log(reason);
+    //             setExpressionState(ExpressionState.PRE_COMPILED);
+    //             setMessage(errorMessage(reason));
+    //         })
+    // }
 
     /**
      * Handles running the simulation by subscribing to the observable generated from compiling the
@@ -342,14 +367,17 @@ function SensorsEditor(props: Props): JSX.Element {
     /**
      * Handles stopping the sensor simulation, but keeps the simulation window open
      */
-    function handleStopSensorSimulation(): void {
+    async function handleStopSensorSimulation(): Promise<void> {
         subscriptionRef.current?.unsubscribe();
         // only want to set the expression state to compiled if it is running. it is possible
         // that the simulation has been stopped (expression state is compiled), and then edited
         // while the simulation window is open, and in that case, we want to leave the expression
         // state as pre-compiled
         if (expressionState === ExpressionState.RUNNING) {
-            setExpressionState(ExpressionState.COMPILED);
+            await simulationRef.current.stop();
+            setSensorObservable(undefined);
+            setExpressionState(ExpressionState.PRE_COMPILED);
+            // setExpressionState(ExpressionState.COMPILED);
         }
     }
 

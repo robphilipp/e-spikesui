@@ -5,11 +5,7 @@ import { ObservablePromise } from 'threads/dist/observable-promise';
 import { ModuleProxy, PrivateThreadProps, StripAsync } from 'threads/dist/types/master';
 import { spawn, Thread, Worker } from 'threads';
 
-type SimulationType = (((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>);
-
-// interface CompilerResult {
-//     neuronIds: Array<string>;
-// }
+type SimulationType = ((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>;
 
 export interface SensorThread {
     compileSimulator: (codeSnippet: string) => Promise<SignalGenerator>;
@@ -23,13 +19,24 @@ export interface SignalGenerator {
     observable: Observable<SensorOutput>;
 }
 
+/**
+ * Abstracts the worker so that the main code can deal with the thread directly.
+ * @return A promise for a sensor thread that has functions for compiling the sensor code,
+ * stopping, and terminating the thread.
+ */
 export async function newSensorThread(): Promise<SensorThread> {
 
+    /**
+     * Compiles the sensor code snippet and sets up the observable as a simulator. Has a closure 
+     * on the worker.
+     * @param codeSnippet The sensor code snippet
+     * @return A promise for a signal generator (a set of input neuron IDs and an observable)
+     */
     async function compileSimulator(codeSnippet: string): Promise<SignalGenerator> {
-        const ids = await simulation.compile(codeSnippet);
-        const fnsObs: FnsObservable<SensorOutput> = simulation.observable();
+        const ids = await worker.compile(codeSnippet);
+        const fnsObs: FnsObservable<SensorOutput> = worker.observable();
         const observable = new Observable<SensorOutput>(observer => {
-            simulation.simulate().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
+            worker.simulate().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
         });
         return {
             neuronIds: ids,
@@ -37,11 +44,18 @@ export async function newSensorThread(): Promise<SensorThread> {
         };
     }
 
+    /**
+     * Connects to the websocket, compiles the sensor code snippet and sets up the observer 
+     * to send sensor signals down the websocket. Has a closure on the worker.
+     * @param codeSnippet The sensor code snippet
+     * @param websocket The web socket address for sending sensor signals
+     * @return A promise for a signal generator (a set of input neuron IDs and an observable)
+     */
     async function compileSender(codeSnippet: string, websocket: string): Promise<SignalGenerator> {
-        const ids = await simulation.compile(codeSnippet);
-        const fnsObs: FnsObservable<SensorOutput> = simulation.observable();
+        const ids = await worker.compile(codeSnippet);
+        const fnsObs: FnsObservable<SensorOutput> = worker.observable();
         const observable = new Observable<SensorOutput>(observer => {
-            simulation.sendSignals(websocket)
+            worker.sendSignals(websocket)
                 .then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
         });
         return {
@@ -50,15 +64,22 @@ export async function newSensorThread(): Promise<SensorThread> {
         };
     }
 
+    /**
+     * Stops sending signals
+     * @return An empty promise
+     */
     async function stop(): Promise<void> {
-        return await simulation.stop();
+        return await worker.stop();
     }
 
+    /**
+     * Terminates the worker thread
+     */
     async function terminate(): Promise<void> {
-        Thread.terminate(simulation);
+        Thread.terminate(worker);
     }
 
-    const simulation = await spawn(new Worker('../workers/sensorSignals'));
+    const worker = await spawn(new Worker('../workers/sensorSignals'));
 
     return {
         compileSimulator,
@@ -66,12 +87,4 @@ export async function newSensorThread(): Promise<SensorThread> {
         stop,
         terminate,
     }
-    // // TODO move this into the simulation and "runSensor" (when written) method so that
-    // //    for the simulation it runs the simulation, for the run-sensor method it writes to
-    // //    websocket to send the sensor signals
-    // const ids = await simulation.compile(codeSnippet);
-    // const fnsObs: FnsObservable<SensorOutput> = simulation.observable();
-    // const observable = new Observable<SensorOutput>(observer => {
-    //     simulation.simulate().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
-    // });
 }

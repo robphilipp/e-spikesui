@@ -309,7 +309,7 @@ function SensorsEditor(props: Props): JSX.Element {
     async function handleCompile(): Promise<void> {
         setMessage(undefined);
 
-        // compile the code-snippet as a simulator (sets the )
+        // compile the code-snippet as a simulator
         const generator = await sensorThreadRef.current.compileSimulator(codeSnippet);
 
         setNeuronIds(generator.neuronIds);
@@ -341,7 +341,7 @@ function SensorsEditor(props: Props): JSX.Element {
     /**
      * Handles stopping the sensor simulation, but keeps the simulation window open
      */
-    async function handleStopSensorSimulation(): Promise<void> {
+    function handleStopSensorSimulation(): void {
         subscriptionRef.current?.unsubscribe();
         // only want to set the expression state to compiled if it is running. it is possible
         // that the simulation has been stopped (expression state is compiled), and then edited

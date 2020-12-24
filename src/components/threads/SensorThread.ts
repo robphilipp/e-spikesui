@@ -79,7 +79,7 @@ export async function newSensorThread(): Promise<SensorThread> {
         Thread.terminate(worker);
     }
 
-    const worker = await spawn(new Worker('../workers/sensorSignals'));
+    const worker: SimulationType = await spawn(new Worker('../workers/sensorSignals'));
 
     return {
         compileSimulator,

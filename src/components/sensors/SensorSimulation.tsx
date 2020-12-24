@@ -115,12 +115,31 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         timeWindow={5000}
                         windowingTime={100}
                         margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                        tooltip={{visible: selectedControl === Control.TOOLTIP}}
-                        magnifier={{visible: selectedControl === Control.MAGNIFIER, magnification: 5}}
-                        tracker={{visible: selectedControl === Control.TRACKER}}
+                        tooltip={{
+                            visible: selectedControl === Control.TOOLTIP, 
+                            backgroundColor: itheme.palette.themeLighterAlt,
+                            fontColor: itheme.palette.themePrimary,
+                            borderColor: itheme.palette.themePrimary,
+                        }}
+                        magnifier={{
+                            visible: selectedControl === Control.MAGNIFIER, 
+                            magnification: 5,
+                            color: itheme.palette.neutralTertiaryAlt,
+                        }}
+                        tracker={{
+                            visible: selectedControl === Control.TRACKER,
+                            color: itheme.palette.themePrimary,
+                        }}
                         filter={seriesFilter}
                         backgroundColor={itheme.palette.white}
                         svgStyle={{width: '95%'}}
+                        axisStyle={{color: itheme.palette.themePrimary}}
+                        axisLabelFont={{color: itheme.palette.themePrimary}}
+                        plotGridLines={{color: itheme.palette.themeLighter}}
+                        spikesStyle={{
+                            color: itheme.palette.themePrimary, 
+                            highlightColor: itheme.palette.themePrimary
+                        }}
                     />
                 </Stack.Item>
                 <Stack horizontal tokens={{childrenGap: 20}}>

@@ -35,10 +35,11 @@ import {map} from "rxjs/operators";
 import {ChartData, Datum} from "stream-charts";
 import moment from 'moment';
 import {baseRouterPathFrom} from '../router/router';
-import {spawn, Worker} from 'threads';
+import {spawn, Thread, Worker} from 'threads';
 import {Observable as FnsObservable} from 'observable-fns';
 import {ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
 import {ObservablePromise} from "threads/dist/observable-promise";
+import { SensorThread, newSensorThread } from '../threads/SensorThread';
 
 type SimulationType = (((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>);
 
@@ -51,7 +52,7 @@ enum ExpressionState {
 }
 
 const customThemes = defaultCustomThemes();
-const editorOptions = { selectOnLineNumbers: true, scrollBeyondLastLine: false };
+const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 const emptyFunction = () => {
     return;
 }
@@ -108,14 +109,14 @@ function SensorsEditor(props: Props): JSX.Element {
     // when user refreshes when the router path is this editor, then we want to load the same
     // sensor as before the refresh. to do this we use the path parameter holding the file path
     // to the sensor code-snippet, and keep it consistent when loading from template
-    const { sensorsPath } = useParams<{ [key: string]: string }>();
+    const {sensorsPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
-    const { path } = useRouteMatch();
+    const {path} = useRouteMatch();
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     const editorRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({ width: 50, height: 50 });
+    const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
     const heightFractionRef = useRef(1.0);
 
     // manages the state of the code snippet (i.e. pre-compiled, compiled, running), and the 
@@ -132,7 +133,8 @@ function SensorsEditor(props: Props): JSX.Element {
 
     const [message, setMessage] = useState<JSX.Element>();
 
-    const simulationRef = useRef<SimulationType>();
+    // sensor thread
+    const sensorThreadRef = useRef<SensorThread>();
 
     // when component mounts, sets the initial dimension of the editor and registers to listen
     // to window resize events. when component un-mounts, removes the window-resize event listener
@@ -142,12 +144,18 @@ function SensorsEditor(props: Props): JSX.Element {
                 setDimension(editorDimensions());
             }
 
+            // create a sensor-simulation worker for compiling and running the sensor
+            newSensorThread().then(thread => sensorThreadRef.current = thread);
+
             // listen to resize events so that the editor width and height can be updated
             window.addEventListener('resize', handleWindowResize);
 
             return () => {
                 // stop listening to resize events
                 window.removeEventListener('resize', handleWindowResize);
+
+                // terminate sensor-simulation worker thread
+                sensorThreadRef.current.terminate();
             }
         },
         []
@@ -267,7 +275,7 @@ function SensorsEditor(props: Props): JSX.Element {
             onSave(path, network).then(() => console.log('saved'));
         } else {
             remote.dialog
-                .showSaveDialog(remote.getCurrentWindow(), { title: "Save As..." })
+                .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
                 .then(response => onSave(response.filePath, network)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
                 );
@@ -284,7 +292,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{ name: 'spikes-sensor', extensions: ['sensor'] }],
+                    filters: [{name: 'spikes-sensor', extensions: ['sensor']}],
                     properties: ['openFile']
                 }
             )
@@ -296,52 +304,18 @@ function SensorsEditor(props: Props): JSX.Element {
     /**
      * Handles compiling and evaluating the sensor description code-snippet. The compiled code snippet
      * is for simulating the sensor code so that it can be tested.
+     * @return An empty promise
      */
-    // worker needs to be set as a reference so that the run method can be called
     async function handleCompile(): Promise<void> {
         setMessage(undefined);
-        const simulation = await spawn(new Worker('./workers/simulationWorker'));
-        const ids = await simulation.compile(codeSnippet)
-        console.log(ids);
-        const fnsObs: FnsObservable<SensorOutput> = simulation.observable();
-        const observable = new Observable<SensorOutput>(observer => {
-            simulation.run().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
-        });
 
-        simulationRef.current = simulation;
-        setSensorObservable(observable);
-        setNeuronIds(ids);
+        // compile the code-snippet as a simulator (sets the )
+        const generator = await sensorThreadRef.current.compileSimulator(codeSnippet);
+
+        setNeuronIds(generator.neuronIds);
+        setSensorObservable(generator.observable);
         setExpressionState(ExpressionState.COMPILED);
-        console.log('done')
-
-        // compileSensorDescription(codeSnippet)
-        //     .ifRight(result => {
-        //         const { neuronIds, observable } = result;
-        //         setSensorObservable(observable);
-        //         setNeuronIds(neuronIds);
-        //         setExpressionState(ExpressionState.COMPILED);
-        //     })
-        //     .ifLeft(reason => {
-        //         console.log(reason);
-        //         setExpressionState(ExpressionState.PRE_COMPILED);
-        //         setMessage(errorMessage(reason));
-        //     })
     }
-    // function handleCompile(): void {
-    //     setMessage(undefined);
-    //     compileSensorDescription(codeSnippet)
-    //         .ifRight(result => {
-    //             const { neuronIds, observable } = result;
-    //             setSensorObservable(observable);
-    //             setNeuronIds(neuronIds);
-    //             setExpressionState(ExpressionState.COMPILED);
-    //         })
-    //         .ifLeft(reason => {
-    //             console.log(reason);
-    //             setExpressionState(ExpressionState.PRE_COMPILED);
-    //             setMessage(errorMessage(reason));
-    //         })
-    // }
 
     /**
      * Handles running the simulation by subscribing to the observable generated from compiling the
@@ -354,7 +328,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 map(output => ({
                     maxTime: output.time - now,
                     newPoints: new Map<string, Array<Datum>>(
-                        output.neuronIds.map(id => [id, [{ time: output.time - now, value: output.signal.value }]])
+                        output.neuronIds.map(id => [id, [{time: output.time - now, value: output.signal.value}]])
                     )
                 }))
             );
@@ -374,10 +348,9 @@ function SensorsEditor(props: Props): JSX.Element {
         // while the simulation window is open, and in that case, we want to leave the expression
         // state as pre-compiled
         if (expressionState === ExpressionState.RUNNING) {
-            await simulationRef.current.stop();
+            sensorThreadRef.current.stop();
             setSensorObservable(undefined);
             setExpressionState(ExpressionState.PRE_COMPILED);
-            // setExpressionState(ExpressionState.COMPILED);
         }
     }
 
@@ -412,10 +385,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return a button to create a new network
      */
     function newButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="New network environment from template">
                 <IconButton
-                    iconProps={{ iconName: 'add' }}
+                    iconProps={{iconName: 'add'}}
                     onClick={() => handleNew()}
                 />
             </TooltipHost>
@@ -428,10 +401,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The save-button component
      */
     function saveButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Save network environment">
                 <IconButton
-                    iconProps={{ iconName: 'save' }}
+                    iconProps={{iconName: 'save'}}
                     onClick={() => handleSave(sensorDescriptionPath, templatePath, codeSnippet)}
                     disabled={!(modified || sensorDescriptionPath === templatePath)}
                 />
@@ -445,10 +418,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The load button for the sidebar
      */
     function loadButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Load network environment">
                 <IconButton
-                    iconProps={{ iconName: 'upload' }}
+                    iconProps={{iconName: 'upload'}}
                     onClick={handleLoad}
                 />
             </TooltipHost>
@@ -460,10 +433,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for compiling the sensor description
      */
     function compileButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Compile the sensor code">
                 <IconButton
-                    iconProps={{ iconName: 'code' }}
+                    iconProps={{iconName: 'code'}}
                     disabled={
                         (codeSnippet !== undefined && codeSnippet.length < 31) ||
                         sensorObservable !== undefined ||
@@ -481,10 +454,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for evaluating the sensor description
      */
     function runSensorSimulationButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Run simulation of the sensor code">
                 <IconButton
-                    iconProps={{ iconName: 'sprint' }}
+                    iconProps={{iconName: 'sprint'}}
                     disabled={
                         expressionState === ExpressionState.PRE_COMPILED ||
                         expressionState === ExpressionState.RUNNING ||
@@ -502,10 +475,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for stopping the evaluation of the sensor description code
      */
     function stopSensorSimulationButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Stop the sensor code simulation">
                 <IconButton
-                    iconProps={{ iconName: 'stop' }}
+                    iconProps={{iconName: 'stop'}}
                     disabled={expressionState !== ExpressionState.RUNNING}
                     onClick={handleStopSensorSimulation}
                 />
@@ -518,10 +491,10 @@ function SensorsEditor(props: Props): JSX.Element {
      * @return The button for hiding the sensor simulation layer.
      */
     function hideSimulationButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Hide the sensor simulation">
                 <IconButton
-                    iconProps={{ iconName: 'minusCircle' }}
+                    iconProps={{iconName: 'minusCircle'}}
                     onClick={handleHideSimulation}
                 />
             </TooltipHost>
@@ -551,10 +524,10 @@ function SensorsEditor(props: Props): JSX.Element {
             ref={editorRef}
             // can't just set a fraction for the height because the parent height may not be
             // set...but if it is, then you can use that.
-            style={{ height: window.innerHeight * 0.9, width: '100%' }}
+            style={{height: window.innerHeight * 0.9, width: '100%'}}
             onKeyDown={handleKeyboardShortcut}
         >
-            {message || <span />}
+            {message || <span/>}
             <div
                 style={{
                     marginLeft: 30,
@@ -570,7 +543,7 @@ function SensorsEditor(props: Props): JSX.Element {
                     {newButton()}
                     {saveButton()}
                     {loadButton()}
-                    <Separator />
+                    <Separator/>
                     {compileButton()}
                     {runSensorSimulationButton()}
                     {stopSensorSimulationButton()}
@@ -590,21 +563,21 @@ function SensorsEditor(props: Props): JSX.Element {
                             onChange={onChanged}
                             editorDidMount={emptyFunction}
                         />
-                        {showSimulation && <LayerHost id='chart-layer' />}
+                        {showSimulation && <LayerHost id='chart-layer'/>}
                     </Stack.Item>
                 </Stack>
             </Stack>
             {showSimulation &&
-                <Layer hostId="chart-layer">
-                    <Separator>Sensor Simulation</Separator>
-                    <SensorSimulation
-                        itheme={itheme}
-                        neuronIds={neuronIds}
-                        observable={chartObservable}
-                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                        onSubscribe={subscription => subscriptionRef.current = subscription}
-                    />
-                </Layer>}
+            <Layer hostId="chart-layer">
+                <Separator>Sensor Simulation</Separator>
+                <SensorSimulation
+                    itheme={itheme}
+                    neuronIds={neuronIds}
+                    observable={chartObservable}
+                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                    onSubscribe={subscription => subscriptionRef.current = subscription}
+                />
+            </Layer>}
         </div>
     )
 }

@@ -51,7 +51,7 @@ function neurons(): Array<string> {
  * streaming the results to the master thread).
  */
 function simulate(): void {
-    rxjsObservable?.subscribe(output => subject.next(output));
+    rxjsObservable?.subscribe(output => subject?.next(output));
 }
 
 /**

@@ -1,8 +1,8 @@
 import * as React from 'react';
-import {FormEvent, useEffect, useState} from 'react';
-import {Observable, Subscription} from "rxjs";
-import {ChartData, regexFilter, Series, seriesFrom, RasterChart} from "stream-charts";
-import {Checkbox, ITheme, Stack, TextField} from "@fluentui/react";
+import { FormEvent, useEffect, useState } from 'react';
+import { Observable, Subscription } from "rxjs";
+import { ChartData, regexFilter, Series, seriesFrom, RasterChart } from "stream-charts";
+import { Checkbox, ITheme, Stack, TextField } from "@fluentui/react";
 
 const emptyFunction = () => {
     return;
@@ -40,6 +40,8 @@ export default function SensorSimulation(props: Props): JSX.Element {
     const [selectedControl, setSelectedControl] = useState<string>('');
     const [filterValue, setFilterValue] = useState<string>('');
     const [seriesFilter, setSeriesFilter] = useState<RegExp>(new RegExp(''));
+
+    const [dropDataAfter, setDropDataAfter] = useState<number>(5000);
 
     // update the series list of the neuron info changes
     useEffect(
@@ -82,13 +84,20 @@ export default function SensorSimulation(props: Props): JSX.Element {
         regexFilter(updatedFilter).ifSome((regex: RegExp) => setSeriesFilter(regex));
     }
 
+    function handleUpdateDropDataAfter(time: string): void {
+        const value = parseInt(time);
+        if (!isNaN(value)) {
+            setDropDataAfter(value);
+        }
+    }
+
     if (neuronList.length === 0) {
-        return <div/>;
+        return <div />;
     }
     return (
-        <div style={{padding: 10}}>
-            <Stack tokens={{childrenGap: 10}}>
-                <Stack horizontal tokens={{childrenGap: 20}}>
+        <div style={{ padding: 10 }}>
+            <Stack tokens={{ childrenGap: 10 }}>
+                <Stack horizontal tokens={{ childrenGap: 20 }}>
                     <Checkbox
                         label="Tracker"
                         checked={selectedControl === Control.TRACKER}
@@ -114,15 +123,16 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         onSubscribe={onSubscribe}
                         timeWindow={5000}
                         windowingTime={100}
-                        margin={{top: 15, right: 20, bottom: 35, left: 30}}
+                        dropDataAfter={dropDataAfter}
+                        margin={{ top: 15, right: 20, bottom: 35, left: 30 }}
                         tooltip={{
-                            visible: selectedControl === Control.TOOLTIP, 
+                            visible: selectedControl === Control.TOOLTIP,
                             backgroundColor: itheme.palette.themeLighterAlt,
                             fontColor: itheme.palette.themePrimary,
                             borderColor: itheme.palette.themePrimary,
                         }}
                         magnifier={{
-                            visible: selectedControl === Control.MAGNIFIER, 
+                            visible: selectedControl === Control.MAGNIFIER,
                             magnification: 5,
                             color: itheme.palette.neutralTertiaryAlt,
                         }}
@@ -132,22 +142,28 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         }}
                         filter={seriesFilter}
                         backgroundColor={itheme.palette.white}
-                        svgStyle={{width: '95%'}}
-                        axisStyle={{color: itheme.palette.themePrimary}}
-                        axisLabelFont={{color: itheme.palette.themePrimary}}
-                        plotGridLines={{color: itheme.palette.themeLighter}}
+                        svgStyle={{ width: '95%' }}
+                        axisStyle={{ color: itheme.palette.themePrimary }}
+                        axisLabelFont={{ color: itheme.palette.themePrimary }}
+                        plotGridLines={{ color: itheme.palette.themeLighter }}
                         spikesStyle={{
-                            color: itheme.palette.themePrimary, 
+                            color: itheme.palette.themePrimary,
                             highlightColor: itheme.palette.themePrimary
                         }}
                     />
                 </Stack.Item>
-                <Stack horizontal tokens={{childrenGap: 20}}>
+                <Stack horizontal tokens={{ childrenGap: 20 }}>
                     <TextField
                         prefix="Filter"
                         suffix="RegEx"
                         value={filterValue}
                         onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
+                    />
+                    <TextField
+                        prefix="Drop Data After"
+                        suffix="ms"
+                        value={dropDataAfter.toString()}
+                        onChange={(_, value: string) => handleUpdateDropDataAfter(value)}
                     />
                 </Stack>
             </Stack>

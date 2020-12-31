@@ -35,7 +35,8 @@ export interface SensorsUpdatedAction {
 
 export type ResponseActionType = typeof SENSORS_LOADED
     | typeof SENSORS_SAVED
-    | typeof SENSORS_CHANGED;
+    | typeof SENSORS_CHANGED
+    ;
 
 export type SensorsAction = SensorsLoadedAction
     | SensorsUpdatedAction
@@ -47,6 +48,11 @@ export type SensorsAction = SensorsLoadedAction
  | Redux action creators (for use by the components)
  | (functions that return actions or they return a thunk (a function that returns an action))
  |
+ */
+/**
+ * Action creator for updating sensor code snippet
+ * @param codeSnippet The code snippet describing the sensor signals and timing
+ * @return An action for updating the sensor description
  */
 export function updateSensors(codeSnippet: string): SensorsUpdatedAction {
     return {

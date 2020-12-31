@@ -35,11 +35,9 @@ import {map} from "rxjs/operators";
 import {ChartData, Datum} from "stream-charts";
 import moment from 'moment';
 import {baseRouterPathFrom} from '../router/router';
-import {spawn, Thread, Worker} from 'threads';
-import {Observable as FnsObservable} from 'observable-fns';
 import {ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
 import {ObservablePromise} from "threads/dist/observable-promise";
-import { SensorThread, newSensorThread } from '../threads/SensorThread';
+import {newSensorThread, SensorThread} from '../threads/SensorThread';
 
 type SimulationType = (((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>);
 

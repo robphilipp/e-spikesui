@@ -5,7 +5,7 @@ export interface SensorsState {
     // timing.
     codeSnippet?: string;
     // the original code-snippet, which is reset when the network is saved
-    preSavedDescription?: string;
+    preSavedCodeSnippet?: string;
     // flag when the sensor description has been modified, which is reset when the
     // network is saved
     modified: boolean;
@@ -23,7 +23,7 @@ function initialState(): SensorsState {
         codeSnippet: undefined,
         modified: false,
         path: undefined,
-        preSavedDescription: undefined
+        preSavedCodeSnippet: undefined
     }
 }
 
@@ -40,15 +40,15 @@ export function sensorsReducer(state: SensorsState = initialState(), action: Sen
                 codeSnippet: action.result.codeSnippet,
                 modified: false,
                 path: action.result.path,
-                preSavedDescription: action.result.codeSnippet
+                preSavedCodeSnippet: action.result.codeSnippet
             }
 
         case SENSORS_CHANGED:
             return {
                 ...state,
+                modified: action.codeSnippet !== state.preSavedCodeSnippet,
                 codeSnippet: action.codeSnippet,
-                modified: action.codeSnippet !== state.codeSnippet,
-                preSavedDescription: state.preSavedDescription === undefined ? state.codeSnippet : state.preSavedDescription
+                preSavedCodeSnippet: state.preSavedCodeSnippet === undefined ? state.codeSnippet : state.preSavedCodeSnippet
             }
 
         case SENSORS_SAVED:
@@ -56,7 +56,7 @@ export function sensorsReducer(state: SensorsState = initialState(), action: Sen
                 ...state,
                 modified: false,
                 path: action.result.path,
-                preSavedDescription: action.result.codeSnippet
+                preSavedCodeSnippet: action.result.codeSnippet
             }
 
         default:

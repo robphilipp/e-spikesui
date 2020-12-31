@@ -62,6 +62,7 @@ export default function prepareIcons(): void {
             'add': <FontAwesomeIcon icon={faPlus}/>,
             'statuserrorfull': <FontAwesomeIcon icon={faTimes}/>,
             'close': <FontAwesomeIcon icon={faTimes}/>,
+            'crossCircle': <FontAwesomeIcon icon={faTimesCircle}/>,
             'minusCircle': <FontAwesomeIcon icon={faMinusCircle}/>,
             'cancel': <FontAwesomeIcon icon={faTimes}/>,
             'chevrondown': <FontAwesomeIcon icon={faChevronDown}/>,

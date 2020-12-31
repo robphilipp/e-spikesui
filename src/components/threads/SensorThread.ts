@@ -76,7 +76,7 @@ export async function newSensorThread(): Promise<SensorThread> {
      * Terminates the worker thread
      */
     async function terminate(): Promise<void> {
-        Thread.terminate(worker);
+        return Thread.terminate(worker);
     }
 
     const worker: SimulationType = await spawn(new Worker('../workers/sensorSignals'));

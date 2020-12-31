@@ -2,7 +2,7 @@ import * as React from 'react';
 import {FormEvent, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
 import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
-import {Checkbox, IconButton, ITheme, Stack, TextField, TooltipHost} from "@fluentui/react";
+import {Checkbox, IconButton, ITheme, MessageBar, Stack, TextField, TooltipHost} from "@fluentui/react";
 import {SensorOutput} from "./compiler";
 import moment from "moment";
 import {map} from "rxjs/operators";
@@ -323,46 +323,54 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     <Stack.Item>
                         {stopSensorSimulationButton()}
                     </Stack.Item>
+                    <Stack.Item tokens={{margin: '0 20px 0 30px'}}>
+                        {neuronList?.length > 0 ? <div/> : <MessageBar>
+                            Please compile sensor description.
+                        </MessageBar>}
+                    </Stack.Item>
                 </Stack>
                 <Stack.Item>
-                    {neuronList?.length > 0 ? <RasterChart
-                        height={neuronList.length * heightPerNeuron + 60}
-                        seriesList={neuronList}
-                        seriesObservable={chartObservable}
-                        // shouldSubscribe={shouldSubscribe}
-                        // onSubscribe={onSubscribe}
-                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                        onSubscribe={subscription => subscriptionRef.current = subscription}
-                        timeWindow={5000}
-                        windowingTime={100}
-                        dropDataAfter={dropDataAfter}
-                        margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                        tooltip={{
-                            visible: selectedControl === Control.TOOLTIP,
-                            backgroundColor: itheme.palette.themeLighterAlt,
-                            fontColor: itheme.palette.themePrimary,
-                            borderColor: itheme.palette.themePrimary,
-                        }}
-                        magnifier={{
-                            visible: selectedControl === Control.MAGNIFIER,
-                            magnification: 5,
-                            color: itheme.palette.neutralTertiaryAlt,
-                        }}
-                        tracker={{
-                            visible: selectedControl === Control.TRACKER,
-                            color: itheme.palette.themePrimary,
-                        }}
-                        filter={seriesFilter}
-                        backgroundColor={itheme.palette.white}
-                        svgStyle={{width: '95%'}}
-                        axisStyle={{color: itheme.palette.themePrimary}}
-                        axisLabelFont={{color: itheme.palette.themePrimary}}
-                        plotGridLines={{color: itheme.palette.themeLighter}}
-                        spikesStyle={{
-                            color: itheme.palette.themePrimary,
-                            highlightColor: itheme.palette.themePrimary
-                        }}
-                    /> : <div>Please compile sensor description.</div>}
+                    {neuronList?.length > 0 ?
+                        <RasterChart
+                            height={neuronList.length * heightPerNeuron + 60}
+                            seriesList={neuronList}
+                            seriesObservable={chartObservable}
+                            // shouldSubscribe={shouldSubscribe}
+                            // onSubscribe={onSubscribe}
+                            shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                            onSubscribe={subscription => subscriptionRef.current = subscription}
+                            timeWindow={5000}
+                            windowingTime={100}
+                            dropDataAfter={dropDataAfter}
+                            margin={{top: 15, right: 20, bottom: 35, left: 30}}
+                            tooltip={{
+                                visible: selectedControl === Control.TOOLTIP,
+                                backgroundColor: itheme.palette.themeLighterAlt,
+                                fontColor: itheme.palette.themePrimary,
+                                borderColor: itheme.palette.themePrimary,
+                            }}
+                            magnifier={{
+                                visible: selectedControl === Control.MAGNIFIER,
+                                magnification: 5,
+                                color: itheme.palette.neutralTertiaryAlt,
+                            }}
+                            tracker={{
+                                visible: selectedControl === Control.TRACKER,
+                                color: itheme.palette.themePrimary,
+                            }}
+                            filter={seriesFilter}
+                            backgroundColor={itheme.palette.white}
+                            svgStyle={{width: '95%'}}
+                            axisStyle={{color: itheme.palette.themePrimary}}
+                            axisLabelFont={{color: itheme.palette.themePrimary}}
+                            plotGridLines={{color: itheme.palette.themeLighter}}
+                            spikesStyle={{
+                                color: itheme.palette.themePrimary,
+                                highlightColor: itheme.palette.themePrimary
+                            }}
+                        /> :
+                        <div/>
+                    }
                 </Stack.Item>
             </Stack>
             <Stack horizontal tokens={{childrenGap: 20}}>

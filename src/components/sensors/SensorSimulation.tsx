@@ -44,6 +44,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
     const [filterValue, setFilterValue] = useState<string>('');
     const [seriesFilter, setSeriesFilter] = useState<RegExp>(new RegExp(''));
     const [dropDataAfter, setDropDataAfter] = useState<number>(5000);
+    const [timeWindow, setTimeWindow] = useState<number>(5000);
 
     // manages the state of the code snippet (i.e. pre-compiled, compiled, running), and the
     // compile-time errors
@@ -128,10 +129,24 @@ export default function SensorSimulation(props: Props): JSX.Element {
         regexFilter(updatedFilter).ifSome((regex: RegExp) => setSeriesFilter(regex));
     }
 
+    /**
+     * Handles updating the time after which data is dropped
+     * @param time The time, in milliseconds, after which data is dropped
+     */
     function handleUpdateDropDataAfter(time: string): void {
-        const value = parseInt(time);
-        if (!isNaN(value)) {
-            setDropDataAfter(value);
+        if (time.match(/^[1-9]([0-9]*)$/) !== null) {
+            setDropDataAfter(parseInt(time, 10));
+        }
+    }
+
+    /**
+     * Handles updating the time-window of the plot (i.e. the time-range of data shown when
+     * streaming by)
+     * @param time The width of the time-window in milliseconds
+     */
+    function handleUpdateTimeWindow(time: string): void {
+        if (time.match(/^[1-9]([0-9]*)$/) !== null) {
+            setTimeWindow(parseInt(time, 10));
         }
     }
 
@@ -279,10 +294,20 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 <Stack horizontal tokens={{childrenGap: 5}}>
                     <Stack.Item>
                         <TextField
+                            size={8}
                             prefix="Drop Data After"
                             suffix="ms"
                             value={dropDataAfter.toString()}
                             onChange={(_, value: string) => handleUpdateDropDataAfter(value)}
+                        />
+                    </Stack.Item>
+                    <Stack.Item>
+                        <TextField
+                            size={8}
+                            prefix="Time Window"
+                            suffix="ms"
+                            value={timeWindow.toString()}
+                            onChange={(_, value: string) => handleUpdateTimeWindow(value)}
                         />
                     </Stack.Item>
                     <Stack.Item grow>
@@ -331,7 +356,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                             seriesObservable={chartObservable}
                             shouldSubscribe={expressionState === ExpressionState.RUNNING}
                             onSubscribe={subscription => subscriptionRef.current = subscription}
-                            timeWindow={5000}
+                            timeWindow={timeWindow}
                             windowingTime={100}
                             dropDataAfter={dropDataAfter}
                             margin={{top: 15, right: 20, bottom: 35, left: 30}}

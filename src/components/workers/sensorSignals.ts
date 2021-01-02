@@ -20,15 +20,29 @@ let rxjsObservable: RxjsObservable<SensorOutput>;
  * @return An array of the neuron IDs to which the sensor signals are sent
  */
 function compile(codeSnippet: string): Array<string> {
-    return compileSensorDescription(codeSnippet)
+    const result = compileSensorDescription(codeSnippet);
+    if (result.isLeft()) {
+        throw new Error(result.getLeft());
+    }
+    return result
         .map(result => {
             neuronIds = result.neuronIds;
             rxjsObservable = result.observable;
             
             return neuronIds;
         })
-        .getOrElse(undefined)
+        .getOrElse([])
 }
+// function compile(codeSnippet: string): Array<string> {
+//     return compileSensorDescription(codeSnippet)
+//         .map(result => {
+//             neuronIds = result.neuronIds;
+//             rxjsObservable = result.observable;
+//
+//             return neuronIds;
+//         })
+//         .getOrElse(undefined)
+// }
 
 /**
  * @return An observable-fns to which the master thread can subscribe

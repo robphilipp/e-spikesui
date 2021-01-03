@@ -27,7 +27,10 @@ import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage}
 import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
 import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
 import {
-    loadSimulationProject, newSimulationProject, ProjectLoadedAction, ProjectSavedAction,
+    loadSimulationProject,
+    newSimulationProject,
+    ProjectLoadedAction,
+    ProjectSavedAction,
     saveSimulationProject,
     updateSimulationProject
 } from "../redux/actions/simulationProject";
@@ -45,7 +48,7 @@ const MAX_TIME_FACTOR = 20;
 
 enum TabName {
     PROJECT = 'simulation-project',
-    EXEC = 'simulation-execution'
+    EXECUTE = 'simulation-execution'
 }
 
 interface OwnProps extends RouteComponentProps<never> {
@@ -131,7 +134,6 @@ function SimulationManager(props: Props): JSX.Element {
                 onLoad(filePath)
                     .then(() => console.log("loaded"))
                     .catch(reason => onSetError(<div>{reason.message}</div>))
-                // .catch(reason => setMessage(errorMessage(<div>{reason.message}</div>)))
             }
         },
         [simulationProjectPath]
@@ -150,6 +152,7 @@ function SimulationManager(props: Props): JSX.Element {
      * Handles creating a new project with default settings.
      */
     function handleNewProject(): void {
+        setSelectedTab(TabName.PROJECT);
         onCreate();
         history.push(`${baseRouterPath}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
     }
@@ -227,13 +230,13 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
+                setSelectedTab(TabName.PROJECT);
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
             .catch(reason => onSetError(<>
                 <div><b>Unable to load simulation project file</b></div>
                 <div>Response: {reason}</div>
             </>));
-        // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
     }
 
     /**
@@ -379,7 +382,6 @@ function SimulationManager(props: Props): JSX.Element {
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    // const {path, templatePath, codeSnippet} = keyboardEventRef.current;
                     handleSaveProject();
                     break;
                 }
@@ -416,7 +418,7 @@ function SimulationManager(props: Props): JSX.Element {
      */
     function saveButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <TooltipHost content="Save simulation project">
+            <TooltipHost content="Save project settings">
                 <IconButton
                     iconProps={{iconName: 'save'}}
                     onClick={handleSaveProject}
@@ -668,21 +670,23 @@ function SimulationManager(props: Props): JSX.Element {
                         {/*{stopSensorSimulationButton()}*/}
                         {/*{showSimulation && hideSimulationButton()}*/}
                     </StackItem>
-                    <Stack tokens={{childrenGap: 10}} grow>
-                        <Pivot aria-label="simulation-tabs" initialSelectedKey={selectedTab}>
+                    <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow>
+                        <Pivot
+                            aria-label="simulation-tabs"
+                            selectedKey={selectedTab}
+                            onLinkClick={item => setSelectedTab(item.props.itemKey)}
+                        >
                             <PivotItem
-                                headerText="Project"
+                                headerText="Project Settings"
                                 itemKey={TabName.PROJECT}
-                                onClick={() => setSelectedTab(TabName.PROJECT)}
                             >
                                 {simulationCard()}
                                 {networkDescriptionCard()}
                                 {sensorDescriptionCard()}
                             </PivotItem>
                             <PivotItem
-                                headerText="Execute"
-                                itemKey={TabName.EXEC}
-                                onClick={() => setSelectedTab(TabName.EXEC)}
+                                headerText="Deploy and Run"
+                                itemKey={TabName.EXECUTE}
                             >
                                 <div>Execute</div>
                             </PivotItem>

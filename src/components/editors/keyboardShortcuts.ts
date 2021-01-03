@@ -6,6 +6,7 @@ import {Option} from "prelude-ts";
 export enum KeyboardShortcut {
     NEW = 'new',
     SAVE = 'save',
+    SAVE_AS = 'saveAs',
     LOAD = 'load',
 }
 
@@ -16,6 +17,9 @@ export enum KeyboardShortcut {
  */
 export function keyboardShortcutFor(event: KeyboardEvent): Option<KeyboardShortcut> {
     if (process.platform === 'darwin') {
+        if (event.metaKey && event.shiftKey && event.key.toLocaleLowerCase() === 's') {
+            return Option.of(KeyboardShortcut.SAVE_AS);
+        }
         if (event.metaKey && event.key.toLocaleLowerCase() === 's') {
             return Option.of(KeyboardShortcut.SAVE);
         }
@@ -26,6 +30,9 @@ export function keyboardShortcutFor(event: KeyboardEvent): Option<KeyboardShortc
             return Option.of(KeyboardShortcut.NEW);
         }
     } else {
+        if (event.ctrlKey && event.shiftKey && event.key.toLocaleLowerCase() === 's') {
+            return Option.of(KeyboardShortcut.SAVE_AS);
+        }
         if (event.ctrlKey && event.key.toLocaleLowerCase() === 's') {
             return Option.of(KeyboardShortcut.SAVE);
         }

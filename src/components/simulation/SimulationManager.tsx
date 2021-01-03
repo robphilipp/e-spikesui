@@ -49,6 +49,7 @@ interface DispatchProps {
     onCreate: () => void;
     onLoad: (path: string) => Promise<ProjectLoadedAction>;
     onSave: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
+    onSaveAs: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
 
     onSetError: (messages: JSX.Element) => MessageSetAction;
     onSetSuccess: (messages: JSX.Element) => MessageSetAction;
@@ -154,6 +155,57 @@ function SimulationManager(props: Props): JSX.Element {
      * the user to set the path. Sends redux action when file has been saved.
      */
     function handleSaveProject(): void {
+        // if the state path is set and the path does not equal the template path, then the network
+        // description is from an existing file, and we can just save it. otherwise, we need to up a
+        // dialog so that the user can give the filename
+        if (projectPath && projectPath !== NEW_PROJECT_PATH) {
+            const project: SimulationProject = {
+                simulationName: simulationName,
+                timeFactor: timeFactor,
+                simulationDuration: simulationDuration,
+                sensorFilePath: sensorDescriptionPath,
+                networkFilePath: networkDescriptionPath
+            }
+
+            // todo handle success and error
+            onSave(projectPath, project).catch(reason => onSetError(<div>{reason}</div>));
+        } else {
+            handleSaveProjectAs();
+        }
+    }
+
+    // function handleSaveProject(): void {
+    //     const project: SimulationProject = {
+    //         simulationName: simulationName,
+    //         timeFactor: timeFactor,
+    //         simulationDuration: simulationDuration,
+    //         sensorFilePath: sensorDescriptionPath,
+    //         networkFilePath: networkDescriptionPath
+    //     }
+    //
+    //     // if the state path is set and the path does not equal the template path, then the network
+    //     // description is from an existing file, and we can just save it. otherwise, we need to up a
+    //     // dialog so that the user can give the filename
+    //     if (projectPath && projectPath !== NEW_PROJECT_PATH) {
+    //         // todo handle success and error
+    //         onSave(projectPath, project)
+    //             .catch(reason => onSetError(<div>{reason}</div>));
+    //         // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
+    //     } else {
+    //         remote.dialog
+    //             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+    //             .then(response => onSave(response.filePath, project)
+    //                 .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
+    //                 .catch(reason => onSetError(<>
+    //                     <div><b>Unable to save project to file.</b></div>
+    //                     <div>Path: {projectPath}</div>
+    //                     <div>Response: {reason}</div>
+    //                 </>))
+    //             );
+    //     }
+    // }
+
+    function handleSaveProjectAs(): void {
         const project: SimulationProject = {
             simulationName: simulationName,
             timeFactor: timeFactor,
@@ -162,26 +214,24 @@ function SimulationManager(props: Props): JSX.Element {
             networkFilePath: networkDescriptionPath
         }
 
-        // if the state path is set and the path does not equal the template path, then the network
-        // description is from an existing file, and we can just save it. otherwise, we need to up a
-        // dialog so that the user can give the filename
-        if (projectPath && projectPath !== NEW_PROJECT_PATH) {
-            // todo handle success and error
-            onSave(projectPath, project)
-                .catch(reason => onSetError(<div>{reason}</div>));
-            // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
-        } else {
-            remote.dialog
-                .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-                .then(response => onSave(response.filePath, project)
+        remote.dialog
+            .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
+            .then(response => {
+                if (response.filePath === "") {
+                    return;
+                }
+                const path = response.filePath.endsWith('.spikes') ?
+                    response.filePath :
+                    `${response.filePath}.spikes`
+                ;
+                onSave(path, project)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
                     .catch(reason => onSetError(<>
                         <div><b>Unable to save project to file.</b></div>
                         <div>Path: {projectPath}</div>
                         <div>Response: {reason}</div>
                     </>))
-                );
-        }
+            });
     }
 
     /**
@@ -197,6 +247,11 @@ function SimulationManager(props: Props): JSX.Element {
 
                 case KeyboardShortcut.SAVE: {
                     handleSaveProject();
+                    break;
+                }
+
+                case KeyboardShortcut.SAVE_AS: {
+                    handleSaveProjectAs();
                     break;
                 }
 
@@ -243,6 +298,23 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     /**
+     * Creates a save button in the gutter when the contents have an associated file
+     * path, and when they can be saved.
+     * @return The save-button component
+     */
+    function saveAsButton(): JSX.Element {
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <TooltipHost content="Save project settings as new file">
+                <IconButton
+                    iconProps={{iconName: 'save-as'}}
+                    onClick={handleSaveProjectAs}
+                    // disabled={!canSave()}
+                />
+            </TooltipHost>
+        </div>
+    }
+
+    /**
      * @return `true` if the simulation project can be saved; `false` otherwise
      */
     function canSave(): boolean {
@@ -270,9 +342,7 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     return (
-        <div
-            onKeyDown={handleKeyboardShortcut}
-        >
+        <div onKeyDown={handleKeyboardShortcut}>
             {/* {message || <span />} */}
             <div
                 style={{
@@ -290,6 +360,7 @@ function SimulationManager(props: Props): JSX.Element {
                         {newButton()}
                         {loadButton()}
                         {saveButton()}
+                        {saveAsButton()}
                         <Separator/>
                         {/*{compileButton()}*/}
                         {/*{runSensorSimulationButton()}*/}
@@ -357,6 +428,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onCreate: () => dispatch(newSimulationProject()),
     onLoad: (path: string) => dispatch(loadSimulationProject(path)),
     onSave: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
+    onSaveAs: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
 
     onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
     onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),

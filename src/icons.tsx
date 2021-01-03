@@ -33,6 +33,7 @@ import {
     faChevronUp,
     faSyncAlt,
     faFileContract,
+    faCopy,
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -61,6 +62,7 @@ export default function prepareIcons(): void {
         icons: {
             'check-square': <FontAwesomeIcon icon={faCheckSquare}/>,
             'save': <FontAwesomeIcon icon={faSave}/>,
+            'save-as': <FontAwesomeIcon icon={faCopy}/>,
             'upload': <FontAwesomeIcon icon={faFileUpload}/>,
             'open-simulation': <FontAwesomeIcon icon={faFileContract}/>,
             'file': <FontAwesomeIcon icon={faFile}/>,

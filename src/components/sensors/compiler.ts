@@ -37,6 +37,7 @@ export interface CompilerResult {
  * Attempts to compile the sensor description code snippet. When successful, returns an
  * `Observable<SensorOutput>` that streams signals to a set of neurons on each event.
  * @param sensorDescription The code snippet that creates the signal stream.
+ * @param timeFactor The simulation time-factor
  * @return Either a string with a compile error; or an `Observable<SensorOutput>` representing
  * the compiled sensor description.
  * @example
@@ -52,13 +53,13 @@ export interface CompilerResult {
     const sensorName = 'test-sensors';
     const neuronIds = ['in-1', 'in-2', 'in-3', 'in-4'];
 
-    const observable =  interval(50).pipe(
+    const observable =  interval(timeFactor * 50).pipe(
         map(() => randomSignal(sensorName, neuronIds)),
     )
 
     return {neuronIds, observable};
  */
-export function compileSensorDescription(sensorDescription: string): Either<string, CompilerResult> {
+export function compileSensorDescription(sensorDescription: string, timeFactor: number): Either<string, CompilerResult> {
     try {
         // attempts to compile the code
         const code = compiler.compileCode(sensorDescription);
@@ -74,6 +75,7 @@ export function compileSensorDescription(sensorDescription: string): Either<stri
             RegExp: RegExp,
             Date: Date,
             moment: moment,
+            timeFactor: timeFactor
         };
         const tempVars = {};
 

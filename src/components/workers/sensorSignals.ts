@@ -17,10 +17,11 @@ let rxjsObservable: RxjsObservable<SensorOutput>;
  * a stream is sensor signals.
  * @param codeSnippet The code snippet that returns an observable for generating a
  * stream of sensor signals.
+ * @param timeFactor The simulation time-factor
  * @return An array of the neuron IDs to which the sensor signals are sent
  */
-function compile(codeSnippet: string): Array<string> {
-    const result = compileSensorDescription(codeSnippet);
+function compile(codeSnippet: string, timeFactor: number): Array<string> {
+    const result = compileSensorDescription(codeSnippet, timeFactor);
     if (result.isLeft()) {
         throw new Error(result.getLeft());
     }
@@ -96,7 +97,7 @@ function stop(): void {
 }
 
 export interface SensorSignals extends WorkerModule<string> {
-    compile: (codeSnippet: string) => Array<string>;
+    compile: (codeSnippet: string, timeFactor: number) => Array<string>;
     neurons: () => Array<string>;
     observable: () => Observable<SensorOutput>;
     simulate: () => void;

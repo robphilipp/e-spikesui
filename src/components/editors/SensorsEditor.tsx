@@ -60,6 +60,7 @@ interface OwnProps extends RouteComponentProps<never> {
 
 interface StateProps {
     codeSnippet: string;
+    timeFactor: number;
     modified: boolean;
     sensorDescriptionPath?: string;
     templatePath?: string;
@@ -85,6 +86,7 @@ function SensorsEditor(props: Props): JSX.Element {
         theme = DefaultTheme.DARK,
         itheme,
         codeSnippet,
+        timeFactor,
         templatePath,
         onChanged,
         onLoadTemplate,
@@ -411,6 +413,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 <SensorSimulation
                     itheme={itheme}
                     codeSnippet={codeSnippet}
+                    timeFactor={timeFactor}
                     onClose={hideSimulationLayer}
                 />
             </Layer>}
@@ -430,6 +433,7 @@ function SensorsEditor(props: Props): JSX.Element {
  */
 const mapStateToProps = (state: AppState): StateProps => ({
     codeSnippet: state.sensorDescription.codeSnippet,
+    timeFactor: state.simulationProject.timeFactor,
     modified: state.sensorDescription.modified,
     sensorDescriptionPath: state.sensorDescription.path,
     templatePath: state.settings.sensorDescription.templatePath

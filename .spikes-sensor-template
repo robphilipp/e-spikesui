@@ -32,14 +32,17 @@ function randomSignal(sensorName, neuronIds) {
       time: moment().valueOf(),
       neuronIds: [neuronIds[index]],
       signal: {value: 1.05 * Math.random(), units: 'mV'}
-    //   signal: {value: 1.05, units: 'mV'} 
    }
 }
 
 const sensorName = 'test-sensors';
 const neuronIds = ['in-1', 'in-2', 'in-3', 'in-4'];
 
-const observable =  interval(50).pipe(
+// the variable 'timeFactor' is exposed so that it can be included in this sensor code. A time
+// factor of 1 means that one simulation second equals one real-time second. A time factor of
+// 5 means that one simulation second takes 5 real-time seconds, effectively slowing down the
+// simulation time.
+const observable =  interval(timeFactor * 50).pipe(
    map(index => randomSignal(sensorName, neuronIds)),
 )
 

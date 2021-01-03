@@ -8,8 +8,8 @@ import { spawn, Thread, Worker } from 'threads';
 type SimulationType = ((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>;
 
 export interface SensorThread {
-    compileSimulator: (codeSnippet: string) => Promise<SignalGenerator>;
-    compileSender: (codeSnippet: string, websocket: string) => Promise<SignalGenerator>;
+    compileSimulator: (codeSnippet: string, timeFactor: number) => Promise<SignalGenerator>;
+    compileSender: (codeSnippet: string, timeFactor: number, websocket: string) => Promise<SignalGenerator>;
     stop: () => Promise<void>;
     terminate: () => Promise<void>;
 }
@@ -30,10 +30,11 @@ export async function newSensorThread(): Promise<SensorThread> {
      * Compiles the sensor code snippet and sets up the observable as a simulator. Has a closure 
      * on the worker.
      * @param codeSnippet The sensor code snippet
+     * @param timeFactor The simulation time-factor
      * @return A promise for a signal generator (a set of input neuron IDs and an observable)
      */
-    async function compileSimulator(codeSnippet: string): Promise<SignalGenerator> {
-        const ids = await worker.compile(codeSnippet);
+    async function compileSimulator(codeSnippet: string, timeFactor: number): Promise<SignalGenerator> {
+        const ids = await worker.compile(codeSnippet, timeFactor);
         const fnsObs: FnsObservable<SensorOutput> = worker.observable();
         const observable = new Observable<SensorOutput>(observer => {
             worker.simulate().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
@@ -48,11 +49,12 @@ export async function newSensorThread(): Promise<SensorThread> {
      * Connects to the websocket, compiles the sensor code snippet and sets up the observer 
      * to send sensor signals down the websocket. Has a closure on the worker.
      * @param codeSnippet The sensor code snippet
+     * @param timeFactor The simulation time-factor
      * @param websocket The web socket address for sending sensor signals
      * @return A promise for a signal generator (a set of input neuron IDs and an observable)
      */
-    async function compileSender(codeSnippet: string, websocket: string): Promise<SignalGenerator> {
-        const ids = await worker.compile(codeSnippet);
+    async function compileSender(codeSnippet: string, timeFactor: number, websocket: string): Promise<SignalGenerator> {
+        const ids = await worker.compile(codeSnippet, timeFactor);
         const fnsObs: FnsObservable<SensorOutput> = worker.observable();
         const observable = new Observable<SensorOutput>(observer => {
             worker.sendSignals(websocket)

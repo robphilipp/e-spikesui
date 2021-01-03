@@ -2,7 +2,17 @@ import * as React from 'react';
 import {FormEvent, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
 import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
-import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, Stack, TextField, TooltipHost} from "@fluentui/react";
+import {
+    Checkbox,
+    IconButton,
+    ITheme,
+    Label,
+    MessageBar,
+    MessageBarType,
+    Stack,
+    TextField,
+    TooltipHost
+} from "@fluentui/react";
 import {SensorOutput} from "./compiler";
 import moment from "moment";
 import {map} from "rxjs/operators";
@@ -17,6 +27,7 @@ enum Control {
 
 interface Props {
     codeSnippet: string;
+    timeFactor: number;
 
     onClose?: () => void;
 
@@ -34,6 +45,7 @@ interface Props {
 export default function SensorSimulation(props: Props): JSX.Element {
     const {
         codeSnippet,
+        timeFactor,
         onClose,
         itheme,
         heightPerNeuron = 20,
@@ -158,7 +170,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
     async function handleCompile(): Promise<void> {
         try {
             // attempt to compile the code-snippet as a simulator
-            const generator = await sensorThreadRef.current.compileSimulator(codeSnippet);
+            const generator = await sensorThreadRef.current.compileSimulator(codeSnippet, timeFactor);
 
             setNeuronList(seriesList(generator.neuronIds));
             setSensorObservable(generator.observable);
@@ -179,12 +191,15 @@ export default function SensorSimulation(props: Props): JSX.Element {
         if (expressionState === ExpressionState.COMPILED) {
             const now = moment().valueOf();
             const observable = sensorObservable.pipe(
-                map(output => ({
-                    maxTime: output.time - now,
-                    newPoints: new Map<string, Array<Datum>>(
-                        output.neuronIds.map(id => [id, [{time: output.time - now, value: output.signal.value}]])
-                    )
-                }))
+                map(output => {
+                    const time = Math.ceil((output.time - now) / timeFactor);
+                    return {
+                        maxTime: time,
+                        newPoints: new Map<string, Array<Datum>>(
+                            output.neuronIds.map(id => [id, [{time: time, value: output.signal.value}]])
+                        )
+                    }
+                })
             );
             setChartObservable(observable);
             setExpressionState(ExpressionState.RUNNING);
@@ -334,7 +349,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     </Stack.Item>
                     <Stack.Item tokens={{margin: '0 20px 0 30px'}}>
                         {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED ?
-                            <MessageBar>
+                            <MessageBar messageBarType={MessageBarType.info}>
                                 Please compile sensor description.
                             </MessageBar> :
                             <div/>
@@ -348,6 +363,9 @@ export default function SensorSimulation(props: Props): JSX.Element {
                             <div/>}
                     </Stack.Item>
                 </Stack>
+                <Stack.Item>
+                    <Label>Simulation Time Factor: {timeFactor}</Label>
+                </Stack.Item>
                 <Stack.Item>
                     {neuronList?.length > 0 ?
                         <RasterChart
@@ -390,23 +408,26 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     }
                 </Stack.Item>
             </Stack>
-            <Stack horizontal tokens={{childrenGap: 20}}>
-                <Checkbox
-                    label="Tracker"
-                    checked={selectedControl === Control.TRACKER}
-                    onChange={handleTrackerSelection}
-                />
-                <Checkbox
-                    label="Tooltip"
-                    checked={selectedControl === Control.TOOLTIP}
-                    onChange={handleTooltipSelection}
-                />
-                <Checkbox
-                    label="Magnifier"
-                    checked={selectedControl === Control.MAGNIFIER}
-                    onChange={handleMagnifierSelection}
-                />
-            </Stack>
+            {neuronList?.length > 0 ?
+                <Stack horizontal tokens={{childrenGap: 20}}>
+                    <Checkbox
+                        label="Tracker"
+                        checked={selectedControl === Control.TRACKER}
+                        onChange={handleTrackerSelection}
+                    />
+                    <Checkbox
+                        label="Tooltip"
+                        checked={selectedControl === Control.TOOLTIP}
+                        onChange={handleTooltipSelection}
+                    />
+                    <Checkbox
+                        label="Magnifier"
+                        checked={selectedControl === Control.MAGNIFIER}
+                        onChange={handleMagnifierSelection}
+                    />
+                </Stack> :
+                <div/>
+            }
         </div>
     );
 }

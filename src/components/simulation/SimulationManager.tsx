@@ -2,6 +2,8 @@ import {
     Icon,
     IconButton,
     ITheme,
+    Pivot,
+    PivotItem,
     Separator,
     SpinButton,
     Stack,
@@ -10,28 +12,28 @@ import {
     TextField,
     TooltipHost
 } from "@fluentui/react";
-import { Card } from '@uifabric/react-cards';
-import { remote } from "electron";
+import {Card} from '@uifabric/react-cards';
+import {remote} from "electron";
 import * as React from "react";
-import { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import { RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter } from "react-router-dom";
-import { ThunkDispatch } from "redux-thunk";
-import { KeyboardShortcut, keyboardShortcutFor } from "../editors/keyboardShortcuts";
-import { NEW_NETWORK_PATH } from "../editors/NetworkEditor";
-import { NEW_SENSOR_PATH } from "../editors/SensorsEditor";
-import { DefaultTheme } from "../editors/themes";
-import { ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage } from "../redux/actions/actions";
-import { loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction } from "../redux/actions/networkDescription";
-import { loadSensorsFrom, SensorsLoadedAction } from "../redux/actions/sensors";
+import {useEffect, useState} from "react";
+import {connect} from "react-redux";
+import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
+import {ThunkDispatch} from "redux-thunk";
+import {KeyboardShortcut, keyboardShortcutFor} from "../editors/keyboardShortcuts";
+import {NEW_NETWORK_PATH} from "../editors/NetworkEditor";
+import {NEW_SENSOR_PATH} from "../editors/SensorsEditor";
+import {DefaultTheme} from "../editors/themes";
+import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage} from "../redux/actions/actions";
+import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
+import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
 import {
     loadSimulationProject, newSimulationProject, ProjectLoadedAction, ProjectSavedAction,
     saveSimulationProject,
     updateSimulationProject
 } from "../redux/actions/simulationProject";
-import { AppState } from "../redux/reducers/root";
-import { SimulationProject } from "../repos/simulationProjectRepo";
-import { baseRouterPathFrom } from "../router/router";
+import {AppState} from "../redux/reducers/root";
+import {SimulationProject} from "../repos/simulationProjectRepo";
+import {baseRouterPathFrom} from "../router/router";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -40,6 +42,11 @@ const SIDEBAR_ELEMENT_HEIGHT = 32;
 const durationRegex = /^[0-9]+[ ]*s*$/
 const MIN_TIME_FACTOR = 1;
 const MAX_TIME_FACTOR = 20;
+
+enum TabName {
+    PROJECT = 'simulation-project',
+    EXEC = 'simulation-execution'
+}
 
 interface OwnProps extends RouteComponentProps<never> {
     networkRouterPath: string;
@@ -104,12 +111,15 @@ function SimulationManager(props: Props): JSX.Element {
     // when user refreshes when the router path is this simulation manager, then we want to load the same
     // project as before the refresh. to do this we use the path parameter holding the file path
     // to the project, and keep it consistent when loading a project
-    const { simulationProjectPath } = useParams<{ [key: string]: string }>();
+    const {simulationProjectPath} = useParams<{ [key: string]: string }>();
     const history = useHistory();
-    const { path } = useRouteMatch();
+    const {path} = useRouteMatch();
 
     const [message, setMessage] = useState<JSX.Element>();
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
+
+    // the selected tab (i.e. configuration or execution)
+    const [selectedTab, setSelectedTab] = useState<string>(TabName.PROJECT);
 
     // when the environment code-snippet file path from the router has changed, and is
     // not equal to the current state path, or is empty, then load the environment code-snippet,
@@ -153,7 +163,7 @@ function SimulationManager(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{ name: 'spikes-sensor', extensions: ['sensor'] }],
+                    filters: [{name: 'spikes-sensor', extensions: ['sensor']}],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -183,7 +193,7 @@ function SimulationManager(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{ name: 'spikes-network', extensions: ['boo'] }],
+                    filters: [{name: 'spikes-network', extensions: ['boo']}],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -213,7 +223,7 @@ function SimulationManager(props: Props): JSX.Element {
                 remote.getCurrentWindow(),
                 {
                     title: 'Open...',
-                    filters: [{ name: 'spikes-sensor', extensions: ['spikes'] }],
+                    filters: [{name: 'spikes-sensor', extensions: ['spikes']}],
                     properties: ['openFile']
                 })
             .then(response => {
@@ -249,7 +259,7 @@ function SimulationManager(props: Props): JSX.Element {
             // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
         } else {
             remote.dialog
-                .showSaveDialog(remote.getCurrentWindow(), { title: "Save As..." })
+                .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
                 .then(response => onSave(response.filePath, project)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
                     .catch(reason => onSetError(<>
@@ -389,10 +399,10 @@ function SimulationManager(props: Props): JSX.Element {
      * @return a button to create a new network
      */
     function newButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="New simulation project">
                 <IconButton
-                    iconProps={{ iconName: 'add' }}
+                    iconProps={{iconName: 'add'}}
                     onClick={handleNewProject}
                 />
             </TooltipHost>
@@ -405,10 +415,10 @@ function SimulationManager(props: Props): JSX.Element {
      * @return The save-button component
      */
     function saveButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Save simulation project">
                 <IconButton
-                    iconProps={{ iconName: 'save' }}
+                    iconProps={{iconName: 'save'}}
                     onClick={handleSaveProject}
                     disabled={!canSave()}
                 />
@@ -433,10 +443,10 @@ function SimulationManager(props: Props): JSX.Element {
      * @return The load button for the sidebar
      */
     function loadButton(): JSX.Element {
-        return <div style={{ width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT }}>
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
             <TooltipHost content="Load network environment">
                 <IconButton
-                    iconProps={{ iconName: 'upload' }}
+                    iconProps={{iconName: 'file-solid'}}
                     onClick={handleLoadProject}
                 />
             </TooltipHost>
@@ -451,18 +461,18 @@ function SimulationManager(props: Props): JSX.Element {
         return (
             <Card
                 aria-label="Simulation Parameters"
-                horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}
+                horizontal tokens={{childrenMargin: 12, boxShadow: "none"}}
             >
-                <Card.Item align="start" tokens={{ margin: 20 }}>
+                <Card.Item align="start" tokens={{margin: 20}}>
                     <Icon
                         iconName='sprint'
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16}}
                     />
                 </Card.Item>
                 <Card.Section grow>
                     <Text
                         variant="medium"
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 700 }}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 700}}
                     >
                         Simulation Parameters
                     </Text>
@@ -472,7 +482,7 @@ function SimulationManager(props: Props): JSX.Element {
                         onChange={(event, name) => handleSimulationNameChange(name)}
                         value={simulationName}
                         autoFocus
-                        styles={{ errorMessage: { color: itheme.palette.redDark } }}
+                        styles={{errorMessage: {color: itheme.palette.redDark}}}
                     />
                     <SpinButton
                         label="Time Factor"
@@ -480,15 +490,15 @@ function SimulationManager(props: Props): JSX.Element {
                         max={20}
                         value={`${timeFactor}`}
                         onValidate={handleValidateTimeFactor}
-                        incrementButtonIcon={{ iconName: 'chevronup' }}
-                        decrementButtonIcon={{ iconName: 'chevrondown' }}
+                        incrementButtonIcon={{iconName: 'chevronup'}}
+                        decrementButtonIcon={{iconName: 'chevrondown'}}
                         onIncrement={(value: string) => handleTimeFactorChange(parseInt(value) + 1)}
                         onDecrement={(value: string) => handleTimeFactorChange(parseInt(value) - 1)}
                         onBlur={event => handleTimeFactorChange(parseInt(event.currentTarget.value))}
                     />
                     <Text
                         variant="small"
-                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                        style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
                     >
                         How many seconds in real time does it take to simulate 1 second?
                     </Text>
@@ -497,15 +507,15 @@ function SimulationManager(props: Props): JSX.Element {
                         min={1}
                         max={20000}
                         value={`${simulationDuration} s`}
-                        incrementButtonIcon={{ iconName: 'chevronup' }}
-                        decrementButtonIcon={{ iconName: 'chevrondown' }}
+                        incrementButtonIcon={{iconName: 'chevronup'}}
+                        decrementButtonIcon={{iconName: 'chevrondown'}}
                         onIncrement={(value: string) => updateSimulationTime(value, 10)}
                         onDecrement={(value: string) => updateSimulationTime(value, -10)}
                         onBlur={event => updateSimulationTime(event.currentTarget.value, 0)}
                     />
                     <Text
                         variant="small"
-                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                        style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
                     >
                         Simulation duration in simulation time.
                     </Text>
@@ -528,47 +538,50 @@ function SimulationManager(props: Props): JSX.Element {
             </Card>
         )
     }
+
     /**
      * @return Card showing the network-description file with buttons to select a new file or edit the current file
      */
     function networkDescriptionCard(): JSX.Element {
         return (
-            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}>
-                <Card.Item align="start" tokens={{ margin: 20 }}>
+            <Card aria-label="Network Description File" horizontal tokens={{childrenMargin: 12, boxShadow: "none"}}>
+                <Card.Item align="start" tokens={{margin: 20}}>
                     <Icon
                         iconName='homegroup'
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16}}
                     />
                 </Card.Item>
                 <Card.Section grow>
                     <Text
                         variant="medium"
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 700 }}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 700}}
                     >
                         Network Description
-                </Text>
+                    </Text>
                     <Text
                         variant="medium"
-                        style={{ color: itheme.palette.neutralPrimary, fontWeight: 400 }}
+                        style={{color: itheme.palette.neutralPrimary, fontWeight: 400}}
                     >
                         {networkDescriptionPath || '(none selected'}
                     </Text>
                     <Text
                         variant="small"
-                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                        style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
                     >
                         Select or edit a network description file
-                </Text>
+                    </Text>
                 </Card.Section>
-                <Card.Section styles={{ root: { alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}` } }} tokens={{ padding: '0px 0px 0px 12px' }}>
+                <Card.Section
+                    styles={{root: {alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}`}}}
+                    tokens={{padding: '0px 0px 0px 12px'}}>
                     <IconButton
-                        iconProps={{ iconName: "edit" }}
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        iconProps={{iconName: "edit"}}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                         onClick={handleEditNetworkDescription}
                     />
                     <IconButton
-                        iconProps={{ iconName: "file" }}
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        iconProps={{iconName: "file"}}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                         onClick={handleLoadNetwork}
                     />
                 </Card.Section>
@@ -582,45 +595,45 @@ function SimulationManager(props: Props): JSX.Element {
      */
     function sensorDescriptionCard(): JSX.Element {
         return (
-            <Card aria-label="Network Description File" horizontal tokens={{ childrenMargin: 12, boxShadow: "none" }}>
-                <Card.Item align="start" tokens={{ margin: 20 }}>
+            <Card aria-label="Network Description File" horizontal tokens={{childrenMargin: 12, boxShadow: "none"}}>
+                <Card.Item align="start" tokens={{margin: 20}}>
                     <Icon
                         iconName='environment'
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16 }}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400, fontSize: 16}}
                     />
                 </Card.Item>
                 <Card.Section grow>
                     <Text
                         variant="medium"
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 700 }}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 700}}
                     >
                         Sensor Description
-                </Text>
+                    </Text>
                     <Text
                         variant="medium"
-                        style={{ color: itheme.palette.neutralPrimary, fontWeight: 400 }}
+                        style={{color: itheme.palette.neutralPrimary, fontWeight: 400}}
                     >
                         {sensorDescriptionPath || '(none selected'}
                     </Text>
                     <Text
                         variant="small"
-                        style={{ color: itheme.palette.themeSecondary, fontWeight: 400 }}
+                        style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
                     >
                         Select or edit a sensor description file
-                </Text>
+                    </Text>
                 </Card.Section>
                 <Card.Section
-                    styles={{ root: { alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}` } }}
-                    tokens={{ padding: '0px 0px 0px 12px' }}
+                    styles={{root: {alignSelf: 'stretch', borderLeft: `1px solid ${itheme.palette.neutralLighter}`}}}
+                    tokens={{padding: '0px 0px 0px 12px'}}
                 >
                     <IconButton
-                        iconProps={{ iconName: "edit" }}
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        iconProps={{iconName: "edit"}}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                         onClick={handleEditSensorDescription}
                     />
                     <IconButton
-                        iconProps={{ iconName: "file" }}
-                        style={{ color: itheme.palette.themePrimary, fontWeight: 400 }}
+                        iconProps={{iconName: "file"}}
+                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                         onClick={handleLoadSensor}
                     />
                 </Card.Section>
@@ -647,18 +660,33 @@ function SimulationManager(props: Props): JSX.Element {
                 <Stack horizontal>
                     <StackItem>
                         {newButton()}
-                        {saveButton()}
                         {loadButton()}
-                        <Separator />
+                        {saveButton()}
+                        <Separator/>
                         {/*{compileButton()}*/}
                         {/*{runSensorSimulationButton()}*/}
                         {/*{stopSensorSimulationButton()}*/}
                         {/*{showSimulation && hideSimulationButton()}*/}
                     </StackItem>
-                    <Stack tokens={{ childrenGap: 10, padding: 20 }} grow>
-                        {simulationCard()}
-                        {networkDescriptionCard()}
-                        {sensorDescriptionCard()}
+                    <Stack tokens={{childrenGap: 10}} grow>
+                        <Pivot aria-label="simulation-tabs" initialSelectedKey={selectedTab}>
+                            <PivotItem
+                                headerText="Project"
+                                itemKey={TabName.PROJECT}
+                                onClick={() => setSelectedTab(TabName.PROJECT)}
+                            >
+                                {simulationCard()}
+                                {networkDescriptionCard()}
+                                {sensorDescriptionCard()}
+                            </PivotItem>
+                            <PivotItem
+                                headerText="Execute"
+                                itemKey={TabName.EXEC}
+                                onClick={() => setSelectedTab(TabName.EXEC)}
+                            >
+                                <div>Execute</div>
+                            </PivotItem>
+                        </Pivot>
                     </Stack>
                 </Stack>
             </div>

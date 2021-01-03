@@ -7,6 +7,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {
     fas,
     faSave,
+    faFile as faFileSolid,
     faFileUpload,
     faTrash,
     faProjectDiagram,
@@ -19,7 +20,19 @@ import {
     faPlus,
     faTimes,
     faChevronDown,
-    faCheckCircle, faArrowDown, faArrowUp, faCheck, faCheckSquare, faExclamationCircle, faWaveSquare, faBrain, faCode, faMinusCircle, faChevronUp, faSyncAlt, 
+    faCheckCircle,
+    faArrowDown,
+    faArrowUp,
+    faCheck,
+    faCheckSquare,
+    faExclamationCircle,
+    faWaveSquare,
+    faBrain,
+    faCode,
+    faMinusCircle,
+    faChevronUp,
+    faSyncAlt,
+    faFileContract,
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -49,7 +62,9 @@ export default function prepareIcons(): void {
             'check-square': <FontAwesomeIcon icon={faCheckSquare}/>,
             'save': <FontAwesomeIcon icon={faSave}/>,
             'upload': <FontAwesomeIcon icon={faFileUpload}/>,
+            'open-simulation': <FontAwesomeIcon icon={faFileContract}/>,
             'file': <FontAwesomeIcon icon={faFile}/>,
+            'file-solid': <FontAwesomeIcon icon={faFileSolid}/>,
             'edit': <FontAwesomeIcon icon={faEdit}/>,
             'delete': <FontAwesomeIcon icon={faTrash}/>,
             'homegroup': <FontAwesomeIcon icon={faProjectDiagram}/>,

@@ -4,8 +4,7 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 import React, {useEffect, useRef} from "react";
-
-const emptyFunction = () => {return;}
+import { noop } from "../../commons";
 
 interface Props {
     // each editor in the app must have a unique ID
@@ -54,9 +53,9 @@ export default function MonacoEditor(props: Props): JSX.Element {
         customThemes = new Map(),
         options = {} as editor.IEditorOptions,
         overrideServices = {},
-        editorDidMount = emptyFunction,
-        editorWillMount = emptyFunction,
-        onChange = emptyFunction
+        editorDidMount = noop,
+        editorWillMount = noop,
+        onChange = noop
     } = props;
 
     const editorRef = useRef<editor.IStandaloneCodeEditor>();

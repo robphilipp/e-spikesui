@@ -30,6 +30,7 @@ import {remote} from "electron";
 import MonacoEditor from "./MonacoEditor";
 import SensorSimulation from "../sensors/SensorSimulation";
 import {baseRouterPathFrom} from '../router/router';
+import {noop} from "../../commons";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -41,9 +42,6 @@ export enum ExpressionState {
 
 const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
-const emptyFunction = () => {
-    return;
-}
 
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
@@ -401,7 +399,7 @@ function SensorsEditor(props: Props): JSX.Element {
                             value={codeSnippet}
                             options={editorOptions}
                             onChange={onChanged}
-                            editorDidMount={emptyFunction}
+                            editorDidMount={noop}
                         />
                         {showSimulation && <LayerHost id='chart-layer'/>}
                     </Stack.Item>

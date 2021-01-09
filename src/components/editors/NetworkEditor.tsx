@@ -20,14 +20,12 @@ import {IconButton, ITheme, MessageBar, MessageBarType, Stack, StackItem, Toolti
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import { baseRouterPathFrom } from '../router/router';
+import {noop} from "../../commons";
 
 export const NEW_NETWORK_PATH = '**new**';
 
 const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
-const emptyFunction = () => {
-    return;
-}
 
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
@@ -379,7 +377,7 @@ function NetworkEditor(props: Props): JSX.Element {
                         value={network}
                         options={editorOptions}
                         onChange={(value: string) => onChanged(value)}
-                        editorDidMount={emptyFunction}
+                        editorDidMount={noop}
                     />
                 </StackItem>
             </Stack>

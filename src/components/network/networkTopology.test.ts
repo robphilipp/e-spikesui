@@ -1,12 +1,8 @@
 import {networkTopology} from "./networkTopology";
+import {HashSet} from "prelude-ts";
+import {coordinate} from "../visualization/basethree/Coordinate";
 
-it('parsing', () => {
-    const topology = networkTopology(initialNetworkDescription);
-    expect(true).toBeTruthy()
-})
-
-
-const initialNetworkDescription = `// line sensor network
+const validNetworkDescription = `// line sensor network
 // For parameters that accept units, if they are not specified, they default to:
 // • distances to µm
 // • times to ms
@@ -102,3 +98,70 @@ LRN=[
     (fnc=flat)
 ]
 )`;
+
+it('parsing', () => {
+    // const topology = networkTopology(validNetworkDescription);
+    const result = networkTopology(validNetworkDescription);
+    expect(result.isRight()).toBeTruthy();
+
+    const topology = result.getOrThrow();
+
+    // expect 6 neurons and 8 connections
+    expect(topology.neurons.length()).toBe(6)
+    expect(topology.connections.length()).toBe(8)
+
+    // neurons names should match
+    expect(topology.neurons.keySet()
+        .equals(HashSet.ofIterable(['in-1', 'in-2', 'inh-1', 'inh-2', 'out-1', 'out-2']))
+    ).toBeTruthy()
+
+    // connection names should match
+    expect(topology.connections.keySet()
+        .equals(HashSet.ofIterable([
+            "out-1-inh-1",
+            "inh-2-out-1",
+            "inh-1-out-2",
+            "in-1-out-1",
+            "out-2-inh-2",
+            "in-1-out-2",
+            "in-2-out-1",
+            "in-2-out-2"
+        ]))
+    ).toBeTruthy()
+
+    const in1 = topology.neurons.get('in-1').getOrElse(undefined);
+    expect(in1).not.toBeUndefined();
+    expect(in1.name).toBe('in-1');
+    expect(in1.type).toBe('e');
+    expect(in1.coords.toArray()).toEqual(coordinate(-300, 0, 100).toArray())
+
+    const in2 = topology.neurons.get('in-2').getOrElse(undefined);
+    expect(in2).not.toBeUndefined();
+    expect(in2.name).toBe('in-2');
+    expect(in2.type).toBe('e');
+    expect(in2.coords.toArray()).toEqual(coordinate(300, 0, 100).toArray())
+
+    const inh1 = topology.neurons.get('inh-1').getOrElse(undefined);
+    expect(inh1).not.toBeUndefined();
+    expect(inh1.name).toBe('inh-1');
+    expect(inh1.type).toBe('i');
+    expect(inh1.coords.toArray()).toEqual(coordinate(-290, 0, 0).toArray())
+
+    const inh2 = topology.neurons.get('inh-2').getOrElse(undefined);
+    expect(inh2).not.toBeUndefined();
+    expect(inh2.name).toBe('inh-2');
+    expect(inh2.type).toBe('i');
+    expect(inh2.coords.toArray()).toEqual(coordinate(290, 0, 0).toArray())
+
+    const in1out1 = topology.connections.get('in-1-out-1').getOrElse(undefined);
+    expect(in1out1).not.toBeUndefined();
+    expect(in1out1.preSynaptic.name).toEqual('in-1')
+    expect(in1out1.postSynaptic.name).toEqual('out-1')
+    expect(in1out1.weight).toEqual(0.5)
+
+    const in2out2 = topology.connections.get('in-2-out-2').getOrElse(undefined);
+    expect(in2out2).not.toBeUndefined();
+    expect(in2out2.preSynaptic.name).toEqual('in-2')
+    expect(in2out2.postSynaptic.name).toEqual('out-2')
+    expect(in2out2.weight).toEqual(0.5)
+})

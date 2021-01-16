@@ -1,7 +1,7 @@
-import {HashMap} from "prelude-ts";
+import {Either, HashMap} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from "../visualization/neuralthree/Connections";
-import {coordinate, Coordinate, emptyCoordinate} from "../visualization/basethree/Coordinate";
+import {coordinate, Coordinate} from "../visualization/basethree/Coordinate";
 import {connectionKey} from "../redux/reducers/networkEvent";
 
 const NEURON = 'NRN';
@@ -14,22 +14,24 @@ interface ParsedConnectionInfo {
     weight: number;
 }
 
-export interface ParsedTopology {
+interface ParsedTopology {
     neurons: HashMap<string, NeuronInfo>;
     connections: HashMap<string, ParsedConnectionInfo>;
 }
 
-export interface ResolvedTopology {
+export interface NetworkTopology {
     neurons: HashMap<string, NeuronInfo>;
     connections: HashMap<string, ConnectionInfo>;
 }
 
-export function networkTopology(networkDescription: string): ResolvedTopology {
-    return resolveConnections(
-        parseDescription(
-            cleanDescription(networkDescription)
-        )
-    );
+/**
+ * Parses the network description into the topology for displaying in the visualization
+ * @param networkDescription The network description
+ * @return
+ */
+export function networkTopology(networkDescription: string): Either<string, NetworkTopology> {
+    return parseDescription(cleanDescription(networkDescription))
+        .flatMap(parsed => resolveConnections(parsed));
 }
 
 function emptyNetworkTopology(): ParsedTopology {
@@ -39,10 +41,15 @@ function emptyNetworkTopology(): ParsedTopology {
     }
 }
 
+/**
+ * Removes comments, spaces, new-lines to make the parsing easier
+ * @param description The network description
+ * @return A cleaned network description
+ */
 function cleanDescription(description: string): string {
     return description
         // strip trailing comments
-        .replace(/[,]+([\n\r]\])+/g, '')
+        .replace(/[,]+([\n\r]])+/g, '')
         // string comments
         .replace(/\*(.*?)[\r\n]*(.*?)\*/, '')
         .replace(/\/\/[^\r\n]*/g, '')
@@ -50,49 +57,68 @@ function cleanDescription(description: string): string {
         .replace(/\s/g, '')
 }
 
-function parseDescription(description: string, topology = emptyNetworkTopology(), cursor = 0): ParsedTopology {
+function parseDescription(
+    description: string,
+    topology = emptyNetworkTopology(),
+    cursor = 0
+): Either<string, ParsedTopology> {
     const connectionIndex = description.indexOf(`${CONNECTION}=[`, cursor);
     const neuronIndex = description.indexOf(`${NEURON}=[`, cursor);
     if (cursor === -1 || (connectionIndex === -1 && neuronIndex === -1)) {
-        return topology;
+        return Either.right(topology)
     }
 
     // when no more connections or connection section comes after the neuron section, then
     // parse the neurons
     if (connectionIndex === -1 || (neuronIndex > -1 && neuronIndex < connectionIndex)) {
-        const {topology: newTopology, neuronsEnd} = parseNeurons(description, topology, neuronIndex);
-        return parseDescription(description, newTopology, neuronsEnd);
+        return parseNeurons(description, topology, neuronIndex)
+            .flatMap(({topology: newTopology, neuronsEnd}) =>
+                parseDescription(description, newTopology, neuronsEnd)
+            )
     }
 
     if (neuronIndex === -1 || (connectionIndex > -1 && connectionIndex < neuronIndex)) {
-        const {topology: newTopology, connectionEnd} =  parseConnections(description, topology, connectionIndex);
-        return parseDescription(description, newTopology, connectionEnd);
+        return parseConnections(description, topology, connectionIndex)
+            .flatMap(({topology: newTopology, connectionEnd}) =>
+                parseDescription(description, newTopology, connectionEnd)
+            );
     }
 }
 
-function resolveConnections(topology: ParsedTopology): ResolvedTopology {
+function resolveConnections(topology: ParsedTopology): Either<string, NetworkTopology> {
     const {neurons, connections} = topology;
-    const resolvedConnections: HashMap<string, ConnectionInfo> = connections.mapValues(connection => ({
-        preSynaptic: neurons.get(connection.preSynaptic).getOrThrow('neuron not found'),
-        postSynaptic: neurons.get(connection.postSynaptic).getOrThrow('neuron not found'),
-        weight: connection.weight
-    }));
-    return {
-        neurons: neurons,
-        connections: resolvedConnections,
+    try {
+        const resolvedConnections: HashMap<string, ConnectionInfo> = connections.mapValues(connection => ({
+            preSynaptic: neurons.get(connection.preSynaptic).getOrThrow('neuron not found'),
+            postSynaptic: neurons.get(connection.postSynaptic).getOrThrow('neuron not found'),
+            weight: connection.weight
+        }));
+        return Either.right({
+            neurons: neurons,
+            connections: resolvedConnections,
+        });
+    } catch(error) {
+        return Either.left(error);
     }
 }
 
-function parseNeurons(description: string, topology: ParsedTopology, cursor: number): {topology: ParsedTopology, neuronsEnd: number} {
+function parseNeurons(
+    description: string,
+    topology: ParsedTopology,
+    cursor: number
+): Either<string, {topology: ParsedTopology, neuronsEnd: number}> {
     const idIndex = description.indexOf('nid=', cursor);
-    const typeIndex = description.indexOf('nty=', cursor);
+    const typeIndex = description.indexOf('inh=', cursor);
     const locIndex = description.indexOf(`${NEURON_LOCATION}=(`, cursor);
     if (idIndex === -1 || typeIndex === -1 || locIndex === -1) {
-        return {topology, neuronsEnd: cursor}
+        return Either.right({topology, neuronsEnd: cursor});
     }
 
     // parse out the neuron's name
     const idComma = description.indexOf(',', idIndex + 4);
+    if (idComma === -1) {
+        return Either.left(`Expected comma; ${description.substring(idIndex, Math.min(description.length, idIndex + 4))}`)
+    }
     const neuronId = description.substring(idIndex + 4, idComma);
 
     // parse out the neuron's type
@@ -100,36 +126,45 @@ function parseNeurons(description: string, topology: ParsedTopology, cursor: num
     const neuronType = description.substring(typeIndex + 4, typeComma)
 
     // parse out the neurons location (starting from the beginning of the neuron
-    const {coords, locationEnd} = parseNeuronLocation(description, locIndex + 5);
-    const info: NeuronInfo = {
-        name: neuronId,
-        type: neuronType,
-        coords: coords
-    }
+    return parseNeuronLocation(description, locIndex + 5)
+        .flatMap(({coords, locationEnd}) => {
+            const info: NeuronInfo = {
+                name: neuronId,
+                type: neuronType === 'f' ? 'e' : 'i',
+                coords: coords
+            }
 
-    const newTopology = {
-        ...topology,
-        neurons: topology.neurons.put(neuronId, info)
-    };
+            const newTopology = {
+                ...topology,
+                neurons: topology.neurons.put(neuronId, info)
+            };
 
-    return parseNeurons(description, newTopology, Math.max(idComma, typeComma, locationEnd));
+            return parseNeurons(description, newTopology, Math.max(idComma, typeComma, locationEnd));
+        })
 }
 
-function parseNeuronLocation(description: string, cursor: number): {coords: Coordinate, locationEnd: number} {
+function parseNeuronLocation(
+    description: string,
+    cursor: number
+): Either<string, {coords: Coordinate, locationEnd: number}> {
     const endIndex = description.indexOf(')', cursor);
     const location = description.substring(cursor, endIndex);
     // todo for now assume that the coords are cartesian
     const matches = Array.from(location.matchAll(/(?:=)([0-9-.]+)/g)).map(value => parseFloat(value[1]))
     const coords = coordinate(matches[0], matches[1], matches[2])
-    return {coords, locationEnd: endIndex}
+    return Either.right({coords, locationEnd: endIndex})
 }
 
-function parseConnections(description: string, topology: ParsedTopology, cursor: number): {topology: ParsedTopology, connectionEnd: number} {
+function parseConnections(
+    description: string,
+    topology: ParsedTopology,
+    cursor: number
+): Either<string, {topology: ParsedTopology, connectionEnd: number}> {
     const preIndex = description.indexOf('prn=', cursor);
     const postIndex = description.indexOf('psn=', cursor);
     const weightIndex = description.indexOf('cnw=', cursor);
     if (preIndex === -1 || postIndex === -1 || weightIndex === -1) {
-        return {topology, connectionEnd: cursor};
+        return Either.right({topology, connectionEnd: cursor});
     }
 
     const weightComma = description.indexOf(',', weightIndex + 4);
@@ -165,7 +200,6 @@ function parseConnections(description: string, topology: ParsedTopology, cursor:
 }
 
 function expandConnection(connection: string): Array<string> {
-    // const matches = connection.match(/^[a-zA-Z-0-9]+$/);
     // if it is a simple connection, then just return it
     if (connection.match(/^[a-zA-Z-0-9]+$/) !== null) {
         return [connection];

@@ -52,7 +52,8 @@ export interface Props {
 export default function NetworkVisualization(props: Props): JSX.Element {
     const {
         itheme,
-        sceneWidth, sceneHeight,
+        sceneWidth,
+        sceneHeight,
         excitationColor = new Color(0x00ff00),     // green
         inhibitionColor = new Color(0xff0000),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color

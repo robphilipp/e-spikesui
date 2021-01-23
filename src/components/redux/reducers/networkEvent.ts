@@ -2,7 +2,7 @@ import {
     asCoordinate,
     BUILD_ACTIONS,
     DELETE_NETWORK,
-    NETWORK_CREATED,
+    NETWORK_CREATED, NETWORK_TOPOLOGY_UPDATED,
     NetworkEventAction,
     NetworkEventsAction,
     Neuron,
@@ -118,6 +118,13 @@ export function networkEventReducer(state: NetworkState = initialState,
                 (accState: NetworkState, action: NetworkEventAction) => networkEventReducer(accState, action),
                 state
             );
+
+        case NETWORK_TOPOLOGY_UPDATED:
+            return {
+                ...state,
+                neurons: action.topology.neurons,
+                connections: action.topology.connections
+            }
 
         default:
             return state;

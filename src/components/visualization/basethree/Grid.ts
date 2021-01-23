@@ -2,7 +2,7 @@ import {useThree} from './useThree';
 import {
     BufferAttribute,
     BufferGeometry,
-    Color,
+    Color, FaceColors,
     Float32BufferAttribute,
     LineBasicMaterial,
     LineSegments,
@@ -88,17 +88,11 @@ function Grid(props: GridProps): null {
         geometry.setAttribute('color', colors);
 
         const material = new LineBasicMaterial({
-            color: VertexColors,
             vertexColors: true,
             opacity: opacity,
+            linewidth: 0.5,
             transparent: true
         });
-        // const material = new LineBasicMaterial({
-        //     vertexColors: VertexColors,
-        //     opacity: opacity,
-        //     // linewidth: 0.5
-        //     transparent: true
-        // });
 
         return scenesContext.addToScene(sceneId, new LineSegments(geometry, material));
     });

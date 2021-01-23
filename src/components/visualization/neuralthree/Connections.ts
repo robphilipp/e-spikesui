@@ -222,7 +222,6 @@ function Connections(props: OwnProps): null {
         connectionGeometry.computeBoundingSphere();
         connectionGeometry.setDrawRange(0, numConnections * 2);
         const connectionMaterial = new LineBasicMaterial({
-            color: VertexColors,
             vertexColors: true,
             linewidth: 1.5,
             transparent: false

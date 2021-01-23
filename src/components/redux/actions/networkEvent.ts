@@ -13,6 +13,7 @@
  */
 
 import {Coordinate, coordinateFrom} from "../../visualization/basethree/Coordinate";
+import {NetworkTopology} from "../../network/networkTopology";
 
 export const NEURON_CREATED = 'neuron-created';
 export const NEURON_CONNECTED = 'neuron-connected';
@@ -20,6 +21,8 @@ export const BUILD_ACTIONS = 'network-build-actions';
 export const NETWORK_CREATED = 'network-created';
 export const DELETE_NETWORK = 'delete-network';
 export const EMPTY = 'empty-network-action';
+
+export const NETWORK_TOPOLOGY_UPDATED = 'network-topology-updated';
 
 /*
  |
@@ -191,11 +194,17 @@ export interface EmptyNetworkAction {
     type: typeof EMPTY;
 }
 
+export interface NetworkTopologyUpdated {
+    type: typeof NETWORK_TOPOLOGY_UPDATED;
+    topology: NetworkTopology;
+}
+
 export type NetworkEventAction = NeuronCreatedAction
     | NeuronConnectedAction
     | NetworkCreatedAction
     | DeleteNetworkAction
     | EmptyNetworkAction
+    | NetworkTopologyUpdated
     ;
 
 export interface NetworkEventsAction {
@@ -279,3 +288,9 @@ export function networkBuildEventsActionCreator(events: Array<NetworkEvent>): Ne
     }
 }
 
+export function updateNetworkTopology(topology: NetworkTopology): NetworkTopologyUpdated {
+    return {
+        type: NETWORK_TOPOLOGY_UPDATED,
+        topology,
+    }
+}

@@ -377,7 +377,10 @@ function SensorsEditor(props: Props): JSX.Element {
                     color: props.itheme.palette.themeSecondary
                 }}
             >
-                {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ? '[new file]' : sensorDescriptionPath}{modified ? '*' : ''}
+                {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
+                    '[new file]' :
+                    sensorDescriptionPath
+                }{modified ? '*' : ''}
             </div>
             <Stack horizontal>
                 <Stack.Item>

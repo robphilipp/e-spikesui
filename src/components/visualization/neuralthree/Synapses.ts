@@ -97,7 +97,7 @@ function Synapses(props: OwnProps): null {
         geometry.setAttribute('color', new BufferAttribute(synapseColors, 3));
 
         const material = new PointsMaterial({
-            color: VertexColors,
+            // color: VertexColors,
             vertexColors: true,
             size: 4,
             // blending: AdditiveBlending,

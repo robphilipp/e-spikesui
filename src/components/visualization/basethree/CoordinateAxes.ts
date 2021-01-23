@@ -85,9 +85,10 @@ function CoordinateAxes(props: OwnProps): null {
         geometry.setAttribute('color', colors);
 
         const material = new LineBasicMaterial({
-            color: VertexColors,
             vertexColors: true,
             opacity: opacity,
+            linewidth: 3,
+            linecap: 'arrow3'
             // transparent: true,
         });
 

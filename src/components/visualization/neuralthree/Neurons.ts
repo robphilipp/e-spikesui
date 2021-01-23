@@ -174,7 +174,7 @@ function Neurons(props: OwnProps): null {
         neuronGeometry.setAttribute('color', new BufferAttribute(neuronColorsRef.current, 3));
 
         const pointMaterial = new PointsMaterial({
-            color: VertexColors,
+            // color: VertexColors,
             vertexColors: true,
             size: 7,
             // blending: THREE.AdditiveBlending,

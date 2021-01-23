@@ -4,9 +4,16 @@ import {ConnectionInfo} from "../visualization/neuralthree/Connections";
 import {convertToCartesian, Coordinate} from "../visualization/basethree/Coordinate";
 import {connectionKey} from "../redux/reducers/networkEvent";
 
+// constants used in the network description
 const NEURON = 'NRN';
+const NEURON_ID = 'nid';
+const NEURON_EXCITATION = 'inh';
 const NEURON_LOCATION = 'LOC';
+const COORDINATE_SYSTEM_TYPE = 'cst';
 const CONNECTION = 'CON'
+const PRE_SYNAPTIC_NEURON = 'prn';
+const POST_SYNAPTIC_NEURON = 'psn';
+const CONNECTION_WEIGHT = 'cnw';
 
 interface ValueResult {
     value: string;
@@ -155,8 +162,8 @@ function parseDescription(
  * @return Either the parse network topology or a string describing the encountered error
  */
 function parseNeurons(description: string, topology: ParsedTopology, cursor: number): Either<string, NeuronParseResult> {
-    const parseResult = findValueFor('nid', description, cursor)
-        .flatMap(neuronId => findValueFor('inh', description, cursor)
+    const parseResult = findValueFor(NEURON_ID, description, cursor)
+        .flatMap(neuronId => findValueFor(NEURON_EXCITATION, description, cursor)
             .flatMap(neuronType => findSubSectionFor(NEURON_LOCATION, description, cursor)
                 .flatMap(neuronLocation => parseNeuronLocation(neuronLocation.subSection)
                     .flatMap(coords => {
@@ -217,7 +224,7 @@ function findSubSectionFor(key: string, description: string, cursor: number): Ei
  * @return Either an object holding the coordinates, or a string describing the encountered error.
  */
 function parseNeuronLocation(location: string): Either<string, Coordinate> {
-    return findValueFor('cst', location, 0).flatMap(coordinateSystem => {
+    return findValueFor(COORDINATE_SYSTEM_TYPE, location, 0).flatMap(coordinateSystem => {
         const matches = Array.from(location.matchAll(/(?:=)([0-9-.]+(nm|µm|mm)?)/g)).map(value => standardizeCoordinateUnits(value[1]))
         if (matches === null || matches.length !== 3) {
             return Either.left(`Parse neuron location error: unable to parse neuron coordinates; ${location}`);
@@ -240,9 +247,9 @@ function parseNeuronLocation(location: string): Either<string, Coordinate> {
  * @return Either the parsed network topology or a string describing the encountered error
  */
 function parseConnections(description: string, topology: ParsedTopology, cursor: number): Either<string, ConnectionParseResult> {
-    const preIndex = description.indexOf('prn=', cursor);
-    const postIndex = description.indexOf('psn=', cursor);
-    const weightIndex = description.indexOf('cnw=', cursor);
+    const preIndex = description.indexOf(`${PRE_SYNAPTIC_NEURON}=`, cursor);
+    const postIndex = description.indexOf(`${POST_SYNAPTIC_NEURON}=`, cursor);
+    const weightIndex = description.indexOf(`${CONNECTION_WEIGHT}=`, cursor);
     if (preIndex === -1 || postIndex === -1 || weightIndex === -1) {
         return Either.right({topology, connectionEnd: cursor});
     }

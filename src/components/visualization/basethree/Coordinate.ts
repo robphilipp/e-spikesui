@@ -107,3 +107,33 @@ export function midpoint(coordinate1: BaseCoordinate, coordinate2: BaseCoordinat
         (coordinate1.z + coordinate2.z) / 2.0
     );
 }
+
+/**
+ * Converts the coordinates from the specified coordinate system to the cartesian coordinate system
+ * @param coordinateSystem The coordinate system (i.e. cartesian, cylindrical, spherical)
+ * @param coords The coordinates to convert
+ * @return The cartesian coordinates
+ */
+export function convertToCartesian(coordinateSystem: string, coords: [number, number, number]): Coordinate {
+    const [px1, px2, px3] = coords;
+    switch(coordinateSystem) {
+        // cylindrical (r, φ, z)
+        case 'cl':
+            return coordinate(
+                px1 * Math.cos(px2),
+                px1 * Math.sin(px2),
+                px3
+            )
+        // spherical (r, φ, θ)
+        case 'sp':
+            return coordinate(
+                px1 * Math.cos(px2) * Math.sin(px3),
+                px1 * Math.sin(px2) * Math.sin(px3),
+                px1 * Math.cos(px3)
+            )
+        // cartesian (x, y, z)
+        case 'ct':
+        default:
+            return coordinate(px1, px2, px3);
+    }
+}

@@ -1,12 +1,17 @@
 import {Either, HashMap} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from "../visualization/neuralthree/Connections";
-import {coordinate, Coordinate} from "../visualization/basethree/Coordinate";
+import {convertToCartesian, Coordinate} from "../visualization/basethree/Coordinate";
 import {connectionKey} from "../redux/reducers/networkEvent";
 
 const NEURON = 'NRN';
 const NEURON_LOCATION = 'LOC';
 const CONNECTION = 'CON'
+
+interface ValueResult {
+    value: string;
+    endIndex: number;
+}
 
 interface ParsedConnectionInfo {
     preSynaptic: string;
@@ -19,9 +24,15 @@ interface ParsedTopology {
     connections: HashMap<string, ParsedConnectionInfo>;
 }
 
-interface LocationParseResult {
-    coords: Coordinate;
-    locationEnd: number;
+interface SubSectionParseResult {
+    startIndex: number;
+    endIndex: number;
+    subSection: string;
+}
+
+interface NeuronParseResult {
+    topology: ParsedTopology,
+    neuronsEnd: number
 }
 
 interface ConnectionParseResult {
@@ -143,82 +154,79 @@ function parseDescription(
  * @param cursor The current index into the description (i.e. the current location of the parser)
  * @return Either the parse network topology or a string describing the encountered error
  */
-function parseNeurons(
-    description: string,
-    topology: ParsedTopology,
-    cursor: number
-): Either<string, {topology: ParsedTopology, neuronsEnd: number}> {
-    const idIndex = description.indexOf('nid=', cursor);
-    const typeIndex = description.indexOf('inh=', cursor);
-    const locIndex = description.indexOf(`${NEURON_LOCATION}=(`, cursor);
-    if (idIndex === -1 || typeIndex === -1 || locIndex === -1) {
-        return Either.right({topology, neuronsEnd: cursor});
-    }
+function parseNeurons(description: string, topology: ParsedTopology, cursor: number): Either<string, NeuronParseResult> {
+    const parseResult = findValueFor('nid', description, cursor)
+        .flatMap(neuronId => findValueFor('inh', description, cursor)
+            .flatMap(neuronType => findSubSectionFor(NEURON_LOCATION, description, cursor)
+                .flatMap(neuronLocation => parseNeuronLocation(neuronLocation.subSection)
+                    .flatMap(coords => {
+                        const info: NeuronInfo = {
+                            name: neuronId.value,
+                            type: neuronType.value === 'f' ? 'e' : 'i',
+                            coords: coords
+                        }
 
-    // parse out the neuron's name
-    const idComma = description.indexOf(',', idIndex + 4);
-    if (idComma === -1) {
-        return Either.left(
-            `Parse neurons error: expected comma after neuron ID; ${description.substring(idIndex, Math.min(description.length, idIndex + 4))}`
+                        const newTopology = {
+                            ...topology,
+                            neurons: topology.neurons.put(neuronId.value, info)
+                        };
+
+                        // recursive call
+                        return parseNeurons(description, newTopology, Math.max(neuronId.endIndex, neuronType.endIndex, neuronLocation.endIndex));
+                    })
+                )
+            )
         );
+
+    // when neuron id, type, or location can no longer be found, then done with neurons
+    if (parseResult.isLeft()) {
+        return Either.right({topology, neuronsEnd: cursor})
     }
-    const neuronId = description.substring(idIndex + 4, idComma);
+    // otherwise, keep parsing
+    return parseResult;
+}
 
-    // parse out the neuron's type
-    const typeComma = description.indexOf(',', typeIndex + 4);
-    if (typeComma === -1) {
-        return Either.left(
-            `Parse neurons error: expected comma after neuron type; ${description.substring(typeIndex, Math.min(description.length, typeIndex + 4))}`
-        );
+/**
+ * Finds the subsection for the specified key, starting from the specified curson, in the description. Recall that
+ * a subsection has the form `XXX=(....)`. For example, `LOC=(cst=ct, px1=-300 µm, px2=0µm, px3=100 µm)`.
+ * @param key The subsection key (name)
+ * @param description The network description
+ * @param cursor The start position in the description
+ * @return Either the subsection, start and end indexes, or a string describing the parse error
+ */
+function findSubSectionFor(key: string, description: string, cursor: number): Either<string, SubSectionParseResult> {
+    const startIndex = description.indexOf(`${key}=(`, cursor);
+    if (startIndex === -1) {
+        return Either.left(`Parse subsection error; subsection key not found; key="${key}"; ${description.substring(cursor, Math.min(description.length, cursor + 10))}`)
     }
-    const neuronType = description.substring(typeIndex + 4, typeComma)
-
-    // parse out the neurons location (starting from the beginning of the neuron
-    return parseNeuronLocation(description, locIndex + 5)
-        .flatMap(({coords, locationEnd}) => {
-            const info: NeuronInfo = {
-                name: neuronId,
-                type: neuronType === 'f' ? 'e' : 'i',
-                coords: coords
-            }
-
-            const newTopology = {
-                ...topology,
-                neurons: topology.neurons.put(neuronId, info)
-            };
-
-            // recursive call
-            return parseNeurons(description, newTopology, Math.max(idComma, typeComma, locationEnd));
-        })
+    const endIndex = description.indexOf(')', startIndex);
+    if (endIndex === -1) {
+        return Either.left(`Parse subsection error; subsection end not found; ${description.substring(startIndex, Math.min(description.length, startIndex + 20))}`)
+    }
+    const subSection = description.substring(startIndex + key.length + 2, endIndex);
+    if (subSection.length === 0) {
+        return Either.left(`Parse subsection error; subsection is empty; ${description.substring(startIndex, Math.min(description.length, endIndex + 1))}`)
+    }
+    return Either.right({startIndex, endIndex, subSection});
 }
 
 /**
  * todo add logic to process units
- * todo add logic to convert from different coordinate systems
  * Parses the neurons location into a coordinate.
- * @param description The (cleaned) network description
- * @param cursor The current index into the description (i.e. the current location of the parser)
- * @return Either an object holding the coordinates and the end of the location section, or a string
- * describing the encountered error.
+ * @param location The neuron location description
+ * @return Either an object holding the coordinates, or a string describing the encountered error.
  */
-function parseNeuronLocation(description: string, cursor: number): Either<string, LocationParseResult> {
-    return findValueFor('cst', description, cursor).flatMap(coordinateSystem => {
-        const endIndex = description.indexOf(')', cursor);
-        if (endIndex === -1) {
-            return Either.left(`Parse neuron location error: expected ')' after neuron coordinates; ${description.substring(cursor, Math.min(description.length, endIndex))}`);
-        }
-
-        const location = description.substring(cursor, endIndex);
+function parseNeuronLocation(location: string): Either<string, Coordinate> {
+    return findValueFor('cst', location, 0).flatMap(coordinateSystem => {
         const matches = Array.from(location.matchAll(/(?:=)([0-9-.]+(nm|µm|mm)?)/g)).map(value => standardizeCoordinateUnits(value[1]))
         if (matches === null || matches.length !== 3) {
-            return Either.left(`Parse neuron location error: unable to parse neuron coordinates; ${description.substring(cursor, Math.min(description.length, endIndex))}`);
+            return Either.left(`Parse neuron location error: unable to parse neuron coordinates; ${location}`);
         }
-        // const coords = coordinate(matches[0], matches[1], matches[2])
 
         // convert coordinate system to cartesian
         const coords = convertToCartesian(coordinateSystem.value, [matches[0], matches[1], matches[2]])
 
-        return Either.right({coords, locationEnd: endIndex})
+        return Either.right(coords);
     })
 }
 
@@ -303,6 +311,12 @@ function expandConnection(connection: string): Array<string> {
     return nums.map(num => `${prefix}${num}`);
 }
 
+/**
+ * Finds the position of the key-value end starting at the specified cursor in the description
+ * @param description The network description
+ * @param cursor The position in the description at which to start searching
+ * @return The position of the key-value pairs end, or -1 if no end is found
+ */
 function findKeyValueEnd(description: string, cursor: number): number {
     const end = description.indexOf(',', cursor);
     if (end >= 0) {
@@ -311,11 +325,13 @@ function findKeyValueEnd(description: string, cursor: number): number {
     return description.indexOf(')', cursor);
 }
 
-interface ValueResult {
-    value: string;
-    endIndex: number;
-}
-
+/**
+ * Finds the value for the specified key, starting at the specified cursor in the description
+ * @param key The key for which to return the value
+ * @param description The network description containing the key-value pair
+ * @param cursor The cursor in the description at which to start searching
+ * @return Either the value with the position of the value's end, or a string holding the parse error
+ */
 function findValueFor(key: string, description: string, cursor: number): Either<string, ValueResult> {
     const startIndex = description.indexOf(`${key}=`, cursor);
     if (startIndex === -1) {
@@ -349,34 +365,4 @@ function standardizeCoordinateUnits(value: string): number {
         return parseFloat(value.substring(0, value.length-2)) * 1000;
     }
     return parseFloat(value);
-}
-
-/**
- * Converts the coordinates from the specified coordinate system to the cartesian coordinate system
- * @param coordinateSystem The coordinate system (i.e. cartesian, cylindrical, spherical)
- * @param coords The coordinates to convert
- * @return The cartesian coordinates
- */
-function convertToCartesian(coordinateSystem: string, coords: [number, number, number]): Coordinate {
-    const [px1, px2, px3] = coords;
-    switch(coordinateSystem) {
-        // cylindrical (r, φ, z)
-        case 'cl':
-            return coordinate(
-                px1 * Math.cos(px2),
-                px1 * Math.sin(px2),
-                px3
-            )
-        // spherical (r, φ, θ)
-        case 'sp':
-            return coordinate(
-                px1 * Math.cos(px2) * Math.sin(px3),
-                px1 * Math.sin(px2) * Math.sin(px3),
-                px1 * Math.cos(px3)
-            )
-        // cartesian (x, y, z)
-        case 'ct':
-        default:
-            return coordinate(px1, px2, px3);
-    }
 }

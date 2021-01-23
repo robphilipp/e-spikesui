@@ -179,7 +179,11 @@ function parseNeurons(description: string, topology: ParsedTopology, cursor: num
                         };
 
                         // recursive call
-                        return parseNeurons(description, newTopology, Math.max(neuronId.endIndex, neuronType.endIndex, neuronLocation.endIndex));
+                        return parseNeurons(
+                            description,
+                            newTopology,
+                            Math.max(neuronId.endIndex, neuronType.endIndex, neuronLocation.endIndex)
+                        );
                     })
                 )
             )
@@ -204,15 +208,23 @@ function parseNeurons(description: string, topology: ParsedTopology, cursor: num
 function findSubSectionFor(key: string, description: string, cursor: number): Either<string, SubSectionParseResult> {
     const startIndex = description.indexOf(`${key}=(`, cursor);
     if (startIndex === -1) {
-        return Either.left(`Parse subsection error; subsection key not found; key="${key}"; ${description.substring(cursor, Math.min(description.length, cursor + 10))}`)
+        return Either.left(
+            `Parse subsection error; subsection key not found; key="${key}";` +
+            ` ${description.substring(cursor, Math.min(description.length, cursor + 10))}`
+        )
     }
     const endIndex = description.indexOf(')', startIndex);
     if (endIndex === -1) {
-        return Either.left(`Parse subsection error; subsection end not found; ${description.substring(startIndex, Math.min(description.length, startIndex + 20))}`)
+        return Either.left(
+            `Parse subsection error; subsection end not found;` +
+            ` ${description.substring(startIndex, Math.min(description.length, startIndex + 20))}`
+        )
     }
     const subSection = description.substring(startIndex + key.length + 2, endIndex);
     if (subSection.length === 0) {
-        return Either.left(`Parse subsection error; subsection is empty; ${description.substring(startIndex, Math.min(description.length, endIndex + 1))}`)
+        return Either.left(`Parse subsection error; subsection is empty;` +
+            ` ${description.substring(startIndex, Math.min(description.length, endIndex + 1))}`
+        )
     }
     return Either.right({startIndex, endIndex, subSection});
 }
@@ -225,7 +237,9 @@ function findSubSectionFor(key: string, description: string, cursor: number): Ei
  */
 function parseNeuronLocation(location: string): Either<string, Coordinate> {
     return findValueFor(COORDINATE_SYSTEM_TYPE, location, 0).flatMap(coordinateSystem => {
-        const matches = Array.from(location.matchAll(/(?:=)([0-9-.]+(nm|µm|mm)?)/g)).map(value => standardizeCoordinateUnits(value[1]))
+        const matches = Array.from(
+            location.matchAll(/(?:=)([0-9-.]+(nm|µm|mm)?)/g)).map(value => standardizeCoordinateUnits(value[1])
+        );
         if (matches === null || matches.length !== 3) {
             return Either.left(`Parse neuron location error: unable to parse neuron coordinates; ${location}`);
         }
@@ -343,13 +357,15 @@ function findValueFor(key: string, description: string, cursor: number): Either<
     const startIndex = description.indexOf(`${key}=`, cursor);
     if (startIndex === -1) {
         return Either.left(
-            `Parse error; failed to parse key-value pairs because key could not be found; key=${key}; ...${description.substring(cursor, cursor + 10)}...`
+            `Parse error; failed to parse key-value pairs because key could not be found;` +
+            ` key=${key}; ...${description.substring(cursor, cursor + 10)}...`
         );
     }
     const endIndex = findKeyValueEnd(description, startIndex + 4);
     if (endIndex === -1) {
         return Either.left(
-            `Parse error; failed to parse key-value pairs because ending comma or parens could not be found; key=${key}; ...${description.substring(cursor, cursor + 10)}...`
+            `Parse error; failed to parse key-value pairs because ending comma or parens could ` +
+            `not be found; key=${key}; ...${description.substring(cursor, cursor + 10)}...`
         );
     }
     const value = description.substring(startIndex + 4, endIndex);

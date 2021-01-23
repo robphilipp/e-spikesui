@@ -4,6 +4,27 @@ import {ConnectionInfo} from "../visualization/neuralthree/Connections";
 import {convertToCartesian, Coordinate} from "../visualization/basethree/Coordinate";
 import {connectionKey} from "../redux/reducers/networkEvent";
 
+export interface NetworkTopology {
+    neurons: HashMap<string, NeuronInfo>;
+    connections: HashMap<string, ConnectionInfo>;
+}
+
+/**
+ * Parses the network description into the topology for displaying in the visualization
+ * @param networkDescription The network description to be parsed
+ * @return Either the network topology or a string describing the encountered error
+ */
+export function networkTopology(networkDescription: string): Either<string, NetworkTopology> {
+    return parseDescription(cleanDescription(networkDescription))
+        .flatMap(parsed => resolveConnections(parsed));
+}
+
+/*
+ |
+ |              PRIVATE PARSER FUNCTIONS
+ |
+ */
+
 // constants used in the network description
 const NEURON = 'NRN';
 const NEURON_ID = 'nid';
@@ -14,6 +35,7 @@ const CONNECTION = 'CON'
 const PRE_SYNAPTIC_NEURON = 'prn';
 const POST_SYNAPTIC_NEURON = 'psn';
 const CONNECTION_WEIGHT = 'cnw';
+
 
 interface ValueResult {
     value: string;
@@ -45,21 +67,6 @@ interface NeuronParseResult {
 interface ConnectionParseResult {
     topology: ParsedTopology;
     connectionEnd: number;
-}
-
-export interface NetworkTopology {
-    neurons: HashMap<string, NeuronInfo>;
-    connections: HashMap<string, ConnectionInfo>;
-}
-
-/**
- * Parses the network description into the topology for displaying in the visualization
- * @param networkDescription The network description to be parsed
- * @return Either the network topology or a string describing the encountered error
- */
-export function networkTopology(networkDescription: string): Either<string, NetworkTopology> {
-    return parseDescription(cleanDescription(networkDescription))
-        .flatMap(parsed => resolveConnections(parsed));
 }
 
 /**

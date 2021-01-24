@@ -230,7 +230,7 @@ function Network(props: Props): JSX.Element {
 
     /**
      * Creates and returns the scenes (and associated information) that are to be displayed
-     * @return {Vector<SceneInfo>} The list of scene information objects
+     * @return The list of scene information objects
      */
     function getScenes(): Vector<SceneInfo> {
         return scenes.getOrCall(() => {
@@ -356,10 +356,9 @@ function Network(props: Props): JSX.Element {
 /**
  * react-redux function that maps the network-events slice of the application state to the components state-props.
  * @param {AppState} state The application state from the redux root store
- * @param {OwnProps} ownProps The network visualization's own properties
  * @return {StateProps} The updated the state-properties, which in our case is the network neurons and connections
  */
-const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
+const mapStateToProps = (state: AppState): StateProps => ({
     itheme: state.settings.itheme,
 
     networkId: state.networkManagement.networkId,
@@ -378,10 +377,9 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * ThunkDispatch, I believe the first type is the state, the second type is the extra argument,
  * and the third type is, obviously, the action.
  * @param {ThunkDispatch} dispatch The redux dispatcher
- * @param {OwnProps} ownProps The components own properties
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
-const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, ApplicationAction>, ownProps: OwnProps): DispatchProps => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<unknown, unknown, ApplicationAction>): DispatchProps => ({
     onAxisVisibilityChange: (visible: boolean) => dispatch(axesVisibilityChanged(visible)),
     onGridVisibilityChange: (visible: boolean) => dispatch(gridVisibilityChanged(visible)),
     onCameraUpdate: (camera: PerspectiveCamera) => dispatch(cameraUpdated(camera)),

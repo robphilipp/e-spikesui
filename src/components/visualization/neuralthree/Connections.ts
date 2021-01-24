@@ -200,6 +200,7 @@ function Connections(props: OwnProps): null {
     const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
 
+    const connectionGeometryRef = useRef(new BufferGeometry());
 
     // called when the connections or the color range are modified to recalculate the connection colors
     useEffect(
@@ -207,32 +208,26 @@ function Connections(props: OwnProps): null {
             connectionPositionsRef.current = connectionPositionsFrom(connections, connectionPositionsRef.current);
             connectionColorsRef.current = connectionColorsFrom(connections, colorRange, connectionColorsRef.current);
             connectionsRef.current = connections;
+
+            connectionGeometryRef.current.setAttribute('position', new BufferAttribute(connectionPositionsRef.current, 3));
+            connectionGeometryRef.current.setAttribute('color', new BufferAttribute(connectionColorsRef.current, 3));
+            connectionGeometryRef.current.computeBoundingSphere();
+            connectionGeometryRef.current.setDrawRange(0, connections.length * 2);
+            const connectionMaterial = new LineBasicMaterial({
+                vertexColors: true,
+                linewidth: 1.5,
+                transparent: false
+            });
+
+            lineSegmentsRef.current = new LineSegments(connectionGeometryRef.current, connectionMaterial);
         },
         [connections, colorRange]
     );
 
     // creates the connections between the pre- and post-synaptic neurons and adds them to the scene
     useThree<LineSegments>((context: ThreeContext): [string, LineSegments] => {
-        const {scenesContext} = context;
-
-        const numConnections = connections.length;
-        const connectionGeometry = new BufferGeometry();
-        connectionGeometry.setAttribute('position', new BufferAttribute(connectionPositionsRef.current, 3));
-        connectionGeometry.setAttribute('color', new BufferAttribute(connectionColorsRef.current, 3));
-        connectionGeometry.computeBoundingSphere();
-        connectionGeometry.setDrawRange(0, numConnections * 2);
-        const connectionMaterial = new LineBasicMaterial({
-            vertexColors: true,
-            linewidth: 1.5,
-            transparent: false
-        });
-
-        const lineSegments = new LineSegments(connectionGeometry, connectionMaterial);
-
-        lineSegmentsRef.current = lineSegments;
         contextRef.current = context;
-
-        return scenesContext.addToScene(sceneId, lineSegments);
+        return context.scenesContext.addToScene(sceneId, lineSegmentsRef.current);
     });
 
     // called when the component is mounted or the context changes to set the render function needed to animate

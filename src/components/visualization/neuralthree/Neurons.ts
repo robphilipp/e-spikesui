@@ -143,19 +143,7 @@ function Neurons(props: OwnProps): null {
     const pointsRef = useRef<Points>();
     const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
-
     const neuronGeometryRef = useRef(new BufferGeometry());
-
-    // // called when the neurons change so that we can recalculate their position
-    // useEffect(
-    //     () => {
-    //         neuronPositionsRef.current = neuronPositionsFrom(neurons, neuronPositionsRef.current);
-    //         neuronGeometryRef.current.setDrawRange(0, neurons.length);
-    //         neuronGeometryRef.current.setAttribute('position', new BufferAttribute(neuronPositionsRef.current, 3));
-    //         renderRef.current();
-    //     },
-    //     [neurons]
-    // );
 
     // called when the neurons or the color ranges change so that we can recalculate the colors
     useEffect(
@@ -180,7 +168,6 @@ function Neurons(props: OwnProps): null {
             });
 
             pointsRef.current = new Points(neuronGeometryRef.current, pointMaterial);
-            renderRef.current();
         },
         [neurons, excitatoryNeuronColor, inhibitoryNeuronColor]
     );

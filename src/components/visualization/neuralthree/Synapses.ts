@@ -1,7 +1,7 @@
 import {BufferAttribute, BufferGeometry, Points, PointsMaterial, Vector3, VertexColors} from "three";
 import {ConnectionInfo} from "./Connections";
 import {ColorRange} from "./Network";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useThree} from "../basethree/useThree";
 import {ThreeContext} from "../basethree/ThreeJsManager";
 
@@ -71,41 +71,33 @@ function synapseColorsFrom(connections: Array<ConnectionInfo>, synapseOffsets: A
 function Synapses(props: OwnProps): null {
     const {sceneId, connections, colorRange, synapseOffsets=[1, 2, 4]} = props;
 
-    const [synapsePositions, setSynapsePositions] = useState<Float32Array>(synapsePositionsFrom(connections, synapseOffsets));
-    const [synapseColors, setSynapseColors] = useState<Float32Array>(synapseColorsFrom(connections, synapseOffsets, colorRange));
-
-    // called when the connections are modified to recalculate the synapse positions
-    useEffect(
-        () => setSynapsePositions(synapsePositionsFrom(connections, synapseOffsets)),
-        [connections]
-    );
+    const pointsRef = useRef<Points>();
+    const geometryRef = useRef(new BufferGeometry());
 
     // called when the connections or the color range are modified to recalculate the synapse colors
     useEffect(
-        () => setSynapseColors(synapseColorsFrom(connections, synapseOffsets, colorRange)),
+        () => {
+            const positions = synapsePositionsFrom(connections, synapseOffsets);
+            const colors = synapseColorsFrom(connections, synapseOffsets, colorRange);
+
+            geometryRef.current.setDrawRange(0, connections.length * synapseOffsets.length);
+            geometryRef.current.setAttribute('position', new BufferAttribute(positions, 3));
+            geometryRef.current.setAttribute('color', new BufferAttribute(colors, 3));
+
+            const material = new PointsMaterial({
+                vertexColors: true,
+                size: 4,
+                transparent: false,
+                sizeAttenuation: false
+            });
+            pointsRef.current = new Points(geometryRef.current, material)
+        },
         [connections, colorRange]
     );
 
     // sets up the synapses, and adds them to the network scene
     useThree<Points>((context: ThreeContext): [string, Points] => {
-        const {scenesContext} = context;
-
-        const numConnections = connections.length;
-        const geometry = new BufferGeometry();
-        geometry.setDrawRange(0, numConnections * synapseOffsets.length);
-        geometry.setAttribute('position', new BufferAttribute(synapsePositions, 3));
-        geometry.setAttribute('color', new BufferAttribute(synapseColors, 3));
-
-        const material = new PointsMaterial({
-            // color: VertexColors,
-            vertexColors: true,
-            size: 4,
-            // blending: AdditiveBlending,
-            transparent: false,
-            sizeAttenuation: false
-        });
-
-        return scenesContext.addToScene(sceneId, new Points(geometry, material));
+        return context.scenesContext.addToScene(sceneId, pointsRef.current);
     });
 
     return null;

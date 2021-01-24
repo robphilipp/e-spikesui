@@ -8,7 +8,8 @@ import {Observable} from "rxjs";
 import {NetworkEvent, updateNetworkTopology} from "../redux/actions/networkEvent";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from "../visualization/neuralthree/Connections";
-import {IconButton, Stack, TooltipHost} from "@fluentui/react";
+import {IconButton, Spinner, SpinnerSize, Stack, TooltipHost} from "@fluentui/react";
+import { Label } from 'office-ui-fabric-react/lib/Label';
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -19,18 +20,11 @@ import {networkTopology, NetworkTopology} from "./networkTopology";
 export interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
 
-    // networkId: Option<string>;
-    // neurons: HashMap<string, NeuronInfo>;
-    // connections: HashMap<string, ConnectionInfo>;
-
-    // networkDescription: string;
-
     sceneHeight: number;
     sceneWidth: number;
     excitationColor?: Color;
     inhibitionColor?: Color;
     colorAttenuation?: number;
-    // networkObservable: Observable<NetworkEvent>;
 
     onClose?: () => void;
 }
@@ -38,17 +32,12 @@ export interface OwnProps extends RouteComponentProps<never> {
 interface StateProps {
     network: string;
     modified: boolean;
-    // networkDescriptionPath?: string;
-    // templatePath?: string;
     neurons: HashMap<string, NeuronInfo>;
     connections: HashMap<string, ConnectionInfo>;
 }
 
 interface DispatchProps {
     onCompiled: (topology: NetworkTopology) => void;
-    // onLoadTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
-    // onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
-    // onSave: (path: string, description: string) => Promise<NetworkDescriptionSavedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -58,10 +47,9 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
         itheme,
         sceneWidth,
         sceneHeight,
-        excitationColor = new Color(0x00ff00),     // green
-        inhibitionColor = new Color(0xff0000),     // red
+        excitationColor = new Color(itheme.palette.green),     // green
+        inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color
-        // networkObservable,
 
         network,
         neurons,
@@ -98,9 +86,9 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
 
     useEffect(
         () => {
-            if (!neurons.isEmpty() && !connections.isEmpty()) {
+            // if (!neurons.isEmpty() && !connections.isEmpty()) {
                 handleCompile();
-            }
+            // }
         },
         [network]
     )
@@ -119,26 +107,26 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
         if (onClose) onClose();
     }
 
-    /**
-     * Creates a compile button used to compile the sensor description
-     * @return The button for compiling the sensor description
-     */
-    function compileButton(): JSX.Element {
-        return <>
-            <TooltipHost content="Compile the sensor code">
-                <IconButton
-                    iconProps={{iconName: 'code'}}
-                    // disabled={
-                    //     (networkDescription !== undefined && networkDescription.length < 31) ||
-                    //     networkObservable !== undefined ||
-                    //     expressionState === ExpressionState.RUNNING ||
-                    //     expressionState === ExpressionState.COMPILED
-                    // }
-                    onClick={handleCompile}
-                />
-            </TooltipHost>
-        </>
-    }
+    // /**
+    //  * Creates a compile button used to compile the sensor description
+    //  * @return The button for compiling the sensor description
+    //  */
+    // function compileButton(): JSX.Element {
+    //     return <>
+    //         <TooltipHost content="Compile the sensor code">
+    //             <IconButton
+    //                 iconProps={{iconName: 'code'}}
+    //                 // disabled={
+    //                 //     (networkDescription !== undefined && networkDescription.length < 31) ||
+    //                 //     networkObservable !== undefined ||
+    //                 //     expressionState === ExpressionState.RUNNING ||
+    //                 //     expressionState === ExpressionState.COMPILED
+    //                 // }
+    //                 onClick={handleCompile}
+    //             />
+    //         </TooltipHost>
+    //     </>
+    // }
 
     /**
      * Creates the button to hide the sensor simulation layer.
@@ -158,16 +146,11 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
     return (
         <div style={{padding: 10}}>
             <Stack tokens={{childrenGap: 10}}>
-                <Stack horizontal tokens={{childrenGap: 0}}>
-                    <Stack.Item grow>
-                        {compileButton()}
-                    </Stack.Item>
-                    <Stack.Item tokens={{margin: '-20px 20px 0 0'}}>
-                        {hideSimulationButton()}
-                    </Stack.Item>
-                </Stack>
                 {neurons.isEmpty() || connections.isEmpty() ?
-                    <div/> :
+                    <Stack horizontal tokens={{childrenGap: 5}}>
+                        <Label>Medium spinner</Label>
+                        <Spinner size={SpinnerSize.medium} />
+                    </Stack> :
                     <Stack horizontal tokens={{childrenGap: 5}}>
                     <Stack.Item grow>
                         <Network
@@ -180,7 +163,11 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                             networkObservable={networkObservableRef.current}
                         />
                     </Stack.Item>
-                </Stack>}
+                        <Stack.Item tokens={{margin: '-20px 20px 0 0'}}>
+                            {hideSimulationButton()}
+                        </Stack.Item>
+
+                    </Stack>}
             </Stack>
         </div>
     )

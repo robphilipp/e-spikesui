@@ -144,7 +144,8 @@ function Network(props: Props): JSX.Element {
             setNeuronInfo(neurons.toVector().map(entry => entry[1]));
         },
         [neurons]
-    )
+    );
+
     useEffect(
         () => {
             setConnectionInfo(connections.toVector().map(connection => connection[1]).toArray());
@@ -257,9 +258,7 @@ function Network(props: Props): JSX.Element {
                 {name: AXES_SCENE_ID, scene: axesScene, visible: false},
                 {name: NETWORK_SCENE_ID, scene: networkScene, visible: true}
             );
-            // scenesRef.current = Option.of(scenes);
             props.onScenesUpdate(scenes);
-            // sceneRef.current = scenes;
             return scenes;
         });
     }

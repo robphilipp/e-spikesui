@@ -424,11 +424,12 @@ function NetworkEditor(props: Props): JSX.Element {
                     {showSimulation && <LayerHost id='chart-layer'/>}
                 </StackItem>
                 {showSimulation &&
-                <Layer hostId="chart-layer" style={{width: 1000, height: 400}}>
+                <Layer hostId="chart-layer" style={{width: '100%'}}>
                     <Separator>Network Topology</Separator>
                     <NetworkTopologyVisualization
                         itheme={itheme}
-                        sceneHeight={400}
+                        sceneHeight={100}
+                        // sceneHeight={window.innerHeight * 0.9 - dimension.height - 250}
                         sceneWidth={1000}
                         onClose={hideSimulationLayer}
                     />

@@ -169,7 +169,7 @@ function NetworkEditor(props: Props): JSX.Element {
      */
     function editorDimensions(): Dimension {
         return {
-            width: editorRef.current.offsetWidth,
+            width: editorRef.current.offsetWidth - 25,
             height: editorRef.current.clientHeight * heightFractionRef.current
         };
     }
@@ -200,7 +200,6 @@ function NetworkEditor(props: Props): JSX.Element {
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    // const {path, templatePath, network} = keyboardEventRef.current;
                     handleSave(networkDescriptionPath, templatePath, network);
                     break;
                 }
@@ -265,7 +264,7 @@ function NetworkEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is visible
      */
     function showSimulationLayer(): void {
-        heightFractionRef.current = 0.38;
+        heightFractionRef.current = 0.4;
         setDimension(editorDimensions());
         setShowSimulation(true);
     }
@@ -428,9 +427,9 @@ function NetworkEditor(props: Props): JSX.Element {
                     <Separator>Network Topology</Separator>
                     <NetworkTopologyVisualization
                         itheme={itheme}
-                        sceneHeight={100}
-                        // sceneHeight={window.innerHeight * 0.9 - dimension.height - 250}
-                        sceneWidth={1000}
+                        // sceneHeight={100}
+                        sceneHeight={window.innerHeight * 0.9 - dimension.height - 75}
+                        sceneWidth={window.innerWidth - 100}
                         onClose={hideSimulationLayer}
                     />
                 </Layer>}

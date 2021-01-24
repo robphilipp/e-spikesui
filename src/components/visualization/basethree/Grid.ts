@@ -28,7 +28,14 @@ interface GridProps {
  * @constructor
  */
 function Grid(props: GridProps): null {
-    const {size = 10000, divisions = 1000, gridColor, centerColor = gridColor, opacity = 1, sceneId} = props;
+    const {
+        size = 10000,
+        divisions = 1000,
+        gridColor,
+        centerColor = gridColor,
+        opacity = 1,
+        sceneId
+    } = props;
 
     const [colors, ] = useState(new Float32BufferAttribute(vertexColors(size, divisions), 3));
     const [vertices, ] = useState(new Float32BufferAttribute(vertexCoords(size, divisions), 3));

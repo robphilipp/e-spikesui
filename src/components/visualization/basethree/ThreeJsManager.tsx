@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {createContext, useEffect, useRef, useState} from 'react';
+import {createContext, useEffect, useMemo, useRef, useState} from 'react';
 
 import Canvas, {CanvasStyle} from './Canvas';
 // import useAnimationFrame from './useAnimationFrame';
@@ -104,7 +104,16 @@ export interface OwnProps {
  * @constructor
  */
 function ThreeJsManager(props: OwnProps): JSX.Element {
-    const {children, getCamera, getRenderer, getScenes, canvasStyle, animate = false} = props;
+    const {
+        children,
+        getCamera,
+        getRenderer,
+        getScenes,
+        canvasStyle,
+        animate = false,
+        width,
+        height,
+    } = props;
 
     const [threeIsReady, setThreeIsReady] = useState<boolean>(false);
     const timerRef = useRef<number>(0);
@@ -121,32 +130,6 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         canvas: canvasRef.current,
         timer: timerRef.current,
     };
-
-    /**
-     * Grabs the offset-width of the canvas element, or 1 if the canvas element hasn't yet
-     * been initialized. The offset-width is a read-only property returns the width of
-     * the html element, including horizontal padding and borders, as an integer. The reason
-     * that we return 1 when the canvas element hasn't yet been initialized,  is so that the
-     * aspect (width / height) is 1.
-     * @param {HTMLCanvasElement | null} canvas The canvas element
-     * @return {number} The offset width of the canvas
-     */
-    function grabOffsetWidth(canvas: HTMLCanvasElement | null): number {
-        return canvas !== null ? canvas.offsetWidth : 1;
-    }
-
-    /**
-     * Grabs the offset-height of the canvas element, or 1 if the canvas element hasn't yet
-     * been initialized. The offset-height is a read-only property returns the height of
-     * the html element, including vertical padding and borders, as an integer.  The reason
-     * that we return 1 when the canvas element hasn't yet been initialized,  is so that the
-     * aspect (width / height) is 1.
-     * @param {HTMLCanvasElement | null} canvas The canvas element
-     * @return {number} The offset height of the canvas
-     */
-    function grabOffsetHeight(canvas: HTMLCanvasElement | null): number {
-        return canvas !== null ? canvas.offsetHeight : 1;
-    }
 
     /**
      * Updates the background colors of the scene so that only the first visible scene receives
@@ -208,17 +191,15 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
             // from being undefined. because the useEffect method is only called after the component
             // is mounted and rendered, these objects will always have a value. however, typescript
             // doesn't know this and complains, and this guard is better than @ts-ignore
-            const offsetWidth = grabOffsetWidth(canvasRef.current);
-            const offsetHeight = grabOffsetHeight(canvasRef.current);
-
-            cameraRef.current!.aspect = offsetWidth / offsetHeight;
-            cameraRef.current!.updateProjectionMatrix();
-            rendererRef.current!.setSize(offsetWidth, offsetHeight);
+            if (cameraRef.current !== undefined) {
+                cameraRef.current.aspect = width / height;
+                cameraRef.current.updateProjectionMatrix();
+            }
+            if (rendererRef.current !== undefined) {
+                rendererRef.current.setSize(width, height);
+            }
         },
-        [
-            grabOffsetWidth(canvasRef.current),
-            grabOffsetHeight(canvasRef.current)
-        ]
+        [width, height]
     );
 
     // set animation frame timer value and rerender the scene
@@ -236,9 +217,6 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
                         (renderer as WebGLRenderer).clearDepth();
                     })
             }
-            // if (rendererRef.current !== undefined && sceneRef.current !== undefined && cameraRef.current !== undefined) {
-            //     rendererRef.current.render(sceneRef.current, cameraRef.current);
-            // }
         }
     });
 
@@ -269,7 +247,12 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
 
     return (
         <>
-            <Canvas ref={canvasRef} width={props.width} height={props.height} style={canvasStyle}/>
+            <Canvas
+                ref={canvasRef}
+                width={width}
+                height={height}
+                style={canvasStyle}
+            />
             {threeIsReady && (
                 <initialThreeContext.Provider value={threeContext}>
                     {children}

@@ -109,7 +109,8 @@ function colorRange(itheme: ITheme, excitationColor: Color, inhibitionColor: Col
 function Network(props: Props): JSX.Element {
     const {
         itheme,
-        sceneWidth, sceneHeight,
+        sceneWidth,
+        sceneHeight,
         axesOffset = origin(),
         excitationColor = new Color(0x00ff00),     // green
         inhibitionColor = new Color(0xff0000),     // red
@@ -129,9 +130,6 @@ function Network(props: Props): JSX.Element {
     const [neuronInfo, setNeuronInfo] = useState<Vector<NeuronInfo>>(neurons.toVector().map(entry => entry[1]));
     const [connectionInfo, setConnectionInfo] = useState<Array<ConnectionInfo>>(connections.toVector().map(entry => entry[1]).toArray());
     const [boundingSphere, setBoundingSphere] = useState<BoundingSphere>(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
-    // const neuronInfoRef = useRef<Vector<NeuronInfo>>(neurons.toVector().map(entry => entry[1]));
-    // const connectionsRef = useRef<Array<ConnectionInfo>>(connections.toVector().map(entry => entry[1]).toArray());
-    // const boundingSphereRef = useRef<BoundingSphere>(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
 
     // called when the background color is changed
     useEffect(
@@ -149,7 +147,6 @@ function Network(props: Props): JSX.Element {
     useEffect(
         () => {
             setConnectionInfo(connections.toVector().map(connection => connection[1]).toArray());
-            // connectionsRef.current = connections.toVector().map(connection => connection[1]).toArray()
         },
         [connections]
     );
@@ -291,16 +288,10 @@ function Network(props: Props): JSX.Element {
                     height={sceneHeight}
                     backgroundColor={new Color(itheme.palette.white)}
                     canvasStyle={{
-                        // position: 'absolute',
                         position: 'floating',
-                        // height: '85%',
-                        height: '55%',
-                        width: '95%',
+                        height: `${sceneHeight}px`,
+                        width: `${sceneWidth}px`,
                         border: `1px solid ${itheme.palette.neutralLighterAlt}`
-                        // height: `${sceneHeight}px`,
-                        // width: `${sceneWidth}px`
-                        // zIndex: -1,
-                        // outline: 'none'
                     }}
                 >
                     <CameraOrbitControls
@@ -309,10 +300,10 @@ function Network(props: Props): JSX.Element {
                     />
                     <Grid
                         sceneId={GRID_SCENE_ID}
-                        size={10000}
-                        divisions={1000}
+                        size={5000}
+                        divisions={100}
                         centerColor={new Color(itheme.palette.white)}
-                        gridColor={new Color(itheme.palette.themeLighter)}
+                        gridColor={new Color(itheme.palette.neutralLight)}
                         opacity={1}
                     />
                     <CoordinateAxes

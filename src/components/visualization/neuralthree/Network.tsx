@@ -126,9 +126,12 @@ function Network(props: Props): JSX.Element {
 
     const controls = useRef<OrbitControls>(null);
 
-    const neuronInfoRef = useRef<Vector<NeuronInfo>>(neurons.toVector().map(entry => entry[1]));
-    const connectionsRef = useRef<Array<ConnectionInfo>>(connections.toVector().map(entry => entry[1]).toArray());
-    const boundingSphereRef = useRef<BoundingSphere>(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
+    const [neuronInfo, setNeuronInfo] = useState<Vector<NeuronInfo>>(neurons.toVector().map(entry => entry[1]));
+    const [connectionInfo, setConnectionInfo] = useState<Array<ConnectionInfo>>(connections.toVector().map(entry => entry[1]).toArray());
+    const [boundingSphere, setBoundingSphere] = useState<BoundingSphere>(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
+    // const neuronInfoRef = useRef<Vector<NeuronInfo>>(neurons.toVector().map(entry => entry[1]));
+    // const connectionsRef = useRef<Array<ConnectionInfo>>(connections.toVector().map(entry => entry[1]).toArray());
+    // const boundingSphereRef = useRef<BoundingSphere>(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
 
     // called when the background color is changed
     useEffect(
@@ -138,7 +141,14 @@ function Network(props: Props): JSX.Element {
 
     useEffect(
         () => {
-            connectionsRef.current = connections.toVector().map(connection => connection[1]).toArray()
+            setNeuronInfo(neurons.toVector().map(entry => entry[1]));
+        },
+        [neurons]
+    )
+    useEffect(
+        () => {
+            setConnectionInfo(connections.toVector().map(connection => connection[1]).toArray());
+            // connectionsRef.current = connections.toVector().map(connection => connection[1]).toArray()
         },
         [connections]
     );
@@ -146,7 +156,7 @@ function Network(props: Props): JSX.Element {
     // updates the spiking neural network's bounding sphere
     useEffect(
         () => {
-            boundingSphereRef.current = boundSphereFrom(neurons.toVector().map(entry => entry[1].coords));
+            setBoundingSphere(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
         },
         [neurons]
     );
@@ -179,8 +189,8 @@ function Network(props: Props): JSX.Element {
      */
     function cameraCoordinates(): Coordinate {
         return coordinateFrom(1,1,1)
-            .scale(1.25 * boundingSphereRef.current.radius)
-            .plus(boundingSphereRef.current.origin);
+            .scale(1.25 * boundingSphere.radius)
+            .plus(boundingSphere.origin);
     }
 
     /**
@@ -296,7 +306,7 @@ function Network(props: Props): JSX.Element {
                 >
                     <CameraOrbitControls
                         ref={controls}
-                        target={boundingSphereRef.current.origin}
+                        target={boundingSphere.origin}
                     />
                     <Grid
                         sceneId={GRID_SCENE_ID}
@@ -319,7 +329,7 @@ function Network(props: Props): JSX.Element {
                     />
                     <Neurons
                         sceneId={NETWORK_SCENE_ID}
-                        neurons={neuronInfoRef.current.toArray()}
+                        neurons={neuronInfo.toArray()}
                         excitatoryNeuronColor={excitationColor}
                         inhibitoryNeuronColor={inhibitionColor}
                         colorRange={colors}
@@ -329,7 +339,7 @@ function Network(props: Props): JSX.Element {
                     />
                     <Connections
                         sceneId={NETWORK_SCENE_ID}
-                        connections={connectionsRef.current}
+                        connections={connectionInfo}
                         colorRange={colors}
                         spikeColor={new Color(itheme.palette.themePrimary)}
                         networkObservable={networkObservable}
@@ -337,7 +347,7 @@ function Network(props: Props): JSX.Element {
                     />
                     <Synapses
                         sceneId={NETWORK_SCENE_ID}
-                        connections={connectionsRef.current}
+                        connections={connectionInfo}
                         colorRange={colors}
                     />
                 </SceneManager>

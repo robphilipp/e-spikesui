@@ -1,6 +1,7 @@
 import {useContext, useEffect, useRef} from 'react';
 import {ThreeContext, initialThreeContext} from './ThreeJsManager';
 import {Object3D, WebGLRenderer} from "three";
+import {noop} from "../../../commons";
 
 /**
  * React hook for three-js when the set-up function returns an entity (i.e. something that derives from
@@ -57,7 +58,7 @@ export function useThree<E extends Object3D>(
  * @return {ThreeContext} The three-js context.
  */
 export function useThreeContext(
-    setup: (context: ThreeContext) => void = (_: ThreeContext) => {},
+    setup: (context: ThreeContext) => void = noop,
     destroy?: (context: ThreeContext) => void
 ): ThreeContext {
 
@@ -80,7 +81,7 @@ export function useThreeContext(
  * @param {ThreeContext} context The three-js context
  * @param {() => void} callback The callback function
  */
-export function threeRender(context: ThreeContext, callback: () => void) {
+export function threeRender(context: ThreeContext, callback: () => void): void {
     const {renderer, camera, canvas, scenesContext} = context;
     requestAnimationFrame(() => {
         if (renderer && camera && canvas) {

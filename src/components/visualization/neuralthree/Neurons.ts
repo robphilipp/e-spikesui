@@ -1,5 +1,5 @@
 import {ThreeContext} from "../basethree/ThreeJsManager";
-import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, VertexColors} from "three";
+import {BufferAttribute, BufferGeometry, Color, Material, Points, PointsMaterial, VertexColors} from "three";
 import {threeRender, useThree} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
@@ -144,21 +144,43 @@ function Neurons(props: OwnProps): null {
     const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
 
+    const neuronGeometryRef = useRef(new BufferGeometry());
 
-    // called when the neurons change so that we can recalculate their position
-    useEffect(
-        () => {
-            neuronPositionsRef.current = neuronPositionsFrom(neurons, neuronPositionsRef.current);
-        },
-        [neurons]
-    );
+    // // called when the neurons change so that we can recalculate their position
+    // useEffect(
+    //     () => {
+    //         neuronPositionsRef.current = neuronPositionsFrom(neurons, neuronPositionsRef.current);
+    //         neuronGeometryRef.current.setDrawRange(0, neurons.length);
+    //         neuronGeometryRef.current.setAttribute('position', new BufferAttribute(neuronPositionsRef.current, 3));
+    //         renderRef.current();
+    //     },
+    //     [neurons]
+    // );
 
     // called when the neurons or the color ranges change so that we can recalculate the colors
     useEffect(
         () => {
+            neuronPositionsRef.current = neuronPositionsFrom(neurons, neuronPositionsRef.current);
+
             neuronColorsRef.current = neuronColorsFrom(
-                neurons, new Color(excitatoryNeuronColor), new Color(inhibitoryNeuronColor), neuronColorsRef.current
+                neurons,
+                new Color(excitatoryNeuronColor),
+                new Color(inhibitoryNeuronColor),
+                neuronColorsRef.current
             );
+            neuronGeometryRef.current.setAttribute('color', new BufferAttribute(neuronColorsRef.current, 3));
+            neuronGeometryRef.current.setDrawRange(0, neurons.length);
+            neuronGeometryRef.current.setAttribute('position', new BufferAttribute(neuronPositionsRef.current, 3));
+
+            const pointMaterial = new PointsMaterial({
+                vertexColors: true,
+                size: 7,
+                transparent: false,
+                sizeAttenuation: false
+            });
+
+            pointsRef.current = new Points(neuronGeometryRef.current, pointMaterial);
+            renderRef.current();
         },
         [neurons, excitatoryNeuronColor, inhibitoryNeuronColor]
     );
@@ -166,34 +188,16 @@ function Neurons(props: OwnProps): null {
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
     useThree<Points>((context: ThreeContext): [string, Points] => {
-        const {scenesContext} = context;
-
-        const neuronGeometry = new BufferGeometry();
-        neuronGeometry.setDrawRange(0, neurons.length);
-        neuronGeometry.setAttribute('position', new BufferAttribute(neuronPositionsRef.current, 3));
-        neuronGeometry.setAttribute('color', new BufferAttribute(neuronColorsRef.current, 3));
-
-        const pointMaterial = new PointsMaterial({
-            // color: VertexColors,
-            vertexColors: true,
-            size: 7,
-            // blending: THREE.AdditiveBlending,
-            transparent: false,
-            sizeAttenuation: false
-        });
-
-        const points = new Points(neuronGeometry, pointMaterial);
-
-        pointsRef.current = points;
         contextRef.current = context;
-
-        return scenesContext.addToScene(sceneId, points);
+        return context.scenesContext.addToScene(sceneId, pointsRef.current);
     });
 
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the neurons' spiking
     useEffect(
-        () => renderRef.current = () => threeRender(contextRef.current as ThreeContext, noop),
+        () => {
+            renderRef.current = () => threeRender(contextRef.current, noop)
+        },
         [contextRef.current]
     );
 
@@ -211,7 +215,11 @@ function Neurons(props: OwnProps): null {
         // update the neuron color based on whether the neuron is spiking or not and let three-js know that
         // the colors need to be updated
         updateNeuronColor(neuronIndex, neuronColorsRef.current, spiking ? spikeColor : neuronColor);
-        (((pointsRef.current as Points).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
+        // (((pointsRef.current).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
+        const color = ((pointsRef.current).geometry as BufferGeometry).attributes.color as BufferAttribute;
+        if (color !== undefined) {
+            color.needsUpdate = true;
+        }
 
         // render the scene with three-js
         renderRef.current();
@@ -221,7 +229,7 @@ function Neurons(props: OwnProps): null {
         if(spiking) {
             setTimeout(
                 () => requestAnimationFrame(
-                    _ => animateSpike(neuronIndex, neuronColor, false)
+                    () => animateSpike(neuronIndex, neuronColor, false)
                 ),
                 spikeDuration
             );

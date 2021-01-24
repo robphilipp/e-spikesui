@@ -265,7 +265,7 @@ function NetworkEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is visible
      */
     function showSimulationLayer(): void {
-        heightFractionRef.current = 0.5;
+        heightFractionRef.current = 0.38;
         setDimension(editorDimensions());
         setShowSimulation(true);
     }

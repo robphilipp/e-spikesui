@@ -1,7 +1,7 @@
-import {BufferAttribute, BufferGeometry, Points, PointsMaterial, Vector3, VertexColors} from "three";
+import {BufferAttribute, BufferGeometry, Points, PointsMaterial, TextureLoader, Vector3} from "three";
 import {ConnectionInfo} from "./Connections";
 import {ColorRange} from "./Network";
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useRef} from "react";
 import {useThree} from "../basethree/useThree";
 import {ThreeContext} from "../basethree/ThreeJsManager";
 
@@ -61,6 +61,9 @@ function synapseColorsFrom(connections: Array<ConnectionInfo>, synapseOffsets: A
     return synapseColors;
 }
 
+const sprite = new TextureLoader().load( '/resources/ball.png');
+const synapseSize = 10;
+
 /**
  * Function component that represents the synapses. These are a set of dots drawn on the connection line
  * just before the post-synaptic neuron
@@ -69,7 +72,12 @@ function synapseColorsFrom(connections: Array<ConnectionInfo>, synapseOffsets: A
  * @constructor
  */
 function Synapses(props: OwnProps): null {
-    const {sceneId, connections, colorRange, synapseOffsets=[1, 2, 4]} = props;
+    const {
+        sceneId,
+        connections,
+        colorRange,
+        synapseOffsets=[synapseSize / 2]
+    } = props;
 
     const pointsRef = useRef<Points>();
     const geometryRef = useRef(new BufferGeometry());
@@ -85,10 +93,13 @@ function Synapses(props: OwnProps): null {
             geometryRef.current.setAttribute('color', new BufferAttribute(colors, 3));
 
             const material = new PointsMaterial({
-                vertexColors: true,
-                size: 4,
-                transparent: false,
-                sizeAttenuation: false
+                // vertexColors: true,
+                size: synapseSize,
+                transparent: true,
+                sizeAttenuation: true,
+                map: sprite,
+                alphaTest: 0.5,
+                color: 'orange'
             });
             pointsRef.current = new Points(geometryRef.current, material)
         },

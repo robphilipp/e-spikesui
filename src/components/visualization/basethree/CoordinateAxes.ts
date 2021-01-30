@@ -1,5 +1,6 @@
 import {ThreeContext} from "./ThreeJsManager";
 import {
+    ArrowHelper,
     BufferAttribute,
     BufferGeometry,
     Color,

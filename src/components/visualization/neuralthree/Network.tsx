@@ -17,7 +17,7 @@ import Neurons, {NeuronInfo} from "./Neurons";
 import Connections, {ConnectionInfo} from "./Connections";
 import Synapses from "./Synapses";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-import {IStackTokens, Stack, Toggle} from "@fluentui/react";
+import {IStackTokens, Label, Stack, Toggle} from "@fluentui/react";
 import {BoundingSphere, boundSphereFrom} from "../basethree/BoundingSphere";
 import {
     axesVisibilityChanged,
@@ -33,6 +33,7 @@ import {
 } from "../../redux/actions/networkVisualization";
 import {NetworkEvent} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
+import {useId} from '@uifabric/react-hooks';
 
 export interface ColorRange {
     excitatory: { min: Color, max: Color };
@@ -260,7 +261,7 @@ function Network(props: Props): JSX.Element {
         });
     }
 
-    const stackTokens: IStackTokens = {childrenGap: 40};
+    const stackTokens: IStackTokens = {childrenGap: 20};
     return (
         <Stack>
             <Stack.Item>

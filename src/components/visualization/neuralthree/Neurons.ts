@@ -174,7 +174,7 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Points>((context: ThreeContext): [string, Points] => {
+    useThree<Points>((context: ThreeContext): [scenedId: string, points: Points] => {
         contextRef.current = context;
         return context.scenesContext.addToScene(sceneId, pointsRef.current);
     });
@@ -230,8 +230,6 @@ function Neurons(props: OwnProps): null {
                 .subscribe({
                     next: event => {
                         if (contextRef.current && pointsRef.current) {
-                            // const render = () => threeRender(contextRef.current as ThreeContext, () => {});
-
                             const neuronIndex = neuronIndexFrom((event.payload as Spike).neuronId, neurons);
                             const neuronColor = neuronColorFor(neurons[neuronIndex], colorRange);
 

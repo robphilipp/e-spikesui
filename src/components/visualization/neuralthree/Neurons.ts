@@ -1,5 +1,5 @@
 import {ThreeContext} from "../basethree/ThreeJsManager";
-import {BufferAttribute, BufferGeometry, Color, Material, Points, PointsMaterial, VertexColors} from "three";
+import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
 import {threeRender, useThree} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
@@ -8,6 +8,7 @@ import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
 import {noop} from "../../../commons";
+// import {ball} from "../../../resources/ball.png"
 
 export interface NeuronInfo {
     name: string;
@@ -148,6 +149,8 @@ function Neurons(props: OwnProps): null {
     // called when the neurons or the color ranges change so that we can recalculate the colors
     useEffect(
         () => {
+            const sprite = new TextureLoader().load( '/src/resources/ball.png');
+
             neuronPositionsRef.current = neuronPositionsFrom(neurons, neuronPositionsRef.current);
 
             neuronColorsRef.current = neuronColorsFrom(
@@ -161,11 +164,19 @@ function Neurons(props: OwnProps): null {
             neuronGeometryRef.current.setAttribute('position', new BufferAttribute(neuronPositionsRef.current, 3));
 
             const pointMaterial = new PointsMaterial({
-                vertexColors: true,
-                size: 7,
-                transparent: false,
-                sizeAttenuation: false
+                size: 35,
+                sizeAttenuation: false,
+                map: sprite,
+                alphaTest: 0.5,
+                transparent: true
             });
+            // const pointMaterial = new PointsMaterial({
+            //     vertexColors: true,
+            //     size: 7,
+            //     transparent: false,
+            //     sizeAttenuation: false,
+            //     // map: sprite,
+            // });
 
             pointsRef.current = new Points(neuronGeometryRef.current, pointMaterial);
         },

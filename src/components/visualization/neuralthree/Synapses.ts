@@ -1,9 +1,10 @@
-import {BufferAttribute, BufferGeometry, Points, PointsMaterial, TextureLoader, Vector3} from "three";
+import {ConeGeometry, Mesh, MeshBasicMaterial, MeshBasicMaterialParameters, Vector3} from "three";
 import {ConnectionInfo} from "./Connections";
 import {ColorRange} from "./Network";
 import {useEffect, useRef} from "react";
-import {useThree} from "../basethree/useThree";
+import {threeRender, useThree} from "../basethree/useThree";
 import {ThreeContext} from "../basethree/ThreeJsManager";
+import {noop} from "../../../commons";
 
 export interface OwnProps {
     sceneId: string;
@@ -12,63 +13,72 @@ export interface OwnProps {
     synapseOffsets?: Array<number>;
 }
 
-/**
- * Creates the points representing the synapse. One point is drawn at an offset from the post-synaptic neuron,
- * along the connection, for each specified synapse offset.
- * @param {[ConnectionInfo]} connections The array holding the pre- and post-synaptic neuron information
- * @param {[number]} synapseOffsets The offset amount for each point used to represent the synapse
- * @return {Float32Array} The array holding the flatten synapse positions. The length of the array, which depends
- * on the number of specified synapse offset, is 3 times the number of connections times the number of offsets
- */
-function synapsePositionsFrom(connections: Array<ConnectionInfo>, synapseOffsets: Array<number>) {
-    function setSynapsePosition(connectionId: number, connection: ConnectionInfo, positions: Float32Array, offsets: Array<number>) {
-        const [x, y, z] = connection.postSynaptic.coords.toArray();
-        const [xp, yp, zp] = connection.preSynaptic.coords.toArray();
-        const direction = new Vector3().subVectors(new Vector3(xp, yp, zp), new Vector3(x, y, z)).normalize();
-        for (let i = 0; i < offsets.length; ++i) {
-            positions[(connectionId * offsets.length + i) * 3] = x + offsets[i] * direction.x;
-            positions[(connectionId * offsets.length + i) * 3 + 1] = y + offsets[i] * direction.y;
-            positions[(connectionId * offsets.length + i) * 3 + 2] = z + offsets[i] * direction.z;
-        }
-    }
+const coneUnitVector = new Vector3(0, -1, 0);
 
-    const synapsePos = new Float32Array(connections.length * 3 * synapseOffsets.length);
-    connections.forEach((connection, i) => setSynapsePosition(i, connection, synapsePos, synapseOffsets));
-    return synapsePos;
+/**
+ * Calculates a unit vector pointing from the pre-synaptic to the post-synaptic neuron
+ * @param connection The connection
+ * @return A unit vector pointing from the pre-synaptic to the post-synaptic neuron
+ */
+function synapseDirection(connection: ConnectionInfo): Vector3 {
+    const [x, y, z] = connection.postSynaptic.coords.toArray();
+    const [xp, yp, zp] = connection.preSynaptic.coords.toArray();
+    return new Vector3().subVectors(new Vector3(xp, yp, zp), new Vector3(x, y, z)).normalize();
 }
 
 /**
- * Creates the array of synapse colors for each point representing a synapse. The colors for the synapse
- * depend on the pre-synaptic neuron's type (i.e. excitatory, inhibitory)
- * @param {[ConnectionInfo]} connections The array holding the pre- and post-synaptic neuron information
- * @param {[number]} synapseOffsets The offset amount for each point used to represent the synapse
- * @param {ColorRange} baseColors The colors for calculating the weight adjusted color
- * @return {Float32Array} The array holding the flatten synapse positions. The length of the array, which depends
- * on the number of specified synapse offset, is 3 times the number of connections times the number of offsets
+ * Calculates the synapse's 3-dimensional coordinates
+ * @param connection The connection
+ * @param direction The direction from the pre-synaptic to the post-synaptic neuron
+ * @return A array representing a 3-tuple (x, y, z).
  */
-function synapseColorsFrom(connections: Array<ConnectionInfo>, synapseOffsets: Array<number>, baseColors: ColorRange) {
-    function setSynapseColors(synapseId: number, neuronType: string, colors: Float32Array, numOffsets: number) {
-        const color = neuronType === 'e' ? baseColors.excitatory.max : baseColors.inhibitory.max;
-        for (let i = 0; i < numOffsets; ++i) {
-            colors[(synapseId * numOffsets + i) * 3] = color.r;
-            colors[(synapseId * numOffsets + i) * 3 + 1] = color.g;
-            colors[(synapseId * numOffsets + i) * 3 + 2] = color.b;
-        }
-    }
-
-    const synapseColors = new Float32Array(connections.length * 3 * synapseOffsets.length);
-    connections.forEach((connection, i) => setSynapseColors(i, connection.preSynaptic.type, synapseColors, synapseOffsets.length));
-    return synapseColors;
+function synapseLocation(connection: ConnectionInfo, direction: Vector3): [x: number, y: number, z: number] {
+    const [x, y, z] = connection.postSynaptic.coords.toArray();
+    const [xp, yp, zp] = connection.preSynaptic.coords.toArray();
+    const distance = Math.min(8, Math.sqrt((x - xp) * (x  - xp) + (y - yp) * (y - yp) + (z - zp) * (z - zp)));
+    return [
+        x + distance * direction.x,
+        y + distance * direction.y,
+        z + distance * direction.z
+    ];
 }
 
-const sprite = new TextureLoader().load( '/resources/ball.png');
-const synapseSize = 10;
+/**
+ * Creates a cone representing the synapse, pointing to the post-synaptic neuron from the pre-synaptic neuron.
+ * @param connection The connection
+ * @param geometry The cone geometry
+ * @param material The basic mesh material
+ * @return A mesh representing the synapse (cone)
+ */
+function createCone(connection: ConnectionInfo, geometry: ConeGeometry, material: MeshBasicMaterial): Mesh {
+    const direction = synapseDirection(connection);
+    const mesh = new Mesh(geometry, material);
+    mesh.quaternion.setFromUnitVectors(coneUnitVector, direction);
+    mesh.position.fromArray(synapseLocation(connection, direction));
+    return mesh
+}
+
+/**
+ * Creates and returns a key representing a connection
+ * @param connection The connection
+ * @return A key string representing the connection
+ */
+function connectionKeyFor(connection: ConnectionInfo): string {
+    return `${connection.preSynaptic.name}::${connection.postSynaptic.name}`;
+}
+
+const meshParameters: MeshBasicMaterialParameters = {
+    transparent: true,
+    vertexColors: true,
+    alphaTest: 0.5,
+    color: 'orange'
+};
 
 /**
  * Function component that represents the synapses. These are a set of dots drawn on the connection line
  * just before the post-synaptic neuron
- * @param {OwnProps} props The properties
- * @return {null} Always null, nothing ever returned
+ * @param props The properties
+ * @return Always null, nothing ever returned
  * @constructor
  */
 function Synapses(props: OwnProps): null {
@@ -76,41 +86,76 @@ function Synapses(props: OwnProps): null {
         sceneId,
         connections,
         colorRange,
-        synapseOffsets=[synapseSize / 2]
     } = props;
 
-    const pointsRef = useRef<Points>();
-    const geometryRef = useRef(new BufferGeometry());
+    const contextRef = useRef<ThreeContext>();
+    const renderRef = useRef<() => void>(noop);
+    const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
+    const materialRef = useRef<MeshBasicMaterial>(new MeshBasicMaterial(meshParameters));
+    const conesRef = useRef<Array<Mesh>>(connections.map(connection => createCone(connection, geometryRef.current, materialRef.current)));
+    const connectionsRef = useRef<Map<string, number>>(
+        new Map(connections.map((info, i) => [connectionKeyFor(info), i]))
+    );
 
     // called when the connections or the color range are modified to recalculate the synapse colors
     useEffect(
         () => {
-            const positions = synapsePositionsFrom(connections, synapseOffsets);
-            const colors = synapseColorsFrom(connections, synapseOffsets, colorRange);
+            // when the connections (property) length is less than the index map, then connections have been removed,
+            // and so we need to remove them from the scene and the index map
+            if (connections.length < connectionsRef.current.size) {
+                // find any connections that have been removed
+                const keys = new Set<string>(connections.map(connection => connectionKeyFor(connection)));
+                Array.from(connectionsRef.current.keys()).forEach(key => {
+                    if (keys.has(key)) {
+                        keys.delete(key);
+                    }
+                })
+                // for any of the connections that have been removed, remove the cone (mesh) form the
+                // array of cones
+                keys.forEach(key => {
+                    conesRef.current.splice(connectionsRef.current.get(key), 1);
+                });
+            }
 
-            geometryRef.current.setDrawRange(0, connections.length * synapseOffsets.length);
-            geometryRef.current.setAttribute('position', new BufferAttribute(positions, 3));
-            geometryRef.current.setAttribute('color', new BufferAttribute(colors, 3));
+            // for each existing connection update possible changes in position or direction. and add any
+            // new connections
+            connections.forEach((connection, i) => {
+                const key = connectionKeyFor(connection);
+                // update position and direction changes
+                if (connectionsRef.current.has(key)) {
+                    const direction = synapseDirection(connection);
+                    conesRef.current[i].position.fromArray(synapseLocation(connection, direction));
+                    conesRef.current[i].quaternion.setFromUnitVectors(coneUnitVector, direction);
+                }
+                // add new synapse (cone)
+                else {
+                    connectionsRef.current.set(key, conesRef.current.length);
+                    const newCone = createCone(connection, geometryRef.current, materialRef.current);
+                    conesRef.current.push(newCone);
+                    contextRef.current.scenesContext.addToScene(sceneId, newCone);
+                }
+            })
 
-            const material = new PointsMaterial({
-                // vertexColors: true,
-                size: synapseSize,
-                transparent: true,
-                sizeAttenuation: true,
-                map: sprite,
-                alphaTest: 0.5,
-                color: 'orange'
-            });
-            pointsRef.current = new Points(geometryRef.current, material)
         },
         [connections, colorRange]
     );
 
+
     // sets up the synapses, and adds them to the network scene
-    useThree<Points>((context: ThreeContext): [string, Points] => {
-        return context.scenesContext.addToScene(sceneId, pointsRef.current);
+    useThree<Array<Mesh>>((context: ThreeContext): [string, Array<Mesh>] => {
+        contextRef.current = context;
+        const meshes = conesRef.current.map(cone => context.scenesContext.addToScene(sceneId, cone)[1]);
+        return [sceneId, meshes];
     });
 
+    // called when the component is mounted or the context changes to set the render function needed to animate
+    // the neurons' spiking
+    useEffect(
+        () => {
+            renderRef.current = () => threeRender(contextRef.current, noop)
+        },
+        [contextRef.current]
+    );
     return null;
 }
 

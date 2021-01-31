@@ -256,7 +256,11 @@ function Connections(props: OwnProps): null {
 
         // update the connection color based on whether the pre-synaptic neuron is spiking or not and
         // let three-js know that the colors need to be updated
-        (((lineSegmentsRef.current as LineSegments).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
+        const attribute = ((lineSegmentsRef.current as LineSegments).geometry as BufferGeometry).attributes.color as BufferAttribute;
+        if (attribute !== undefined) {
+            attribute.needsUpdate = true
+        }
+        // (((lineSegmentsRef.current as LineSegments).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
 
         // render the scene with three-js
         renderRef.current();
@@ -265,7 +269,7 @@ function Connections(props: OwnProps): null {
         // its original value
         if (spiking) {
             setTimeout(
-                () => requestAnimationFrame(_ => animateSpike(originalColors, connectionColors, false)),
+                () => requestAnimationFrame(() => animateSpike(originalColors, connectionColors, false)),
                 spikeDuration
             );
         }

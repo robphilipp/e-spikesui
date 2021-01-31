@@ -8,7 +8,6 @@ import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
 import {noop} from "../../../commons";
-// import {ball} from "/resources/ball.png"
 
 export interface NeuronInfo {
     name: string;
@@ -165,7 +164,7 @@ function Neurons(props: OwnProps): null {
 
             const pointMaterial = new PointsMaterial({
                 vertexColors: true,
-                size: 30,
+                size: 20,
                 transparent: true,
                 sizeAttenuation: true,
                 alphaTest: 0.5,

@@ -132,6 +132,9 @@ function parseDescription(
     topology = emptyNetworkTopology(),
     cursor = 0
 ): Either<string, ParsedTopology> {
+    if (cursor >= description.length) {
+        return Either.left("Failed to parse; reached end of description")
+    }
     const connectionIndex = description.indexOf(`${CONNECTION}=[`, cursor);
     const neuronIndex = description.indexOf(`${NEURON}=[`, cursor);
     if (cursor === -1 || (connectionIndex === -1 && neuronIndex === -1)) {
@@ -280,8 +283,16 @@ function parseConnections(description: string, topology: ParsedTopology, cursor:
 
     // find the strings representing the connection
     const regex = /^[a-zA-Z-0-9]+({[0-9,:]*})?[,)]/
-    const preConn = description.substring(preIndex + 4).match(regex)[0];
-    const postConn = description.substring(postIndex + 4).match(regex)[0];
+    const preMatch = description.substring(preIndex + 4).match(regex);
+    const postMatch = description.substring(postIndex + 4).match(regex);
+    if (preMatch === null || preMatch.length === 0) {
+        return Either.left("Unable to find connection ID for the pre-synaptic neuron");
+    }
+    if (postMatch === null || postMatch.length === 0) {
+        return Either.left("Unable to find connection ID for the post-synaptic neuron");
+    }
+    const preConn = preMatch[0];
+    const postConn =postMatch [0];
 
     // expand the connections, if needed
     const preConns = expandConnection(preConn.substring(0, preConn.length-1));

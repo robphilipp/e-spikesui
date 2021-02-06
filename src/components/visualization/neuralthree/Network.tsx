@@ -4,7 +4,7 @@ import SceneManager from '../basethree/ThreeJsManager';
 import Grid from '../basethree/Grid';
 import CameraOrbitControls from "../basethree/CameraOrbitControls";
 import CoordinateAxes from "../basethree/CoordinateAxes";
-import {AmbientLight, Color, PerspectiveCamera, Renderer, Scene, WebGLRenderer} from "three";
+import {AmbientLight, Color, PerspectiveCamera, Renderer, Scene, Vector3, WebGLRenderer} from "three";
 import {Coordinate, coordinateFrom, origin} from "../basethree/Coordinate";
 import {ITheme} from "@uifabric/styling";
 import {HashMap, Option, Vector} from "prelude-ts";
@@ -17,7 +17,7 @@ import Neurons, {NeuronInfo} from "./Neurons";
 import Connections, {ConnectionInfo} from "./Connections";
 import Synapses from "./Synapses";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-import {IStackTokens, Label, Stack, Toggle} from "@fluentui/react";
+import {IconButton, IStackTokens, Stack, Toggle} from "@fluentui/react";
 import {BoundingSphere, boundSphereFrom} from "../basethree/BoundingSphere";
 import {
     axesVisibilityChanged,
@@ -33,7 +33,6 @@ import {
 } from "../../redux/actions/networkVisualization";
 import {NetworkEvent} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
-import {useId} from '@uifabric/react-hooks';
 
 export interface ColorRange {
     excitatory: { min: Color, max: Color };
@@ -50,6 +49,7 @@ export interface OwnProps {
     axesOffset?: Coordinate;
 
     networkObservable: Observable<NetworkEvent>;
+    spikeDuration?: number;
 }
 
 export interface StateProps {
@@ -119,8 +119,16 @@ function Network(props: Props): JSX.Element {
         colors = colorRange(itheme, excitationColor, inhibitionColor, colorAttenuation),
         neurons,
         connections,
-        axesVisible, gridVisible, camera, scenes,
-        networkObservable
+        axesVisible,
+        gridVisible,
+        camera,
+        scenes,
+        networkObservable,
+        onCameraUpdate,
+        onScenesUpdate,
+        onAxisVisibilityChange,
+        onGridVisibilityChange,
+        spikeDuration = 50
     } = props;
 
     const scenesContext = useScenes(() => getScenes());
@@ -128,23 +136,30 @@ function Network(props: Props): JSX.Element {
 
     const controls = useRef<OrbitControls>(null);
 
-    const [neuronInfo, setNeuronInfo] = useState<Vector<NeuronInfo>>(neurons.toVector().map(entry => entry[1]));
-    const [connectionInfo, setConnectionInfo] = useState<Array<ConnectionInfo>>(connections.toVector().map(entry => entry[1]).toArray());
-    const [boundingSphere, setBoundingSphere] = useState<BoundingSphere>(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
+    const [neuronInfo, setNeuronInfo] = useState<Vector<NeuronInfo>>(Vector.ofIterable(neurons.valueIterable()));
+    const [connectionInfo, setConnectionInfo] = useState<Array<ConnectionInfo>>(Array.from(connections.valueIterable()));
+    const [boundingSphere, setBoundingSphere] = useState<BoundingSphere>(boundSphereFrom(
+        Vector.ofIterable(neurons.mapValues(info => info.coords).valueIterable())
+    ));
 
-    // called when the background color is changed
+    const cameraPositionRef = useRef<Coordinate>(cameraCoordinates());
+
+    // updates the axis color when the background color is changed
     useEffect(
         () => setAxesColor(itheme.palette.themeTertiary),
         [itheme]
     );
 
+    // recalculates the neuron information and bounding sphere when the neurons change
     useEffect(
         () => {
             setNeuronInfo(neurons.toVector().map(entry => entry[1]));
+            setBoundingSphere(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
         },
         [neurons]
     );
 
+    // recalculates the connection information when the connections are updated
     useEffect(
         () => {
             setConnectionInfo(connections.toVector().map(connection => connection[1]).toArray());
@@ -152,13 +167,13 @@ function Network(props: Props): JSX.Element {
         [connections]
     );
 
-    // updates the spiking neural network's bounding sphere
     useEffect(
         () => {
-            setBoundingSphere(boundSphereFrom(neurons.toVector().map(entry => entry[1].coords)));
+            setAxesVisibility(axesVisible);
+            setGridVisibility(gridVisible);
         },
-        [neurons]
-    );
+        []
+    )
 
     /**
      * Sets the visibility of the three-js axes-scene, and then dispatches a message that the axes'
@@ -168,7 +183,7 @@ function Network(props: Props): JSX.Element {
      */
     function setAxesVisibility(visible: boolean): void {
         scenesContext.visibility(AXES_SCENE_ID, visible);
-        props.onAxisVisibilityChange(visible)
+        onAxisVisibilityChange(visible)
     }
 
     /**
@@ -179,7 +194,7 @@ function Network(props: Props): JSX.Element {
      */
     function setGridVisibility(visible: boolean): void {
         scenesContext.visibility(GRID_SCENE_ID, visible);
-        props.onGridVisibilityChange(visible)
+        onGridVisibilityChange(visible)
     }
 
     /**
@@ -201,7 +216,7 @@ function Network(props: Props): JSX.Element {
      */
     function getCamera(offsetWidth: number,
                        offsetHeight: number,
-                       position: Coordinate = cameraCoordinates()): PerspectiveCamera {
+                       position: Coordinate = cameraPositionRef.current): PerspectiveCamera {
         return camera.getOrCall(() => {
             const camera = new PerspectiveCamera(
                 45,
@@ -210,10 +225,21 @@ function Network(props: Props): JSX.Element {
                 10000,
             );
             camera.position.set(position.x, position.y, position.z);
-            // cameraRef.current = Option.of(camera);
-            props.onCameraUpdate(camera);
-            // cameraRef.current = camera;
+            onCameraUpdate(camera);
             return camera;
+        })
+    }
+
+    /**
+     * Resets the camera position to the original, and has the camera look at the origin
+     */
+    function resetCameraPosition(): void {
+        camera.ifSome(cam => {
+            const position = cameraCoordinates();
+            cam.position.set(position.x, position.y, position.z);
+            cam.lookAt(new Vector3(boundingSphere.origin.x, boundingSphere.origin.y, boundingSphere.origin.z));
+            cam.updateProjectionMatrix();
+            onCameraUpdate(cam);
         })
     }
 
@@ -256,7 +282,7 @@ function Network(props: Props): JSX.Element {
                 {name: AXES_SCENE_ID, scene: axesScene, visible: false},
                 {name: NETWORK_SCENE_ID, scene: networkScene, visible: true}
             );
-            props.onScenesUpdate(scenes);
+            onScenesUpdate(scenes);
             return scenes;
         });
     }
@@ -278,6 +304,10 @@ function Network(props: Props): JSX.Element {
                         checked={gridVisible}
                         onChange={() => setGridVisibility(!gridVisible)}
                     />
+                    <IconButton
+                        iconProps={{iconName: "reset"}}
+                        onClick={resetCameraPosition}>
+                    </IconButton>
                 </Stack>
             </Stack.Item>
             <Stack.Item>
@@ -326,7 +356,7 @@ function Network(props: Props): JSX.Element {
                         colorRange={colors}
                         spikeColor={new Color(itheme.palette.themePrimary)}
                         networkObservable={networkObservable}
-                        spikeDuration={50}
+                        spikeDuration={spikeDuration}
                     />
                     <Connections
                         sceneId={NETWORK_SCENE_ID}
@@ -334,7 +364,7 @@ function Network(props: Props): JSX.Element {
                         colorRange={colors}
                         spikeColor={new Color(itheme.palette.themePrimary)}
                         networkObservable={networkObservable}
-                        spikeDuration={50}
+                        spikeDuration={spikeDuration}
                     />
                     <Synapses
                         sceneId={NETWORK_SCENE_ID}

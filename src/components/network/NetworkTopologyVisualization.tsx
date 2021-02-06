@@ -1,21 +1,22 @@
 import * as React from 'react';
-import {useEffect, useMemo, useRef} from 'react';
-import {HashMap} from "prelude-ts";
+import {useEffect, useMemo, useState} from 'react';
+import {HashMap, HashSet} from "prelude-ts";
 import {ITheme} from "@uifabric/styling";
 import Network from "../visualization/neuralthree/Network"
 import {Color} from "three";
-import {Observable} from "rxjs";
-import {NetworkEvent, updateNetworkTopology} from "../redux/actions/networkEvent";
+import {interval, Observable} from "rxjs";
+import {EventTime, NetworkEvent, SignalIntensity, SPIKE, updateNetworkTopology} from "../redux/actions/networkEvent";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from "../visualization/neuralthree/Connections";
 import {IconButton, Spinner, SpinnerSize, Stack, TooltipHost} from "@fluentui/react";
-import { Label } from 'office-ui-fabric-react/lib/Label';
+import {Label} from 'office-ui-fabric-react/lib/Label';
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
 import {RouteComponentProps, withRouter} from "react-router-dom";
 import {networkTopology, NetworkTopology} from "./networkTopology";
+import {map} from "rxjs/operators";
 
 export interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -51,14 +52,14 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
         inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color
 
-        network,
+        network,    // the network description
         neurons,
         connections,
         onClose,
         onCompiled,
     } = props;
 
-    const networkObservableRef = useRef<Observable<NetworkEvent>>(new Observable(() => {/**/}))
+    const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>()
 
     const excitationMinColor = useMemo<Color>(
         () => new Color(excitationColor).lerp(new Color(itheme.palette.white), colorAttenuation),
@@ -84,63 +85,48 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
         [excitationMinColor, excitationMaxColor, inhibitionMinColor, inhibitionMaxColor]
     )
 
+    // updates the network topology when the network description changes
     useEffect(
         () => {
-            // if (!neurons.isEmpty() && !connections.isEmpty()) {
-                handleCompile();
-            // }
+            networkTopology(network)
+                .ifRight(topology => onCompiled(topology))
+                .ifLeft(error => console.error(error));
         },
         [network]
     )
 
-    function handleCompile(): void {
-        networkTopology(network)
-            .ifRight(topology => onCompiled(topology))
-            .ifLeft(error => console.error(error));
+    useEffect(
+        () => {
+            setNetworkObservable(sparkleObservable(neurons.keySet()))
+        },
+        [neurons]
+    )
+
+    /**
+     * Issues a spike for each neuron, in order, on the observable to simulate the network firing
+     * @param neuronIds The neuron IDs
+     * @return An observable of network evenets
+     */
+    function sparkleObservable(neuronIds: HashSet<string>): Observable<NetworkEvent> {
+        const ids = neuronIds.toArray()
+        return interval(250).pipe(
+            map((value, index) => ({
+                type: SPIKE,
+                payload: {
+                    neuronId: ids[index % ids.length],
+                    timestamp: {value: value, units: 'µs'} as EventTime,
+                    signalIntensity: {value: 1, units: 'µV'} as SignalIntensity,
+                    lastFireTime: {value: value - 2000, units: 'µs'} as EventTime
+                }
+            } as NetworkEvent))
+        )
     }
 
     /**
      * Handles closing the sensor simulation panel and stops the simulation if it is running
      */
-    function handleCloseSimulation(): void {
-        // handleStopSensorSimulation();
+    function handleCloseVisualization(): void {
         if (onClose) onClose();
-    }
-
-    // /**
-    //  * Creates a compile button used to compile the sensor description
-    //  * @return The button for compiling the sensor description
-    //  */
-    // function compileButton(): JSX.Element {
-    //     return <>
-    //         <TooltipHost content="Compile the sensor code">
-    //             <IconButton
-    //                 iconProps={{iconName: 'code'}}
-    //                 // disabled={
-    //                 //     (networkDescription !== undefined && networkDescription.length < 31) ||
-    //                 //     networkObservable !== undefined ||
-    //                 //     expressionState === ExpressionState.RUNNING ||
-    //                 //     expressionState === ExpressionState.COMPILED
-    //                 // }
-    //                 onClick={handleCompile}
-    //             />
-    //         </TooltipHost>
-    //     </>
-    // }
-
-    /**
-     * Creates the button to hide the sensor simulation layer.
-     * @return The button for hiding the sensor simulation layer.
-     */
-    function hideSimulationButton(): JSX.Element {
-        return <div>
-            <TooltipHost content="Hide the sensor simulation">
-                <IconButton
-                    iconProps={{iconName: 'close'}}
-                    onClick={handleCloseSimulation}
-                />
-            </TooltipHost>
-        </div>
     }
 
     return (
@@ -149,24 +135,29 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                 {neurons.isEmpty() || connections.isEmpty() ?
                     <Stack horizontal tokens={{childrenGap: 5}}>
                         <Label>Medium spinner</Label>
-                        <Spinner size={SpinnerSize.medium} />
+                        <Spinner size={SpinnerSize.medium}/>
                     </Stack> :
                     <Stack horizontal tokens={{childrenGap: 5}}>
-                    <Stack.Item grow>
-                        <Network
-                            sceneHeight={sceneHeight}
-                            sceneWidth={sceneWidth}
-                            excitationColor={excitationColor}
-                            inhibitionColor={inhibitionColor}
-                            colorAttenuation={colorAttenuation}
-                            colors={colors}
-                            networkObservable={networkObservableRef.current}
-                        />
-                    </Stack.Item>
-                        <Stack.Item tokens={{margin: '-20px 20px 0 0'}}>
-                            {hideSimulationButton()}
+                        <Stack.Item grow>
+                            <Network
+                                sceneHeight={sceneHeight}
+                                sceneWidth={sceneWidth}
+                                excitationColor={excitationColor}
+                                inhibitionColor={inhibitionColor}
+                                colorAttenuation={colorAttenuation}
+                                colors={colors}
+                                networkObservable={networkObservable}
+                                spikeDuration={230}
+                            />
                         </Stack.Item>
-
+                        <Stack.Item tokens={{margin: '-20px 20px 0 0'}}>
+                            <TooltipHost content="Hide the network visualization">
+                                <IconButton
+                                    iconProps={{iconName: 'close'}}
+                                    onClick={handleCloseVisualization}
+                                />
+                            </TooltipHost>
+                        </Stack.Item>
                     </Stack>}
             </Stack>
         </div>

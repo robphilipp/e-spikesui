@@ -1,16 +1,22 @@
-import {ConeGeometry, Mesh, MeshBasicMaterial, MeshBasicMaterialParameters, Vector3} from "three";
-import {ConnectionInfo} from "./Connections";
+import {Color, ConeGeometry, Mesh, MeshBasicMaterial, MeshBasicMaterialParameters, Vector3} from "three";
+import {ConnectionInfo, outgoingConnectionsFor} from "./Connections";
 import {ColorRange} from "./Network";
 import {useEffect, useRef} from "react";
 import {threeRender, useThree} from "../basethree/useThree";
 import {ThreeContext} from "../basethree/ThreeJsManager";
 import {noop} from "../../../commons";
+import {filter} from "rxjs/operators";
+import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
+import {Observable} from "rxjs";
 
 export interface OwnProps {
     sceneId: string;
     connections: Array<ConnectionInfo>;
     colorRange: ColorRange;
     synapseOffsets?: Array<number>;
+    // observable that emits network events upon subscription
+    networkObservable: Observable<NetworkEvent>;
+    spikeDuration: number;
 }
 
 const coneUnitVector = new Vector3(0, -1, 0);
@@ -67,6 +73,9 @@ function connectionKeyFor(connection: ConnectionInfo): string {
     return `${connection.preSynaptic.name}::${connection.postSynaptic.name}`;
 }
 
+const orange = new Color('orange');
+const white = new Color('white');
+
 const meshParameters: MeshBasicMaterialParameters = {
     transparent: true,
     vertexColors: true,
@@ -86,16 +95,24 @@ function Synapses(props: OwnProps): null {
         sceneId,
         connections,
         colorRange,
+        networkObservable,
+        spikeDuration,
     } = props;
 
     const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
-    const materialRef = useRef<MeshBasicMaterial>(new MeshBasicMaterial(meshParameters));
-    const conesRef = useRef<Array<Mesh>>(connections.map(connection => createCone(connection, geometryRef.current, materialRef.current)));
+    // const materialRef = useRef<MeshBasicMaterial>(new MeshBasicMaterial(meshParameters));
+    const materialRef = useRef<Array<MeshBasicMaterial>>(connections.map(() => new MeshBasicMaterial(meshParameters)));
+    // holds the cones representing the synapse
+    const conesRef = useRef<Array<Mesh>>(
+        connections.map((connection, index) => createCone(connection, geometryRef.current, materialRef.current[index]))
+    );
+    // holds the index into the conesRef for the connection (map(connection_key -> conesRef_index))
     const connectionsRef = useRef<Map<string, number>>(
         new Map(connections.map((info, i) => [connectionKeyFor(info), i]))
     );
+    const connectionsInfoRef = useRef<Array<ConnectionInfo>>(connections.slice());
 
     // called when the connections or the color range are modified to recalculate the synapse colors
     useEffect(
@@ -130,12 +147,13 @@ function Synapses(props: OwnProps): null {
                 // add new synapse (cone)
                 else {
                     connectionsRef.current.set(key, conesRef.current.length);
-                    const newCone = createCone(connection, geometryRef.current, materialRef.current);
+                    const newCone = createCone(connection, geometryRef.current, materialRef.current[i]);
                     conesRef.current.push(newCone);
                     contextRef.current.scenesContext.addToScene(sceneId, newCone);
                 }
             })
 
+            connectionsInfoRef.current = connections.slice()
         },
         [connections, colorRange]
     );
@@ -156,6 +174,61 @@ function Synapses(props: OwnProps): null {
         },
         [contextRef.current]
     );
+
+    function animateSpike(spikingConnections: Array<string>, spiking: boolean) {
+        updateSynapseColors(spikingConnections, spiking);
+
+        // render the scene with three-js
+        renderRef.current();
+
+        // if spiking, then call this function again after a delay to set the neuron's color back to
+        // its original value
+        if(spiking) {
+            setTimeout(
+                () => requestAnimationFrame(
+                    () => animateSpike(spikingConnections, false)
+                ),
+                spikeDuration
+            );
+        }
+    }
+
+    function updateSynapseColors(keys: Array<string>, spiking: boolean): void {
+        keys.forEach(key => {
+            const conesIndex = connectionsRef.current.get(key);
+            if (conesIndex !== undefined) {
+                (conesRef.current[conesIndex].material as MeshBasicMaterial).color = (spiking ? white : orange);
+                // (conesRef.current[conesIndex].material as MeshBasicMaterial).color = (spiking ? white : orange);
+            }
+        })
+    }
+
+    useEffect(
+        () => {
+            const subscription = networkObservable
+                .pipe(filter(event => event.type === SPIKE))
+                .subscribe({
+                    next: event => {
+                        if (contextRef.current && conesRef.current) {
+                            const spikingConnections = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsInfoRef.current)
+                                .map(([, info]) => connectionKeyFor(info))
+
+                            // flash the connections
+                            animateSpike(spikingConnections, true);
+                        }
+                    },
+                    error: error => console.error(error),
+                    complete: () => console.log("complete")
+                });
+
+            return () => {
+                subscription.unsubscribe();
+            }
+        },
+        [networkObservable]
+    )
+
+    // nothing to return
     return null;
 }
 

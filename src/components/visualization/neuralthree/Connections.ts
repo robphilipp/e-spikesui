@@ -115,7 +115,7 @@ function connectionColorsFrom(connections: Array<ConnectionInfo>,
  * @return {Array<[number, ConnectionInfo]>} An array holding the index and the connection information for each
  * connection that is emanating from the (pre-synaptic) neuron with the specified ID
  */
-function outgoingConnectionsFor(neuronId: string, connections: Array<ConnectionInfo>): Array<[number, ConnectionInfo]> {
+export function outgoingConnectionsFor(neuronId: string, connections: Array<ConnectionInfo>): Array<[number, ConnectionInfo]> {
     return connections
         .reduce(
             (outgoingConnections: Array<[number, ConnectionInfo]>, connection: ConnectionInfo, index: number) => {

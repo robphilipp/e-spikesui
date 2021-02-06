@@ -375,6 +375,8 @@ function Network(props: Props): JSX.Element {
                         sceneId={NETWORK_SCENE_ID}
                         connections={connectionInfo}
                         colorRange={colors}
+                        networkObservable={networkObservable}
+                        spikeDuration={spikeDuration}
                     />
                 </SceneManager>
             </Stack.Item>

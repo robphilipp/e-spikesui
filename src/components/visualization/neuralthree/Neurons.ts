@@ -215,7 +215,6 @@ function Neurons(props: OwnProps): null {
         // update the neuron color based on whether the neuron is spiking or not and let three-js know that
         // the colors need to be updated
         updateNeuronColor(neuronIndex, neuronColorsRef.current, spiking ? spikeColorRef.current : neuronColor);
-        // (((pointsRef.current).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
         const color = ((pointsRef.current).geometry as BufferGeometry).attributes.color as BufferAttribute;
         if (color !== undefined) {
             color.needsUpdate = true;

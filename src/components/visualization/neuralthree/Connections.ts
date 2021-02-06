@@ -202,6 +202,15 @@ function Connections(props: OwnProps): null {
 
     const connectionGeometryRef = useRef(new BufferGeometry());
 
+    const spikeColorRef = useRef<Color>(spikeColor)
+
+    useEffect(
+        () => {
+            spikeColorRef.current = spikeColor;
+        },
+        [spikeColor]
+    )
+
     // called when the connections or the color range are modified to recalculate the connection colors
     useEffect(
         () => {
@@ -249,8 +258,8 @@ function Connections(props: OwnProps): null {
     function animateSpike(originalColors: Array<ConnectionColor>, connectionColors: Float32Array, spiking: boolean) {
 
         originalColors.forEach(original => {
-            const preSynapticColor = spiking ? spikeColor : original.preSynaptic;
-            const postSynapticColor = spiking ? spikeColor : original.postSynaptic;
+            const preSynapticColor = spiking ? spikeColorRef.current : original.preSynaptic;
+            const postSynapticColor = spiking ? spikeColorRef.current : original.postSynaptic;
             updateConnectionColor(original.connectionIndex, connectionColors, preSynapticColor, postSynapticColor);
         });
 
@@ -260,7 +269,6 @@ function Connections(props: OwnProps): null {
         if (attribute !== undefined) {
             attribute.needsUpdate = true
         }
-        // (((lineSegmentsRef.current as LineSegments).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
 
         // render the scene with three-js
         renderRef.current();

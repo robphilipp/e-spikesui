@@ -132,7 +132,9 @@ function Network(props: Props): JSX.Element {
     } = props;
 
     const scenesContext = useScenes(() => getScenes());
+
     const [axesColor, setAxesColor] = useState<string>(itheme.palette.neutralLight);
+    const [spikeColor, setSpikeColor] = useState<Color>(new Color(itheme.palette.black));
 
     const controls = useRef<OrbitControls>(null);
 
@@ -146,7 +148,10 @@ function Network(props: Props): JSX.Element {
 
     // updates the axis color when the background color is changed
     useEffect(
-        () => setAxesColor(itheme.palette.themeTertiary),
+        () => {
+            setAxesColor(itheme.palette.themeTertiary)
+            setSpikeColor(new Color(itheme.palette.black))
+        },
         [itheme]
     );
 
@@ -354,7 +359,7 @@ function Network(props: Props): JSX.Element {
                         excitatoryNeuronColor={excitationColor}
                         inhibitoryNeuronColor={inhibitionColor}
                         colorRange={colors}
-                        spikeColor={new Color(itheme.palette.themePrimary)}
+                        spikeColor={spikeColor}
                         networkObservable={networkObservable}
                         spikeDuration={spikeDuration}
                     />
@@ -362,7 +367,7 @@ function Network(props: Props): JSX.Element {
                         sceneId={NETWORK_SCENE_ID}
                         connections={connectionInfo}
                         colorRange={colors}
-                        spikeColor={new Color(itheme.palette.themePrimary)}
+                        spikeColor={spikeColor}
                         networkObservable={networkObservable}
                         spikeDuration={spikeDuration}
                     />

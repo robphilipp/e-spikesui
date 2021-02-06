@@ -147,6 +147,15 @@ function Neurons(props: OwnProps): null {
     const renderRef = useRef<() => void>(noop);
     const neuronGeometryRef = useRef(new BufferGeometry());
 
+    const spikeColorRef = useRef<Color>(spikeColor)
+
+    useEffect(
+        () => {
+            spikeColorRef.current = spikeColor;
+        },
+        [spikeColor]
+    )
+
     // called when the neurons or the color ranges change so that we can recalculate the colors
     useEffect(
         () => {
@@ -205,7 +214,7 @@ function Neurons(props: OwnProps): null {
     function animateSpike(neuronIndex: number, neuronColor: Color, spiking: boolean) {
         // update the neuron color based on whether the neuron is spiking or not and let three-js know that
         // the colors need to be updated
-        updateNeuronColor(neuronIndex, neuronColorsRef.current, spiking ? spikeColor : neuronColor);
+        updateNeuronColor(neuronIndex, neuronColorsRef.current, spiking ? spikeColorRef.current : neuronColor);
         // (((pointsRef.current).geometry as BufferGeometry).attributes.color as BufferAttribute)!.needsUpdate = true;
         const color = ((pointsRef.current).geometry as BufferGeometry).attributes.color as BufferAttribute;
         if (color !== undefined) {

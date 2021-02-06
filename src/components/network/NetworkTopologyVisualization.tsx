@@ -105,7 +105,7 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
     /**
      * Issues a spike for each neuron, in order, on the observable to simulate the network firing
      * @param neuronIds The neuron IDs
-     * @return An observable of network evenets
+     * @return An observable of network events
      */
     function sparkleObservable(neuronIds: HashSet<string>): Observable<NetworkEvent> {
         const ids = neuronIds.toArray()

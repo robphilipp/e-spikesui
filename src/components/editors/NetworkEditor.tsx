@@ -260,6 +260,14 @@ function NetworkEditor(props: Props): JSX.Element {
             })
     }
 
+    function toggleShowSimulationLayer(): void {
+        if (showSimulation) {
+            hideSimulationLayer()
+        } else {
+            showSimulationLayer()
+        }
+    }
+
     /**
      * Sets the state so that the sensor simulation window is visible
      */
@@ -348,11 +356,11 @@ function NetworkEditor(props: Props): JSX.Element {
      */
     function showSimulationButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <TooltipHost content="Show sensor simulation control panel">
+            <TooltipHost content={showSimulation ? "Hide network visualization" : "Show network visualization"}>
                 <IconButton
-                    iconProps={{iconName: 'sprint'}}
-                    disabled={showSimulation || network?.length < 10}
-                    onClick={showSimulationLayer}
+                    iconProps={{iconName: showSimulation ? 'noEye' : 'eye'}}
+                    disabled={network?.length < 10}
+                    onClick={toggleShowSimulationLayer}
                 />
             </TooltipHost>
         </div>
@@ -427,7 +435,6 @@ function NetworkEditor(props: Props): JSX.Element {
                     <Separator>Network Topology</Separator>
                     <NetworkTopologyVisualization
                         itheme={itheme}
-                        // sceneHeight={100}
                         sceneHeight={window.innerHeight * 0.9 - dimension.height - 75}
                         sceneWidth={window.innerWidth - 100}
                         onClose={hideSimulationLayer}

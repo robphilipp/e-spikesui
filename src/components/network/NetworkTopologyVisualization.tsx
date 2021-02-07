@@ -181,8 +181,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
     modified: state.networkDescription.modified,
     neurons: state.networkEvent.neurons,
     connections: state.networkEvent.connections,
-    // networkDescriptionPath: state.networkDescription.path,
-    // templatePath: state.settings.networkDescription.templatePath
 });
 
 /**
@@ -194,9 +192,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onCompiled: (topology: NetworkTopology) => dispatch(updateNetworkTopology(topology)),
-    // onLoadTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
-    // onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
-    // onSave: (path: string, description: string) => dispatch(persistNetworkDescription(path, description)),
 });
 
 const connectedNetworkTopology = connect(mapStateToProps, mapDispatchToProps)(NetworkTopologyVisualization);

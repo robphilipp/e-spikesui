@@ -56,10 +56,10 @@ const darkPalette: Palette = {
     black: '#fefcfa',
     white: '#2b2b2b',
     redLight: 'rgb(150,0,0)',
-    red: 'rgb(210,0,0)',
+    red: '#f00',
     redDark: 'rgb(255,0,0)',
     greenLight: 'rgb(0,150,0)',
-    green: 'rgb(0,200,0)',
+    green: '#3f3',
     greenDark: 'rgb(0,255,0)',
 };
 
@@ -87,10 +87,10 @@ const lightPalette: Palette = {
     black: '#4c2c0b',
     white: '#ffffff',
     redLight: 'rgb(255,0,0)',
-    red: 'rgb(200,0,0)',
+    red: '#f30',
     redDark: 'rgb(150, 0, 0)',
     greenLight: 'rgb(0,255,0)',
-    green: 'rgb(0,200,0)',
+    green: '#090',
     greenDark: 'rgb(0,150,0)',
 };
 

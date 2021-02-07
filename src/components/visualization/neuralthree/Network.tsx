@@ -221,17 +221,23 @@ function Network(props: Props): JSX.Element {
     function getCamera(offsetWidth: number,
                        offsetHeight: number,
                        position: Coordinate = cameraPositionRef.current): PerspectiveCamera {
-        return camera.getOrCall(() => {
-            const camera = new PerspectiveCamera(
-                45,
-                offsetWidth / offsetHeight,
-                0.1,
-                10000,
-            );
-            camera.position.set(position.x, position.y, position.z);
-            onCameraUpdate(camera);
-            return camera;
-        })
+        return camera
+            .getOrCall(() => {
+                const camera = new PerspectiveCamera(45, offsetWidth / offsetHeight, 0.1, 10000,);
+                camera.position.set(position.x, position.y, position.z);
+                onCameraUpdate(camera);
+                return camera;
+            })
+    }
+
+    function getAxesCamera(offsetWidth: number, offsetHeight: number): PerspectiveCamera {
+        return camera
+            .map(cam => {
+                const camera = new PerspectiveCamera(45, offsetHeight / offsetHeight, 0.1, 100);
+                camera.up = cam.up;
+                return camera;
+            })
+            .getOrUndefined()
     }
 
     /**
@@ -288,6 +294,7 @@ function Network(props: Props): JSX.Element {
         });
     }
 
+
     const stackTokens: IStackTokens = {childrenGap: 20};
     return (
         <Stack>
@@ -313,6 +320,7 @@ function Network(props: Props): JSX.Element {
             </Stack.Item>
             <Stack.Item>
                 <SceneManager
+                    canvasId="network-canvas"
                     getCamera={getCamera}
                     getRenderer={getRenderer}
                     getScenes={getScenes}

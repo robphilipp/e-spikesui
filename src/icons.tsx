@@ -33,7 +33,7 @@ import {
     faChevronUp,
     faSyncAlt,
     faFileContract,
-    faCopy,
+    faCopy, faCameraRetro, faGlasses, faEye, faEyeSlash,
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -97,7 +97,11 @@ export default function prepareIcons(): void {
             'brain': <FontAwesomeIcon icon={faBrain}/>,
             'help': <FontAwesomeIcon icon={faQuestionCircle}/>,
             'code': <FontAwesomeIcon icon={faCode}/>,
-            'reset': <FontAwesomeIcon icon={faSyncAlt}/>
+            'reset': <FontAwesomeIcon icon={faSyncAlt}/>,
+            'camera': <FontAwesomeIcon icon={faCameraRetro}/>,
+            'glasses': <FontAwesomeIcon icon={faGlasses}/>,
+            'eye': <FontAwesomeIcon icon={faEye}/>,
+            'noEye': <FontAwesomeIcon icon={faEyeSlash}/>,
         }
     });
 }

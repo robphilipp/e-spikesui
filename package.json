@@ -84,6 +84,7 @@
     "@types/react-router-dom": "^5.1.5",
     "@typescript-eslint/eslint-plugin": "^4.10.0",
     "@typescript-eslint/parser": "^4.10.0",
+    "copy-webpack-plugin": "^6.4.1",
     "css-loader": "^5.0.1",
     "electron": "^11.1.0",
     "eslint": "^7.14.0",
@@ -114,6 +115,7 @@
     "d3": "^5.16.0",
     "electron-squirrel-startup": "^1.0.0",
     "file-loader": "^6.1.1",
+    "immutable": "^4.0.0-rc.12",
     "jest": "^26.6.3",
     "moment": "^2.29.1",
     "monaco-editor": "^0.21.2",
@@ -127,6 +129,7 @@
     "sass-loader": "^10.1.0",
     "stream-charts": "file:../../../stream-charts/stream-charts-0.2.2-SNAPSHOT.tgz",
     "threads": "^1.6.3",
+    "three": "^0.124.0",
     "url-loader": "^4.1.1"
   }
 }

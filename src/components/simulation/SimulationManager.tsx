@@ -167,44 +167,15 @@ function SimulationManager(props: Props): JSX.Element {
                 networkFilePath: networkDescriptionPath
             }
 
-            // todo handle success and error
             onSave(projectPath, project).catch(reason => onSetError(<div>{reason}</div>));
         } else {
             handleSaveProjectAs();
         }
     }
 
-    // function handleSaveProject(): void {
-    //     const project: SimulationProject = {
-    //         simulationName: simulationName,
-    //         timeFactor: timeFactor,
-    //         simulationDuration: simulationDuration,
-    //         sensorFilePath: sensorDescriptionPath,
-    //         networkFilePath: networkDescriptionPath
-    //     }
-    //
-    //     // if the state path is set and the path does not equal the template path, then the network
-    //     // description is from an existing file, and we can just save it. otherwise, we need to up a
-    //     // dialog so that the user can give the filename
-    //     if (projectPath && projectPath !== NEW_PROJECT_PATH) {
-    //         // todo handle success and error
-    //         onSave(projectPath, project)
-    //             .catch(reason => onSetError(<div>{reason}</div>));
-    //         // .catch(reason => setMessage(errorMessage(<div>{reason}</div>)));
-    //     } else {
-    //         remote.dialog
-    //             .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-    //             .then(response => onSave(response.filePath, project)
-    //                 .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
-    //                 .catch(reason => onSetError(<>
-    //                     <div><b>Unable to save project to file.</b></div>
-    //                     <div>Path: {projectPath}</div>
-    //                     <div>Response: {reason}</div>
-    //                 </>))
-    //             );
-    //     }
-    // }
-
+    /**
+     * Handles saving the project under a new filename. Displays the save-as file dialog
+     */
     function handleSaveProjectAs(): void {
         const project: SimulationProject = {
             simulationName: simulationName,

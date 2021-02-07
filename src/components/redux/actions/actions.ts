@@ -4,6 +4,9 @@ import {SensorsAction} from "./sensors";
 import {SimulationProjectAction} from "./simulationProject";
 import { MessageBarType } from "@fluentui/react";
 import {Option} from "prelude-ts";
+import { NetworkBuiltAction, NetworkManagementAction } from "./networkManagement";
+import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
+import { NetworkVisualizationAction } from "./networkVisualization";
 
 // import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 // import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
@@ -47,12 +50,12 @@ export interface MessageSetAction {
  */
 export type ApplicationAction = MessageSetAction
     | MessageClearedAction
-    // | NetworkManagementAction
+    | NetworkManagementAction
     | SettingsAction
-    // | NetworkBuiltAction
-    // | NetworkEventAction
-    // | NetworkEventsAction
-    // | NetworkVisualizationAction
+    | NetworkBuiltAction
+    | NetworkEventAction
+    | NetworkEventsAction
+    | NetworkVisualizationAction
     | NetworkDescriptionAction
     | SensorsAction
     | SimulationProjectAction

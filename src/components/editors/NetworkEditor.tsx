@@ -16,18 +16,28 @@ import {
     updateNetworkDescription
 } from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
-import {IconButton, ITheme, MessageBar, MessageBarType, Stack, StackItem, TooltipHost} from '@fluentui/react';
+import {
+    IconButton,
+    ITheme,
+    Layer, LayerHost,
+    MessageBar,
+    MessageBarType,
+    Separator,
+    Stack,
+    StackItem,
+    TooltipHost
+} from '@fluentui/react';
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import { baseRouterPathFrom } from '../router/router';
+import {noop} from "../../commons";
+import SensorSimulation from "../sensors/SensorSimulation";
+import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
 
 export const NEW_NETWORK_PATH = '**new**';
 
 const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
-const emptyFunction = () => {
-    return;
-}
 
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
@@ -66,6 +76,7 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function NetworkEditor(props: Props): JSX.Element {
     const {
+        itheme,
         theme = DefaultTheme.DARK,
         network,
         templatePath,
@@ -88,10 +99,10 @@ function NetworkEditor(props: Props): JSX.Element {
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
+    const heightFractionRef = useRef(1.0);
 
-    // the keyboard event listener holds a stale ref to the props, so we need to use a
-    // reference that is updated for the event listener to use
-    // const keyboardEventRef = useRef({path, templatePath, network});
+    // whether to show the simulation panel
+    const [showSimulation, setShowSimulation] = useState(false);
 
     const [message, setMessage] = useState<JSX.Element>();
 
@@ -152,24 +163,14 @@ function NetworkEditor(props: Props): JSX.Element {
         [path]
     )
     
-
-    // // the keyboard event listener holds a stale ref to the props, so we need to update
-    // // the referenced values when they change
-    // useEffect(
-    //     () => {
-    //         keyboardEventRef.current = {path, templatePath, network};
-    //     },
-    //     [path, templatePath, network]
-    // )
-
     /**
      * calculates the editors dimensions based on the `<div>`'s width and height
      * @return The dimension of the editor
      */
     function editorDimensions(): Dimension {
         return {
-            width: editorRef.current.offsetWidth,
-            height: editorRef.current.clientHeight
+            width: editorRef.current.offsetWidth - 25,
+            height: editorRef.current.clientHeight * heightFractionRef.current
         };
     }
 
@@ -199,7 +200,6 @@ function NetworkEditor(props: Props): JSX.Element {
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    // const {path, templatePath, network} = keyboardEventRef.current;
                     handleSave(networkDescriptionPath, templatePath, network);
                     break;
                 }
@@ -258,6 +258,32 @@ function NetworkEditor(props: Props): JSX.Element {
             .then(response => {
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
+    }
+
+    function toggleShowSimulationLayer(): void {
+        if (showSimulation) {
+            hideSimulationLayer()
+        } else {
+            showSimulationLayer()
+        }
+    }
+
+    /**
+     * Sets the state so that the sensor simulation window is visible
+     */
+    function showSimulationLayer(): void {
+        heightFractionRef.current = 0.4;
+        setDimension(editorDimensions());
+        setShowSimulation(true);
+    }
+
+    /**
+     * Sets the state so that the sensor simulation window is hidden
+     */
+    function hideSimulationLayer(): void {
+        heightFractionRef.current = 1.0;
+        setDimension(editorDimensions());
+        setShowSimulation(false);
     }
 
     /**
@@ -325,6 +351,22 @@ function NetworkEditor(props: Props): JSX.Element {
     }
 
     /**
+     * Renders the button the shows the simulation panel
+     * @return The button for showing the simulation
+     */
+    function showSimulationButton(): JSX.Element {
+        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+            <TooltipHost content={showSimulation ? "Hide network visualization" : "Show network visualization"}>
+                <IconButton
+                    iconProps={{iconName: showSimulation ? 'noEye' : 'eye'}}
+                    disabled={network?.length < 10}
+                    onClick={toggleShowSimulationLayer}
+                />
+            </TooltipHost>
+        </div>
+    }
+
+    /**
      * Message bar for displaying errors
      * @param message The error message
      * @return A `MessageBar` with an error message
@@ -359,7 +401,10 @@ function NetworkEditor(props: Props): JSX.Element {
                     color: props.itheme.palette.themeSecondary
                 }}
             >
-                {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ? '[new file]' : networkDescriptionPath}{modified ? '*' : ''}
+                {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?
+                    '[new file]' :
+                    networkDescriptionPath
+                }{modified ? '*' : ''}
             </div>
             <Stack horizontal>
                 <StackItem>
@@ -367,6 +412,8 @@ function NetworkEditor(props: Props): JSX.Element {
                     {saveButton()}
                     {loadButton()}
                     {buildButton()}
+                    <Separator/>
+                    {showSimulationButton()}
                 </StackItem>
                 <StackItem>
                     <MonacoEditor
@@ -379,9 +426,20 @@ function NetworkEditor(props: Props): JSX.Element {
                         value={network}
                         options={editorOptions}
                         onChange={(value: string) => onChanged(value)}
-                        editorDidMount={emptyFunction}
+                        editorDidMount={noop}
                     />
+                    {showSimulation && <LayerHost id='chart-layer'/>}
                 </StackItem>
+                {showSimulation &&
+                <Layer hostId="chart-layer" style={{width: '100%'}}>
+                    <Separator>Network Topology</Separator>
+                    <NetworkTopologyVisualization
+                        itheme={itheme}
+                        sceneHeight={window.innerHeight * 0.9 - dimension.height - 75}
+                        sceneWidth={window.innerWidth - 100}
+                        onClose={hideSimulationLayer}
+                    />
+                </Layer>}
             </Stack>
         </div>
     )

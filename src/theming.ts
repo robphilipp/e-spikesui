@@ -24,8 +24,12 @@ export interface Palette {
     neutralDark: string;
     black: string;
     white: string;
+    redLight: string;
     redDark: string;
     red: string;
+    greenLight: string;
+    greenDark: string;
+    green: string;
 }
 
 const darkPalette: Palette = {
@@ -51,8 +55,12 @@ const darkPalette: Palette = {
     neutralDark: '#fefaf6',
     black: '#fefcfa',
     white: '#2b2b2b',
-    red: 'rgb(241,154,161)',
-    redDark: 'rgb(241, 112, 123)',
+    redLight: 'rgb(150,0,0)',
+    red: '#f00',
+    redDark: 'rgb(255,0,0)',
+    greenLight: 'rgb(0,150,0)',
+    green: '#3f3',
+    greenDark: 'rgb(0,255,0)',
 };
 
 const lightPalette: Palette = {
@@ -78,8 +86,12 @@ const lightPalette: Palette = {
     neutralDark: '#623d18',
     black: '#4c2c0b',
     white: '#ffffff',
-    red: 'rgb(221,53,61)',
-    redDark: 'rgb(164, 38, 44)',
+    redLight: 'rgb(255,0,0)',
+    red: '#f30',
+    redDark: 'rgb(150, 0, 0)',
+    greenLight: 'rgb(0,255,0)',
+    green: '#090',
+    greenDark: 'rgb(0,150,0)',
 };
 
 export const defaultTheme = "dark";

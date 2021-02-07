@@ -1,14 +1,5 @@
 import {ThreeContext} from "./ThreeJsManager";
-import {
-    ArrowHelper,
-    BufferAttribute,
-    BufferGeometry,
-    Color,
-    Float32BufferAttribute,
-    LineBasicMaterial,
-    LineSegments,
-    VertexColors
-} from "three";
+import {BufferAttribute, BufferGeometry, Color, Float32BufferAttribute, LineBasicMaterial, LineSegments} from "three";
 import {useThree} from "./useThree";
 import {Coordinate, origin} from "./Coordinate";
 import {useEffect, useState} from "react";
@@ -66,8 +57,8 @@ function CoordinateAxes(props: OwnProps): null {
 
     /**
      * Creates the vertex position array
-     * @param {Coordinate} offset The location of the axes origin relative to the true origin
-     * @return {Array<number>} The vertex locations
+     * @param offset The location of the axes origin relative to the true origin
+     * @return The vertex locations
      */
     function vertexCoords(offset: Coordinate): Array<number> {
         return [
@@ -81,16 +72,13 @@ function CoordinateAxes(props: OwnProps): null {
     // to the line segments
     const {getEntity} = useThree<LineSegments>((context: ThreeContext) => {
         const {scenesContext} = context;
-        const geometry = new BufferGeometry();
-        geometry.setAttribute('position', vertices);
-        geometry.setAttribute('color', colors);
+        const geometry = new BufferGeometry()
+            .setAttribute('position', vertices)
+            .setAttribute('color', colors);
 
         const material = new LineBasicMaterial({
             vertexColors: true,
             opacity: opacity,
-            linewidth: 3,
-            linecap: 'arrow3'
-            // transparent: true,
         });
 
         return scenesContext.addToScene(sceneId, new LineSegments(geometry, material));

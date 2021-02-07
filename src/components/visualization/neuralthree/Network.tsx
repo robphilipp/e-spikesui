@@ -273,7 +273,7 @@ function Network(props: Props): JSX.Element {
      */
     function getScenes(): Vector<SceneInfo> {
         return scenes.getOrCall(() => {
-            const light = new AmbientLight(0xffffff, 1);
+            const light = new AmbientLight(0xffffff, 2);
             const gridScene = new Scene();
             gridScene.add(light);
             const axesScene = new Scene();
@@ -282,8 +282,8 @@ function Network(props: Props): JSX.Element {
             networkScene.add(light);
 
             const scenes = Vector.of(
-                {name: GRID_SCENE_ID, scene: gridScene, visible: false},
-                {name: AXES_SCENE_ID, scene: axesScene, visible: false},
+                {name: GRID_SCENE_ID, scene: gridScene, visible: gridVisible},
+                {name: AXES_SCENE_ID, scene: axesScene, visible: axesVisible},
                 {name: NETWORK_SCENE_ID, scene: networkScene, visible: true}
             );
             onScenesUpdate(scenes);
@@ -337,7 +337,7 @@ function Network(props: Props): JSX.Element {
                         sceneId={GRID_SCENE_ID}
                         size={5000}
                         divisions={100}
-                        centerColor={new Color(itheme.palette.white)}
+                        centerColor={new Color(itheme.palette.neutralTertiaryAlt)}
                         gridColor={new Color(itheme.palette.neutralLight)}
                         opacity={1}
                     />

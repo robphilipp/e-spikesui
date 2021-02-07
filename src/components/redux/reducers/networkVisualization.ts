@@ -27,7 +27,7 @@ interface NetworkVisualizationState {
 
 const initialVisState: NetworkVisualizationState = {
     axesVisible: false,
-    gridVisible: false,
+    gridVisible: true,
     camera: Option.none(),
     renderer: Option.none(),
     scenes: Option.none(),

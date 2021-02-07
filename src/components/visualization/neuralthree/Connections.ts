@@ -1,5 +1,5 @@
 import {ThreeContext} from "../basethree/ThreeJsManager";
-import {BufferAttribute, BufferGeometry, Color, LineBasicMaterial, LineSegments, MeshBasicMaterial} from "three";
+import {BufferAttribute, BufferGeometry, Color, LineBasicMaterial, LineSegments} from "three";
 import {threeRender, useThree} from "../basethree/useThree";
 import {NeuronInfo} from "./Neurons";
 import {useEffect, useRef} from "react";

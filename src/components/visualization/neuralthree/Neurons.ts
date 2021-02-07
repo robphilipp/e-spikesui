@@ -141,7 +141,11 @@ function Neurons(props: OwnProps): null {
     } = props;
 
     const neuronPositionsRef = useRef<Float32Array>(neuronPositionsFrom(neurons));
-    const neuronColorsRef = useRef<Float32Array>(neuronColorsFrom(neurons, new Color(excitatoryNeuronColor), new Color(inhibitoryNeuronColor)));
+    const neuronColorsRef = useRef<Float32Array>(
+        neuronColorsFrom(neurons, new Color(excitatoryNeuronColor), new Color(inhibitoryNeuronColor))
+    );
+    const colorRangeRef = useRef<ColorRange>(colorRange);
+
     const pointsRef = useRef<Points>();
     const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
@@ -154,6 +158,13 @@ function Neurons(props: OwnProps): null {
             spikeColorRef.current = spikeColor;
         },
         [spikeColor]
+    )
+
+    useEffect(
+        () => {
+            colorRangeRef.current = colorRange;
+        },
+        [colorRange]
     )
 
     // called when the neurons or the color ranges change so that we can recalculate the colors
@@ -243,7 +254,7 @@ function Neurons(props: OwnProps): null {
                     next: event => {
                         if (contextRef.current && pointsRef.current) {
                             const neuronIndex = neuronIndexFrom((event.payload as Spike).neuronId, neurons);
-                            const neuronColor = neuronColorFor(neurons[neuronIndex], colorRange);
+                            const neuronColor = neuronColorFor(neurons[neuronIndex], colorRangeRef.current);
 
                             animateSpike(neuronIndex, neuronColor, true);
                         }

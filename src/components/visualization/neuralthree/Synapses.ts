@@ -17,6 +17,7 @@ export interface OwnProps {
     // observable that emits network events upon subscription
     networkObservable: Observable<NetworkEvent>;
     spikeDuration: number;
+    spikeColor: Color;
 }
 
 const coneUnitVector = new Vector3(0, -1, 0);
@@ -73,15 +74,20 @@ function connectionKeyFor(connection: ConnectionInfo): string {
     return `${connection.preSynaptic.name}::${connection.postSynaptic.name}`;
 }
 
-const orange = new Color('orange');
-const white = new Color('white');
-
-const meshParameters: MeshBasicMaterialParameters = {
-    transparent: true,
-    vertexColors: true,
-    alphaTest: 0.5,
-    color: 'orange'
-};
+/**
+ * Returns the mesh's material parameters for the synapse (cone) mesh
+ * @param baseColors The base colors (min, max) for the synapse
+ * @param excitatory `true` if the pre-synaptic neuron is excitatory; `false` if the neuron is inhibitory
+ * @return The parameters for the mesh's material
+ */
+function meshParametersFor(baseColors: ColorRange, excitatory: boolean): MeshBasicMaterialParameters {
+    return {
+        transparent: true,
+        vertexColors: true,
+        alphaTest: 0.5,
+        color: excitatory ? baseColors.excitatory.max : baseColors.inhibitory.max,
+    }
+}
 
 /**
  * Function component that represents the synapses. These are a set of dots drawn on the connection line
@@ -97,13 +103,16 @@ function Synapses(props: OwnProps): null {
         colorRange,
         networkObservable,
         spikeDuration,
+        spikeColor,
     } = props;
 
     const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
-    // const materialRef = useRef<MeshBasicMaterial>(new MeshBasicMaterial(meshParameters));
-    const materialRef = useRef<Array<MeshBasicMaterial>>(connections.map(() => new MeshBasicMaterial(meshParameters)));
+    const materialRef = useRef<Array<MeshBasicMaterial>>(
+        connections.map(connection => new MeshBasicMaterial(meshParametersFor(colorRange, connection.preSynaptic.type === 'e')))
+    );
+    const spikeColorRef = useRef<Color>(spikeColor);
     // holds the cones representing the synapse
     const conesRef = useRef<Array<Mesh>>(
         connections.map((connection, index) => createCone(connection, geometryRef.current, materialRef.current[index]))
@@ -158,6 +167,14 @@ function Synapses(props: OwnProps): null {
         [connections, colorRange]
     );
 
+    // when the theme has changed, the spike color will also have changed, so update it
+    useEffect(
+        () => {
+            spikeColorRef.current = spikeColor;
+        },
+        [spikeColor]
+    )
+
 
     // sets up the synapses, and adds them to the network scene
     useThree<Array<Mesh>>((context: ThreeContext): [string, Array<Mesh>] => {
@@ -175,7 +192,13 @@ function Synapses(props: OwnProps): null {
         [contextRef.current]
     );
 
-    function animateSpike(spikingConnections: Array<string>, spiking: boolean) {
+    /**
+     * Function that changes the color of the synapse to it's spiking color, calling itself after the spiking
+     * duration to return the color back to it's pre-spiking color.
+     * @param spikingConnections The connections emanating from the spiking pre-synaptic neuron
+     * @param spiking `true` if spiking; `false` if done spiking
+     */
+    function animateSpike(spikingConnections: Array<ConnectionInfo>, spiking: boolean): void {
         updateSynapseColors(spikingConnections, spiking);
 
         // render the scene with three-js
@@ -193,12 +216,21 @@ function Synapses(props: OwnProps): null {
         }
     }
 
-    function updateSynapseColors(keys: Array<string>, spiking: boolean): void {
-        keys.forEach(key => {
-            const conesIndex = connectionsRef.current.get(key);
+    /**
+     * Updates the synapse colors, given the neuron is spiking, or not spiking and excitatory or inhibitory.
+     * @param connections An array of the connection information for the spiking (or done spiking) neurons
+     * @param spiking `true` if the neuron is spiking; `false` if the neuron is just done spiking
+     */
+    function updateSynapseColors(connections: Array<ConnectionInfo>, spiking: boolean): void {
+        connections.forEach(connection => {
+            const conesIndex = connectionsRef.current.get(connectionKeyFor(connection));
             if (conesIndex !== undefined) {
-                (conesRef.current[conesIndex].material as MeshBasicMaterial).color = (spiking ? white : orange);
-                // (conesRef.current[conesIndex].material as MeshBasicMaterial).color = (spiking ? white : orange);
+                const material = conesRef.current[conesIndex].material as MeshBasicMaterial;
+                if (spiking) {
+                    material.color = spikeColorRef.current;
+                } else {
+                    material.color = connection.preSynaptic.type === 'e' ? colorRange.excitatory.max : colorRange.inhibitory.max;
+                }
             }
         })
     }
@@ -211,7 +243,8 @@ function Synapses(props: OwnProps): null {
                     next: event => {
                         if (contextRef.current && conesRef.current) {
                             const spikingConnections = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsInfoRef.current)
-                                .map(([, info]) => connectionKeyFor(info))
+                                .map(([, info]) => info)
+                                // .map(([, info]) => connectionKeyFor(info))
 
                             // flash the connections
                             animateSpike(spikingConnections, true);

@@ -377,6 +377,7 @@ function Network(props: Props): JSX.Element {
                         colorRange={colors}
                         networkObservable={networkObservable}
                         spikeDuration={spikeDuration}
+                        spikeColor={spikeColor}
                     />
                 </SceneManager>
             </Stack.Item>

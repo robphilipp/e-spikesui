@@ -58,7 +58,6 @@ export interface StateProps {
     networkId: Option<string>;
     neurons: HashMap<string, NeuronInfo>;
     connections: HashMap<string, ConnectionInfo>;
-    // spikes: Vector<Spike>;
 
     axesVisible: boolean;
     gridVisible: boolean;

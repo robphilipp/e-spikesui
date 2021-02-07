@@ -133,16 +133,12 @@ export function outgoingConnectionsFor(neuronId: string, connections: Array<Conn
  * @param {number} connectionIndex The index of the connection in the color array
  * @param {ConnectionInfo} connectionInfo The information about the connection
  * @param {ColorRange} baseColors The colors for calculating the weight adjusted color
- * @param {Float32Array} connectionColors The array holding the colors for the edges two vertices (i.e. the
- * head and tail). The length of the connection colors array must be 6 times the length of the original connection
- * information array.
  * @return {ConnectionColor} Holds the colors for the pre- and post-synaptic neurons and the index into the
  * connection color three-js `Float32Array`.
  */
 function connectionColorFor(connectionIndex: number,
                             connectionInfo: ConnectionInfo,
-                            baseColors: ColorRange,
-                            connectionColors: Float32Array): ConnectionColor {
+                            baseColors: ColorRange): ConnectionColor {
     const color = connectionInfo.preSynaptic.type === 'e' ? baseColors.excitatory : baseColors.inhibitory;
     const adjustedColor = new Color(color.min).lerp(color.max, connectionInfo.weight);
     return {
@@ -187,7 +183,6 @@ function Connections(props: OwnProps): null {
         sceneId,
         connections,
         colorRange,
-        // spikingNeuronIds,
         spikeColor,
         spikeDuration,
         networkObservable
@@ -292,7 +287,7 @@ function Connections(props: OwnProps): null {
                     next: event => {
                         if (contextRef.current && lineSegmentsRef.current) {
                             const originalColors = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsRef.current)
-                                .map(info => connectionColorFor(info[0], info[1], props.colorRange, connectionColorsRef.current));
+                                .map(info => connectionColorFor(info[0], info[1], props.colorRange));
 
                             // flash the connections
                             animateSpike(originalColors, connectionColorsRef.current, true);
@@ -324,7 +319,6 @@ function Connections(props: OwnProps): null {
                 weightSubscription.unsubscribe();
             }
         },
-        // [buildObservable, networkObservable]
         [networkObservable]
     )
 

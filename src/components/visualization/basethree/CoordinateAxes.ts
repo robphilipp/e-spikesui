@@ -2,7 +2,7 @@ import {ThreeContext} from "./ThreeJsManager";
 import {BufferAttribute, BufferGeometry, Color, Float32BufferAttribute, LineBasicMaterial, LineSegments} from "three";
 import {useThree} from "./useThree";
 import {Coordinate, origin} from "./Coordinate";
-import {useEffect, useState} from "react";
+import {useEffect, useRef} from "react";
 
 export interface AxesColors {
     x: Color;
@@ -31,21 +31,20 @@ export interface OwnProps {
 
 /**
  * Displays a set of coordinate axes whose (x, y, z)-colors, axes length, and axes opacity can be specified.
- * @param {OwnProps} props The axes properties
- * @return {null} A `null` JSX element
+ * @param props The axes properties
+ * @return A `null` JSX element
  * @constructor
  */
 function CoordinateAxes(props: OwnProps): null {
 
     const {length, color, opacity, originOffset = origin(), sceneId} = props;
 
-    const [colors, ] = useState(new Float32BufferAttribute(vertexColors(color), 3));
-    const [vertices, ] = useState(new Float32BufferAttribute(vertexCoords(originOffset), 3));
+    const colorsRef = useRef(new Float32BufferAttribute(vertexColors(color), 3));
 
     /**
      * Creates the vertex color array for the specified axes colors.
-     * @param {AxesColors} color The colors for the x, y, and z, axes
-     * @return {Array<number>} The vertex colors
+     * @param color The colors for the x, y, and z, axes
+     * @return The vertex colors
      */
     function vertexColors(color: AxesColors): Array<number> {
         return [
@@ -72,9 +71,11 @@ function CoordinateAxes(props: OwnProps): null {
     // to the line segments
     const {getEntity} = useThree<LineSegments>((context: ThreeContext) => {
         const {scenesContext} = context;
+
+        const vertices = new Float32BufferAttribute(vertexCoords(originOffset), 3);
         const geometry = new BufferGeometry()
             .setAttribute('position', vertices)
-            .setAttribute('color', colors);
+            .setAttribute('color', colorsRef.current);
 
         const material = new LineBasicMaterial({
             vertexColors: true,
@@ -89,7 +90,7 @@ function CoordinateAxes(props: OwnProps): null {
         () => {
             const bufferGeometry = getEntity().geometry as BufferGeometry;
             if(bufferGeometry) {
-                    colors.set(vertexColors(color));
+                    colorsRef.current.set(vertexColors(color));
                     (bufferGeometry.getAttribute('color') as BufferAttribute).needsUpdate = true;
             }
         },

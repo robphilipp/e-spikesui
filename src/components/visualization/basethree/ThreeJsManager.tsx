@@ -226,7 +226,7 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         () => {
             if (rendererRef.current && cameraRef.current) {
                 const renderer = rendererRef.current;
-                const camera = cameraRef.current;
+                // const camera = cameraRef.current;
                 updateBackground();
 
                 // when there are no scenes, don't clear the background
@@ -238,7 +238,7 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
                 scenesContext.scenes
                     .filter(info => info.visible)
                     .forEach(info => {
-                        renderer.render(info.scene, camera);
+                        renderer.render(info.scene, cameraRef.current);
                         (renderer as WebGLRenderer).clearDepth();
                     })
             }

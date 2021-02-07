@@ -206,7 +206,7 @@ function Network(props: Props): JSX.Element {
      * @return {Coordinate} The camera's coordinates
      */
     function cameraCoordinates(): Coordinate {
-        return coordinateFrom(1,1,1)
+        return coordinateFrom(1, 1, 1)
             .scale(1.25 * boundingSphere.radius)
             .plus(boundingSphere.origin);
     }
@@ -257,10 +257,7 @@ function Network(props: Props): JSX.Element {
         if (context === null) {
             throw "Canvas context cannot be null";
         }
-        const renderer = new WebGLRenderer({
-            canvas,
-            context,
-        });
+        const renderer = new WebGLRenderer({canvas, context});
 
         renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
         renderer.setPixelRatio(window.devicePixelRatio);

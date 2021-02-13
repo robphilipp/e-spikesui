@@ -457,6 +457,8 @@ export function editorThemeFrom(name: string): string {
             return DefaultTheme.LIGHT;
 
         case 'dark':
+        case 'darkGray':
+        case 'darkSepia':
             return DefaultTheme.DARK;
 
         default:

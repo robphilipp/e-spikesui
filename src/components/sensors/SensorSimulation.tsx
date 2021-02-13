@@ -370,7 +370,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     </Stack.Item>
                     <Stack.Item tokens={{margin: '0 20px 0 30px'}}>
                         {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED ?
-                            <MessageBar messageBarType={MessageBarType.info}>
+                            <MessageBar>
                                 Please compile sensor description.
                             </MessageBar> :
                             <div/>

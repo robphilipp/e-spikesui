@@ -43,7 +43,9 @@ import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
     {key: "light", text: "Light Theme"},
-    {key: "dark", text: "Dark Theme"}
+    {key: "dark", text: "Dark Theme"},
+    {key: "darkGray", text: "Dark Gray Theme"},
+    {key: "darkSepia", text: "Dark Sepia Theme"}
 ];
 
 interface OwnProps {

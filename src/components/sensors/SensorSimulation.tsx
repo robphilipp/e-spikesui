@@ -119,14 +119,29 @@ export default function SensorSimulation(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Updates the control selection to add/remove the tracker
+     * @param event The event
+     * @param checked `true` if the tracker was selected; `false` otherwise
+     */
     function handleTrackerSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.TRACKER, checked);
     }
 
+    /**
+     * Updates the control selection to add/remove the tooltip
+     * @param event The event
+     * @param checked `true` if the tooltip was selected; `false` otherwise
+     */
     function handleTooltipSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.TOOLTIP, checked);
     }
 
+    /**
+     * Updates the control selection to add/remove the magnifier
+     * @param event The event
+     * @param checked `true` if the magnifier was selected; `false` otherwise
+     */
     function handleMagnifierSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.MAGNIFIER, checked);
     }

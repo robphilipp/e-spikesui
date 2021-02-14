@@ -33,7 +33,7 @@ import {
     faChevronUp,
     faSyncAlt,
     faFileContract,
-    faCopy, faCameraRetro, faGlasses, faEye, faEyeSlash, faHammer,
+    faCopy, faCameraRetro, faGlasses, faEye, faEyeSlash, faHammer, faChevronCircleDown, faChevronCircleUp,
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -84,6 +84,8 @@ export default function prepareIcons(): void {
             'cancel': <FontAwesomeIcon icon={faTimes}/>,
             'chevrondown': <FontAwesomeIcon icon={faChevronDown}/>,
             'chevronup': <FontAwesomeIcon icon={faChevronUp}/>,
+            'doublechevrondown': <FontAwesomeIcon icon={faChevronCircleDown}/>,
+            'doublechevronup': <FontAwesomeIcon icon={faChevronCircleUp}/>,
             'completedsolid': <FontAwesomeIcon icon={faCheckCircle}/>,
             'sortdown': <FontAwesomeIcon icon={faArrowDown}/>,
             'sortup': <FontAwesomeIcon icon={faArrowUp}/>,

@@ -325,10 +325,13 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
                 .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to deploy and build network on server."];
-                    if (reason.response.status === 404) {
+                    if (reason.response?.status === 404) {
                         messages.push(`Server endpoint not found; ${reason.response.config.url}`)
                     } else {
                         messages.push(reason.response.statusText)
+                        if (reason.response.data) {
+                            messages.push(reason.response.data)
+                        }
                     }
                     return dispatch(failedAction(NETWORK_BUILT, messages))
                 })
@@ -349,7 +352,7 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
                 .then(() => dispatch(successAction(NETWORK_DELETED, networkId)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to delete network from server."];
-                    if (reason.response.status === 404) {
+                    if (reason.response?.status === 404) {
                         messages.push(`Server endpoint not found; ${reason.response.config.url}`)
                     } else {
                         messages.push(reason.response.statusText)
@@ -444,7 +447,8 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
             source.pipe(bufferToggle(paused, () => resumed)),
             source.pipe(windowToggle(resumed, () => paused))
         ).pipe(
-            flatMap(message => message),
+            // flatMap(message => message),
+            mergeMap(message => message),
             // accumulate message for the time specified in the buffer interval
             bufferTime(bufferInterval),
             // only call the message processor when there are accumulated messages

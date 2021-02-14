@@ -4,7 +4,7 @@ import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../.
 import {
     CHANGE_THEME,
     KAFKA_SETTINGS_CHANGED,
-    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED, SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED, SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED, SERVER_SETTINGS_CHANGED,
     SettingsAction
 } from "../actions/settings";
 import {KafkaSettings} from "../../settings/kafkaSettings";
@@ -65,6 +65,12 @@ export function settingsReducer(state = initialSettings(), action: SettingsActio
                 ...state,
                 kafka: action.kafkaSettings
             };
+
+        case SERVER_SETTINGS_CHANGED:
+            return {
+                ...state,
+                server: action.serverSettings
+            }
 
         case NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED:
             return {

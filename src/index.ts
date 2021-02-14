@@ -30,7 +30,10 @@ function createWindow(): BrowserWindow {
             nodeIntegrationInWorker: true,
             // allows the renderer process to access "remote" objects from the main process
             // (e.g. dialog)
-            enableRemoteModule: true
+            enableRemoteModule: true,
+            // removes web-security features (in particular, this is needed to get rid of the
+            // CORS error when attempting to make REST calls)
+            webSecurity : false
         }
     });
 
@@ -118,6 +121,10 @@ app.on('activate', () => {
         // registerIpcListeners(mainWindow);
     }
 });
+
+// if upgrading electron breaks because of `webSecurity: false` then try with the
+// line below uncommented
+// app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.

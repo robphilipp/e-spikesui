@@ -206,7 +206,8 @@ function SettingsPanel(props: Props): JSX.Element {
         // attempt to save the settings
         const newSettings: ApplicationSettings = {
             themeName: name,
-            server: serverSettings,
+            // server: serverSettings,
+            server: currentServer,
             kafka: kafkaSettings,
             networkDescription: {...networkDescriptionSettings, templatePath: templateSettings.networkDescriptionPath},
             sensorDescription: {...environmentSettings, templatePath: templateSettings.sensorDescriptionPath},

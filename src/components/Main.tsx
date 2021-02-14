@@ -18,7 +18,8 @@ import {ApplicationAction, clearMessage, FeedbackMessage, setErrorMessage} from 
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
-import NetworkEditor, {editorThemeFrom} from "./editors/NetworkEditor";
+import NetworkEditor from "./editors/NetworkEditor";
+import {editorThemeFrom} from "./editors/themes"
 import {registerSpikesLanguage} from "./language/spikes-language";
 import {
     loadNetworkDescriptionFrom,

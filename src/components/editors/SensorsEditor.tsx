@@ -261,6 +261,17 @@ function SensorsEditor(props: Props): JSX.Element {
     }
 
     /**
+     * Toggles the simulation layer's visibility
+     */
+    function toggleShowSimulationLayer(): void {
+        if (showSimulation) {
+            hideSimulationLayer()
+        } else {
+            showSimulationLayer()
+        }
+    }
+
+    /**
      * Sets the state so that the sensor simulation window is visible
      */
     function showSimulationLayer(): void {
@@ -332,11 +343,14 @@ function SensorsEditor(props: Props): JSX.Element {
      */
     function showSimulationButton(): JSX.Element {
         return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
-            <TooltipHost content="Show sensor simulation control panel">
+            <TooltipHost content={showSimulation ?
+                "Hide sensor simulation control panel" :
+                "Show sensor simulation control panel"
+            }>
                 <IconButton
-                    iconProps={{iconName: 'sprint'}}
-                    disabled={showSimulation || codeSnippet?.length < 10}
-                    onClick={showSimulationLayer}
+                    iconProps={{iconName: showSimulation ? 'noEye' : 'eye'}}
+                    disabled={codeSnippet?.length < 10}
+                    onClick={toggleShowSimulationLayer}
                 />
             </TooltipHost>
         </div>

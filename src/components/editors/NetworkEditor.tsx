@@ -260,6 +260,9 @@ function NetworkEditor(props: Props): JSX.Element {
             })
     }
 
+    /**
+     * Toggles the simulation layer's visibility
+     */
     function toggleShowSimulationLayer(): void {
         if (showSimulation) {
             hideSimulationLayer()
@@ -443,27 +446,6 @@ function NetworkEditor(props: Props): JSX.Element {
             </Stack>
         </div>
     )
-}
-
-/**
- * Returns the editor's theme that is mapped to the application's theme
- * @param name The name of the application's theme
- * @return The name of the editor's theme
- */
-export function editorThemeFrom(name: string): string {
-    switch (name) {
-        case 'default':
-        case 'light':
-            return DefaultTheme.LIGHT;
-
-        case 'dark':
-        case 'darkGray':
-        case 'darkSepia':
-            return DefaultTheme.DARK;
-
-        default:
-            return DefaultTheme.LIGHT;
-    }
 }
 
 /*

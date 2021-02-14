@@ -2,10 +2,12 @@ import { Observable as FnsObservable } from 'observable-fns';
 import { SensorOutput } from '../sensors/compiler';
 import { Observable } from 'rxjs'
 import { ObservablePromise } from 'threads/dist/observable-promise';
-import { ModuleProxy, PrivateThreadProps, StripAsync } from 'threads/dist/types/master';
+import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from 'threads/dist/types/master';
 import { spawn, Thread, Worker } from 'threads';
 
-type SimulationType = ((...args: any) => ObservablePromise<StripAsync<SensorOutput>>) & PrivateThreadProps & ModuleProxy<any>;
+type SimulationType = ((...args: never) =>
+    ObservablePromise<StripAsync<SensorOutput>>) &
+    PrivateThreadProps & ModuleProxy<ModuleMethods>;
 
 export interface SensorThread {
     compileSimulator: (codeSnippet: string, timeFactor: number) => Promise<SignalGenerator>;

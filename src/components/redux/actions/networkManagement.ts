@@ -1,6 +1,6 @@
 import {ThunkAction, ThunkDispatch} from "redux-thunk";
 import {Either} from "prelude-ts";
-import axios, {AxiosResponse} from "axios";
+import axios, {AxiosError, AxiosResponse} from "axios";
 import {WebSocketSubject} from "rxjs/internal-compatibility";
 import {webSocket} from "rxjs/webSocket";
 import {merge, Observable, Subject, Subscription} from "rxjs";
@@ -192,12 +192,38 @@ export const BUILD_MESSAGE = {command: "build"};
 export const START_MESSAGE = {command: "start"};
 export const STOP_MESSAGE = {command: "stop"};
 
+type NetworkDescriptionLoadedThunkAction = ThunkAction<Promise<NetworkDescriptionLoadedAction>, unknown, unknown, NetworkDescriptionLoadedAction>;
+type NetworkBuildThunkAction = ThunkAction<Promise<NetworkBuiltAction>, unknown, unknown, NetworkBuiltAction>;
+type NetworkDeletedThunkAction = ThunkAction<Promise<NetworkDeletedAction>, unknown, unknown, NetworkDeletedAction>;
+type SubscribeWebsocketThunkAction = ThunkAction<Promise<SubscribeWebsocketAction>, unknown, unknown, SubscribeWebsocketAction>;
+type UnsubscribeWebsocketThunkAction = ThunkAction<Promise<UnsubscribeWebsocketAction>, unknown, unknown, UnsubscribeWebsocketAction>;
+type StartSimulationThunkAction = ThunkAction<Promise<StartSimulationAction>, unknown, unknown, StartSimulationAction>;
+type StopSimulationThunkAction = ThunkAction<Promise<StopSimulationAction>, unknown, unknown, StopSimulationAction>;
+
+export interface NetworkManagementActionCreators {
+    networkDescriptionUpdate: (description: string) => NetworkDescriptionChangedAction;
+    loadNetworkDescription: (networkDescriptionFile: File) => NetworkDescriptionLoadedThunkAction;
+    buildNetwork: (networkDescription: string) => NetworkBuildThunkAction;
+    deleteNetwork: (networkId: string) => NetworkDeletedThunkAction;
+    webSocketSubject: (networkId: string) => WebsocketCreatedAction;
+    networkEventsObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction;
+    subscribe: (observable: Observable<Array<NetworkEvent>>,
+                timeWindow: number,
+                eventProcessor: (messages: Array<NetworkEvent>) => void,
+                pauseSubject: Subject<boolean>,
+                paused: boolean) => SubscribeWebsocketThunkAction;
+    unsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => UnsubscribeWebsocketThunkAction;
+    startSimulation: (websocket: WebSocketSubject<string>) => StartSimulationThunkAction;
+    stopSimulation: (websocket: WebSocketSubject<string>) => StopSimulationThunkAction;
+    pauseSimulation: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction;
+}
+
 /**
  * Wraps around the action creators, forming a closure on the network settings
  * @param {ServerSettings} serverSettings The server host and port against which to make calls
  * @return {{networkDescriptionUpdate: (networkDescription: string) => NetworkDescriptionChangedAction; stopSimulation: (websocket: WebSocketSubject<string>) => ThunkAction<Promise<StopSimulationAction>, any, any, StopSimulationAction>; webSocketSubject: (networkId: string) => CreateWebsocketAction; buildNetwork: (networkDescription: string) => ThunkAction<Promise<NetworkBuiltAction>, any, any, NetworkBuiltAction>; subscribe: (observable: Observable<NetworkEvent>, timeWindow: number, messageProcessor: (messages: NetworkEvent) => void, pauseSubject: Subject<boolean>, paused: boolean) => ThunkAction<Promise<SubscribeWebsocketAction>, any, any, SubscribeWebsocketAction>; unsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => ThunkAction<Promise<UnsubscribeWebsocketAction>, any, any, UnsubscribeWebsocketAction>; networkEventsObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction; pauseSimulation: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction; loadNetworkDescription: (networkDescriptionFile: File) => ThunkAction<Promise<NetworkDescriptionLoadedAction>, any, any, NetworkDescriptionLoadedAction>; startSimulation: (websocket: WebSocketSubject<string>) => ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>; deleteNetwork: (networkId: string) => ThunkAction<Promise<NetworkDeletedAction>, any, any, NetworkDeletedAction>}}
  */
-export function networkManagementActionCreators(serverSettings: ServerSettings) {
+export function networkManagementActionCreators(serverSettings: ServerSettings): NetworkManagementActionCreators {
     /* **--< WARNING >--**
      | changing this to a thunk action breaks the editing...each character sends the cursor to the
      | bottom of the text field. Further experimentation reveals that even when this plain action
@@ -257,10 +283,8 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
      * @param {File} networkDescriptionFile The handle of the file containing the network description
      * @return {ThunkAction<Promise<NetworkDescriptionLoadedAction>, object, object, NetworkDescriptionLoadedAction>}
      */
-    function loadNetworkDescription(networkDescriptionFile: File):
-        ThunkAction<Promise<NetworkDescriptionLoadedAction>, any, any, NetworkDescriptionLoadedAction> {
-
-        return (dispatch: ThunkDispatch<any, any, NetworkDescriptionLoadedAction>): Promise<NetworkDescriptionLoadedAction> => {
+    function loadNetworkDescription(networkDescriptionFile: File): NetworkDescriptionLoadedThunkAction {
+        return (dispatch: ThunkDispatch<unknown, unknown, NetworkDescriptionLoadedAction>): Promise<NetworkDescriptionLoadedAction> => {
             return new Promise((resolve, reject) => {
 
                     // open a file reader and read the file asynchronously
@@ -284,9 +308,8 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
      * @return {ThunkAction<Promise<NetworkBuiltAction>, any, any, NetworkBuiltAction>} The thunk action, holding a promise
      * to the action to build the network.
      */
-    function buildNetwork(networkDescription: string): ThunkAction<Promise<NetworkBuiltAction>, any, any, NetworkBuiltAction> {
-
-        return (dispatch: ThunkDispatch<any, any, NetworkBuiltAction>): Promise<NetworkBuiltAction> => {
+    function buildNetwork(networkDescription: string): NetworkBuildThunkAction {
+        return (dispatch: ThunkDispatch<unknown, unknown, NetworkBuiltAction>): Promise<NetworkBuiltAction> => {
             return axios
                 .post(
                     `http://${serverSettings.host}:${serverSettings.port}/network-management/network`,
@@ -299,8 +322,16 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
                         }
                     }
                 )
-                .then((response: AxiosResponse<any>) => dispatch(successAction(NETWORK_BUILT, response.data.id)))
-                .catch((reason: any) => dispatch(failedAction(NETWORK_BUILT, reason)))
+                .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
+                .catch((reason: AxiosError) => {
+                    const messages = ["Unable to deploy and build network on server."];
+                    if (reason.response.status === 404) {
+                        messages.push(`Server endpoint not found; ${reason.response.config.url}`)
+                    } else {
+                        messages.push(reason.response.statusText)
+                    }
+                    return dispatch(failedAction(NETWORK_BUILT, messages))
+                })
                 ;
         }
     }
@@ -311,12 +342,20 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
      * @return {ThunkAction<Promise<NetworkDeletedAction>, any, any, NetworkDeletedAction>} The thunk action, holding a promise
      * to the action to delete the network.
      */
-    function deleteNetwork(networkId: string): ThunkAction<Promise<NetworkDeletedAction>, any, any, NetworkDeletedAction> {
-        return (dispatch: ThunkDispatch<any, any, NetworkDeletedAction>): Promise<NetworkDeletedAction> => {
+    function deleteNetwork(networkId: string): NetworkDeletedThunkAction {
+        return (dispatch: ThunkDispatch<unknown, unknown, NetworkDeletedAction>): Promise<NetworkDeletedAction> => {
             return axios
                 .delete(`http://${serverSettings.host}:${serverSettings.port}/network-management/network/${networkId}`)
-                .then((_: AxiosResponse<any>) => dispatch(successAction(NETWORK_DELETED, networkId)))
-                .catch((reason: any) => dispatch(failedAction(NETWORK_DELETED, reason)))
+                .then(() => dispatch(successAction(NETWORK_DELETED, networkId)))
+                .catch((reason: AxiosError) => {
+                    const messages = ["Unable to delete network from server."];
+                    if (reason.response.status === 404) {
+                        messages.push(`Server endpoint not found; ${reason.response.config.url}`)
+                    } else {
+                        messages.push(reason.response.statusText)
+                    }
+                    return dispatch(failedAction(NETWORK_DELETED, messages))
+                })
                 ;
         }
     }
@@ -445,7 +484,7 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
                        eventProcessor: (messages: Array<NetworkEvent>) => void,
                        pauseSubject: Subject<boolean>,
                        paused: boolean
-    ): ThunkAction<Promise<SubscribeWebsocketAction>, any, any, SubscribeWebsocketAction> {
+    ): SubscribeWebsocketThunkAction {
 
         return (dispatch: ThunkDispatch<any, any, SubscribeWebsocketAction>): Promise<SubscribeWebsocketAction> => {
             return Promise.resolve().then(() => {
@@ -522,9 +561,7 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
      * @param {Subscription} pauseSubscription The observable that listens for requests to pause the message processing
      * @return {ThunkAction<Promise<UnsubscribeWebsocketAction>, any, any, UnsubscribeWebsocketAction>}
      */
-    function unsubscribe(subscription: Subscription,
-                         pauseSubscription: Subscription):
-        ThunkAction<Promise<UnsubscribeWebsocketAction>, any, any, UnsubscribeWebsocketAction> {
+    function unsubscribe(subscription: Subscription, pauseSubscription: Subscription): UnsubscribeWebsocketThunkAction {
         return (dispatch: ThunkDispatch<any, any, UnsubscribeWebsocketAction>): Promise<UnsubscribeWebsocketAction> => {
             return Promise.resolve().then(() => {
 
@@ -543,8 +580,7 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
      * @param {WebSocketSubject<string>} websocket The websocket subject for sending messages to the server
      * @return {ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>} The thunk action
      */
-    function startSimulation(websocket: WebSocketSubject<string>):
-        ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction> {
+    function startSimulation(websocket: WebSocketSubject<string>): StartSimulationThunkAction {
 
         return (dispatch: ThunkDispatch<any, any, StartSimulationAction>): Promise<StartSimulationAction> => {
             return Promise.resolve().then(() => {
@@ -562,8 +598,7 @@ export function networkManagementActionCreators(serverSettings: ServerSettings) 
      * @param {WebSocketSubject<string>} websocket The websocket subject for sending messages to the server
      * @return {ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>} The thunk action
      */
-    function stopSimulation(websocket: WebSocketSubject<string>):
-        ThunkAction<Promise<StopSimulationAction>, any, any, StopSimulationAction> {
+    function stopSimulation(websocket: WebSocketSubject<string>): StopSimulationThunkAction {
 
         return (dispatch: ThunkDispatch<any, any, StopSimulationAction>): Promise<StopSimulationAction> => {
             return Promise.resolve().then(() => {

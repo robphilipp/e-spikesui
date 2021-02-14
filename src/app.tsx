@@ -18,8 +18,7 @@ prepareIcons();
 // load the default settings and write the settings to disk
 const applicationSettings = loadOrInitializeSetting();
 
-// generate the wrapper so that action-creators can be enriched with the server
-// settings
+// generate the wrapper so that action-creators can be enriched with the server settings
 export const remoteActionCreators = generateRemoteActionCreators(applicationSettings.server);
 
 ReactDOM.render(

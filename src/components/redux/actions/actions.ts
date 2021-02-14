@@ -2,11 +2,11 @@ import {SettingsAction} from "./settings";
 import {NetworkDescriptionAction} from "./networkDescription";
 import {SensorsAction} from "./sensors";
 import {SimulationProjectAction} from "./simulationProject";
-import { MessageBarType } from "@fluentui/react";
+import {MessageBarType} from "@fluentui/react";
 import {Option} from "prelude-ts";
-import { NetworkBuiltAction, NetworkManagementAction } from "./networkManagement";
+import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
-import { NetworkVisualizationAction } from "./networkVisualization";
+import {NetworkVisualizationAction} from "./networkVisualization";
 
 // import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 // import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
@@ -63,7 +63,7 @@ export type ApplicationAction = MessageSetAction
 
 /**
  * Sets the application-level error messages
- * @param messages An array of error messages
+ * @param message A react element containing an error message
  * @return An action to that the error message has been set
  */
 export function setErrorMessage(message: JSX.Element): MessageSetAction {

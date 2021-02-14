@@ -1,13 +1,17 @@
 import ServerSettings from "../../settings/serverSettings";
-// import {networkManagementActionCreators} from "./networkManagement";
+import {NetworkManagementActionCreators, networkManagementActionCreators} from "./networkManagement";
+
+interface RemoteActionCreators {
+    networkManagement: NetworkManagementActionCreators;
+}
 
 /**
  * Generates the wrappers around the action creators that need to know the host and port of the server
  * @param {ServerSettings} serverSettings The host, port, and base URL for making calls to the server
  * @return
  */
-export function generateRemoteActionCreators(serverSettings: ServerSettings) {
+export function generateRemoteActionCreators(serverSettings: ServerSettings): RemoteActionCreators {
     return {
-        // ...networkManagementActionCreators(serverSettings)
+        networkManagement: networkManagementActionCreators(serverSettings)
     }
 }

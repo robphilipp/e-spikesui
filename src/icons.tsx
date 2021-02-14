@@ -33,7 +33,7 @@ import {
     faChevronUp,
     faSyncAlt,
     faFileContract,
-    faCopy, faCameraRetro, faGlasses, faEye, faEyeSlash,
+    faCopy, faCameraRetro, faGlasses, faEye, faEyeSlash, faHammer,
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -102,6 +102,7 @@ export default function prepareIcons(): void {
             'glasses': <FontAwesomeIcon icon={faGlasses}/>,
             'eye': <FontAwesomeIcon icon={faEye}/>,
             'noEye': <FontAwesomeIcon icon={faEyeSlash}/>,
+            'build': <FontAwesomeIcon icon={faHammer}/>,
         }
     });
 }

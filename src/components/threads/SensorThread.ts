@@ -18,6 +18,7 @@ export interface SensorThread {
 
 export interface SignalGenerator {
     neuronIds: Array<string>;
+    timeFactor: number;
     observable: Observable<SensorOutput>;
 }
 
@@ -28,8 +29,11 @@ export interface SignalGenerator {
  */
 export async function newSensorThread(): Promise<SensorThread> {
 
+    // spawn a new worker
+    const worker: SimulationType = await spawn(new Worker('../workers/sensorSignals'));
+
     /**
-     * Compiles the sensor code snippet and sets up the observable as a simulator. Has a closure 
+     * Compiles the sensor code snippet and sets up the observable as a simulator. Has a closure
      * on the worker.
      * @param codeSnippet The sensor code snippet
      * @param timeFactor The simulation time-factor
@@ -43,7 +47,8 @@ export async function newSensorThread(): Promise<SensorThread> {
         });
         return {
             neuronIds: ids,
-            observable: observable
+            timeFactor: timeFactor,
+            observable: observable,
         };
     }
 
@@ -64,7 +69,8 @@ export async function newSensorThread(): Promise<SensorThread> {
         });
         return {
             neuronIds: ids,
-            observable: observable
+            timeFactor: timeFactor,
+            observable: observable,
         };
     }
 
@@ -73,7 +79,7 @@ export async function newSensorThread(): Promise<SensorThread> {
      * @return An empty promise
      */
     async function stop(): Promise<void> {
-        return await worker.stop();
+        return worker.stop();
     }
 
     /**
@@ -82,8 +88,6 @@ export async function newSensorThread(): Promise<SensorThread> {
     async function terminate(): Promise<void> {
         return Thread.terminate(worker);
     }
-
-    const worker: SimulationType = await spawn(new Worker('../workers/sensorSignals'));
 
     return {
         compileSimulator,

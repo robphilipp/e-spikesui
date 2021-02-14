@@ -18,6 +18,7 @@ import {AppState} from "../redux/reducers/root";
 import {SimulationProject} from "../repos/simulationProjectRepo";
 import {baseRouterPathFrom} from "../router/router";
 import ProjectConfig from "./ProjectConfig";
+import RunDeployManager from "./RunDeployManager";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -358,7 +359,9 @@ function SimulationManager(props: Props): JSX.Element {
                                 headerText="Deploy and Run"
                                 itemKey={TabName.EXECUTE}
                             >
-                                <div>Execute</div>
+                                <RunDeployManager
+                                    itheme={itheme}
+                                />
                             </PivotItem>
                         </Pivot>
                     </Stack>

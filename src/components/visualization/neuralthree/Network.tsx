@@ -132,7 +132,7 @@ function Network(props: Props): JSX.Element {
 
     const scenesContext = useScenes(() => getScenes());
 
-    const [axesColor, setAxesColor] = useState<string>(itheme.palette.neutralLight);
+    const [axesColor, setAxesColor] = useState<Color>(new Color(itheme.palette.themeDarker));
     const [spikeColor, setSpikeColor] = useState<Color>(new Color(itheme.palette.black));
 
     const controls = useRef<OrbitControls>(null);
@@ -148,7 +148,7 @@ function Network(props: Props): JSX.Element {
     // updates the axis color when the background color is changed
     useEffect(
         () => {
-            setAxesColor(itheme.palette.themeTertiary)
+            setAxesColor(new Color(itheme.palette.themeDarker))
             setSpikeColor(new Color(itheme.palette.black))
         },
         [itheme]
@@ -206,7 +206,7 @@ function Network(props: Props): JSX.Element {
      * @return {Coordinate} The camera's coordinates
      */
     function cameraCoordinates(): Coordinate {
-        return coordinateFrom(1,1,1)
+        return coordinateFrom(1, 1, 1)
             .scale(1.25 * boundingSphere.radius)
             .plus(boundingSphere.origin);
     }
@@ -221,17 +221,23 @@ function Network(props: Props): JSX.Element {
     function getCamera(offsetWidth: number,
                        offsetHeight: number,
                        position: Coordinate = cameraPositionRef.current): PerspectiveCamera {
-        return camera.getOrCall(() => {
-            const camera = new PerspectiveCamera(
-                45,
-                offsetWidth / offsetHeight,
-                0.1,
-                10000,
-            );
-            camera.position.set(position.x, position.y, position.z);
-            onCameraUpdate(camera);
-            return camera;
-        })
+        return camera
+            .getOrCall(() => {
+                const camera = new PerspectiveCamera(45, offsetWidth / offsetHeight, 0.1, 10000,);
+                camera.position.set(position.x, position.y, position.z);
+                onCameraUpdate(camera);
+                return camera;
+            })
+    }
+
+    function getAxesCamera(offsetWidth: number, offsetHeight: number): PerspectiveCamera {
+        return camera
+            .map(cam => {
+                const camera = new PerspectiveCamera(45, offsetHeight / offsetHeight, 0.1, 100);
+                camera.up = cam.up;
+                return camera;
+            })
+            .getOrUndefined()
     }
 
     /**
@@ -257,10 +263,7 @@ function Network(props: Props): JSX.Element {
         if (context === null) {
             throw "Canvas context cannot be null";
         }
-        const renderer = new WebGLRenderer({
-            canvas,
-            context,
-        });
+        const renderer = new WebGLRenderer({canvas, context});
 
         renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
@@ -273,7 +276,7 @@ function Network(props: Props): JSX.Element {
      */
     function getScenes(): Vector<SceneInfo> {
         return scenes.getOrCall(() => {
-            const light = new AmbientLight(0xffffff, 1);
+            const light = new AmbientLight(0xffffff, 2);
             const gridScene = new Scene();
             gridScene.add(light);
             const axesScene = new Scene();
@@ -282,14 +285,15 @@ function Network(props: Props): JSX.Element {
             networkScene.add(light);
 
             const scenes = Vector.of(
-                {name: GRID_SCENE_ID, scene: gridScene, visible: false},
-                {name: AXES_SCENE_ID, scene: axesScene, visible: false},
+                {name: GRID_SCENE_ID, scene: gridScene, visible: gridVisible},
+                {name: AXES_SCENE_ID, scene: axesScene, visible: axesVisible},
                 {name: NETWORK_SCENE_ID, scene: networkScene, visible: true}
             );
             onScenesUpdate(scenes);
             return scenes;
         });
     }
+
 
     const stackTokens: IStackTokens = {childrenGap: 20};
     return (
@@ -316,6 +320,7 @@ function Network(props: Props): JSX.Element {
             </Stack.Item>
             <Stack.Item>
                 <SceneManager
+                    canvasId="network-canvas"
                     getCamera={getCamera}
                     getRenderer={getRenderer}
                     getScenes={getScenes}
@@ -337,7 +342,7 @@ function Network(props: Props): JSX.Element {
                         sceneId={GRID_SCENE_ID}
                         size={5000}
                         divisions={100}
-                        centerColor={new Color(itheme.palette.white)}
+                        centerColor={new Color(itheme.palette.neutralTertiaryAlt)}
                         gridColor={new Color(itheme.palette.neutralLight)}
                         opacity={1}
                     />
@@ -345,9 +350,9 @@ function Network(props: Props): JSX.Element {
                         sceneId={AXES_SCENE_ID}
                         length={100}
                         color={{
-                            x: new Color(axesColor),
-                            y: new Color(axesColor),
-                            z: new Color(axesColor)
+                            x: axesColor,
+                            y: axesColor,
+                            z: axesColor
                         }}
                         originOffset={axesOffset}
                         opacity={1}

@@ -6,7 +6,6 @@ import {
     ICommandBarItemProps,
     ITheme,
     MessageBar,
-    MessageBarType,
     Stack,
     StackItem
 } from '@fluentui/react'
@@ -19,22 +18,24 @@ import {ApplicationAction, clearMessage, FeedbackMessage, setErrorMessage} from 
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
-import NetworkEditor, {editorThemeFrom} from "./editors/NetworkEditor";
+import NetworkEditor from "./editors/NetworkEditor";
+import {editorThemeFrom} from "./editors/themes"
 import {registerSpikesLanguage} from "./language/spikes-language";
 import {
-    loadNetworkDescriptionFromTemplate,
     loadNetworkDescriptionFrom,
-    saveNetworkDescription as persistNetworkDescription,
+    loadNetworkDescriptionFromTemplate,
     NetworkDescriptionLoadedAction,
     NetworkDescriptionSavedAction,
+    saveNetworkDescription as persistNetworkDescription,
 } from "./redux/actions/networkDescription";
 import {remote} from "electron";
 import SensorsEditor from './editors/SensorsEditor';
 import {
-    SensorsAction,
+    loadSensorsFrom,
+    loadSensorsFromTemplate,
+    saveSensors,
     SensorsLoadedAction,
-    SensorsSavedAction, loadSensorsFrom,
-    loadSensorsFromTemplate, saveSensors
+    SensorsSavedAction
 } from "./redux/actions/sensors";
 import SimulationManager, {NEW_PROJECT_PATH} from "./simulation/SimulationManager";
 import {
@@ -42,7 +43,8 @@ import {
     newSimulationProject,
     ProjectCreatedAction,
     ProjectLoadedAction,
-    ProjectSavedAction, saveSimulationProject
+    ProjectSavedAction,
+    saveSimulationProject
 } from "./redux/actions/simulationProject";
 import {SimulationProject} from "./repos/simulationProjectRepo";
 

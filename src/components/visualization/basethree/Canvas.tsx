@@ -6,21 +6,16 @@ import {mergeProperties} from "./mergeProperties";
  * Canvas style that allows additional style fields
  */
 export interface CanvasStyle {
-    height: string;
-    width: string;
     zIndex?: number;
     outline?: string;
-    [propName: string]: any;
+    [propName: string]: string | number;
 }
 
 /**
  * Canvas properties
  */
 export interface CanvasProps {
-    // width in pixels
-    width: number;
-    // height in pixels
-    height: number;
+    canvasId: string;
     // additional style properties
     style: CanvasStyle
 }
@@ -30,15 +25,12 @@ export interface CanvasProps {
  */
 export const initialCanvasStyle: CanvasStyle = {
     position: "absolute",
-    height: "100%",
-    width: "100%",
     zIndex: -1,
     outline: "none"
 };
 
 export const initialCanvasProps = {
-    width: 100,
-    height: 100,
+    canvasId: "",
     style: initialCanvasStyle
 };
 
@@ -50,14 +42,20 @@ export const initialCanvasProps = {
  * @constructor
  */
 function Canvas(props: CanvasProps = initialCanvasProps, ref: MutableRefObject<HTMLCanvasElement>): JSX.Element {
+    const {
+        canvasId,
+        style,
+    } = props;
 
     /**
      * Updates the size of the canvas when the window is resized
      * @callback
      */
     function onWindowResize(): void {
-        ref.current!.style.height = props.style.height;
-        ref.current!.style.width = props.style.width;
+        if (ref.current !== undefined) {
+            ref.current.style.height = style.height.toString();
+            ref.current.style.width = style.width.toString();
+        }
     }
 
     // called when the component has mounted, just after the first render (note the deps
@@ -76,13 +74,13 @@ function Canvas(props: CanvasProps = initialCanvasProps, ref: MutableRefObject<H
 
     return (
         <canvas
+            id={canvasId}
             ref={ref}
-            height={props.style.height}
-            width={props.style.width}
-            style={mergeProperties(initialCanvasStyle, props.style)}
+            height={style.height}
+            width={style.width}
+            style={mergeProperties(initialCanvasStyle, style)}
         />
     );
 }
 
-//@ts-ignore
 export default forwardRef(Canvas);

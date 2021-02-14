@@ -1,8 +1,7 @@
 import * as React from 'react';
-import {createContext, useEffect, useMemo, useRef, useState} from 'react';
+import {createContext, useEffect, useRef, useState} from 'react';
 
 import Canvas, {CanvasStyle} from './Canvas';
-// import useAnimationFrame from './useAnimationFrame';
 import {Coordinate} from "./Coordinate";
 import {Color, PerspectiveCamera, Renderer, WebGLRenderer} from "three";
 import {emptySceneContext, SceneInfo, ScenesContext, useScenes} from "./useScenes";
@@ -35,8 +34,9 @@ export const initialThreeContext = createContext<ThreeContext>({
  * The properties for the three-js manager.
  */
 export interface OwnProps {
+    canvasId: string;
     // the children of this "three-js scene" to whom the three-js context will be passed
-    children: JSX.Element[];
+    children: JSX.Element[] | JSX.Element;
     // function that returns the perspective camera given the canvas offsets and camera position
     getCamera: (offsetWidth: number, offsetHeight: number, position?: Coordinate) => PerspectiveCamera;
     // function that returns the renderer for the scene
@@ -105,6 +105,7 @@ export interface OwnProps {
  */
 function ThreeJsManager(props: OwnProps): JSX.Element {
     const {
+        canvasId,
         children,
         getCamera,
         getRenderer,
@@ -226,7 +227,7 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         () => {
             if (rendererRef.current && cameraRef.current) {
                 const renderer = rendererRef.current;
-                const camera = cameraRef.current;
+                // const camera = cameraRef.current;
                 updateBackground();
 
                 // when there are no scenes, don't clear the background
@@ -238,7 +239,7 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
                 scenesContext.scenes
                     .filter(info => info.visible)
                     .forEach(info => {
-                        renderer.render(info.scene, camera);
+                        renderer.render(info.scene, cameraRef.current);
                         (renderer as WebGLRenderer).clearDepth();
                     })
             }
@@ -248,9 +249,8 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
     return (
         <>
             <Canvas
+                canvasId={canvasId}
                 ref={canvasRef}
-                width={width}
-                height={height}
                 style={canvasStyle}
             />
             {threeIsReady && (

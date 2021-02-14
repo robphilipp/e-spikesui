@@ -40,7 +40,6 @@ export function useThree<E extends Object3D | Array<Object3D>>(
             // clean-up function
             return (): void => {
                 destroy?.(context, entityRef.current);
-                // context.scenesContext.sceneFor(sceneIdRef.current).ifSome(info => info.scene.remove(entityRef.current));
                 context.scenesContext.sceneFor(sceneIdRef.current)
                     .ifSome(info => {
                         if (entityRef.current instanceof Array) {

@@ -2,6 +2,8 @@ import {Object3D, Scene} from "three";
 import {Option, Vector} from "prelude-ts";
 import {createContext, useContext, useEffect} from "react";
 
+function noop(): void {/* empty */}
+
 /**
  * The scene information.
  */
@@ -24,10 +26,13 @@ export interface ScenesContext {
 
 // the default, initial settings for the scene context
 export const emptySceneContext: ScenesContext = {
-    sceneFor: (_: string) => Option.none(),
+    // (scenedId: string) => Option,
+    sceneFor: () => Option.none(),
     addToScene: <E extends Object3D>(sceneId: string, entity: E) => [sceneId, entity],
-    visibility: (sceneId: string, visible: boolean) => {},
-    isVisible: (sceneId: string) => false,
+    // (sceneId: string, visible: boolean) => void,
+    visibility: noop,
+    // (sceneId: string) => boolean,
+    isVisible: () => false,
     scenes: Vector.empty()
 };
 
@@ -104,14 +109,16 @@ export function useScenes(
     // entity just created as a reference. when components are unmounted, destroys
     // the entity and removes it from the scene.
     useEffect(() => {
-        context.scenes = scenesSupplier();
+            context.scenes = scenesSupplier();
 
-        // clean-up function
-        return (): void => {
-            destroy?.(context);
-            context.scenes = Vector.empty();
-        };
-    }, []);
+            // clean-up function
+            return (): void => {
+                destroy?.(context);
+                context.scenes = Vector.empty();
+            };
+        },
+        []
+    );
 
     return {sceneFor, addToScene, visibility, isVisible, scenes: context.scenes};
 }

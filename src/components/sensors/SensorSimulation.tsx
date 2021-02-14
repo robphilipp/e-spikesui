@@ -74,12 +74,11 @@ export default function SensorSimulation(props: Props): JSX.Element {
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
         () => {
-            // create a sensor-simulation worker for compiling and running the sensor
-            newSensorThread().then(thread => sensorThreadRef.current = thread);
-
             return () => {
-                // terminate sensor-simulation worker thread
-                sensorThreadRef.current.terminate();
+                // terminate sensor-simulation worker thread on dismount, in case it is
+                // still hanging around
+                sensorThreadRef.current.terminate()
+                    .catch(reason => console.error(`Failed to terminate worker thread; ${reason}`));
             }
         },
         []
@@ -120,14 +119,29 @@ export default function SensorSimulation(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Updates the control selection to add/remove the tracker
+     * @param event The event
+     * @param checked `true` if the tracker was selected; `false` otherwise
+     */
     function handleTrackerSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.TRACKER, checked);
     }
 
+    /**
+     * Updates the control selection to add/remove the tooltip
+     * @param event The event
+     * @param checked `true` if the tooltip was selected; `false` otherwise
+     */
     function handleTooltipSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.TOOLTIP, checked);
     }
 
+    /**
+     * Updates the control selection to add/remove the magnifier
+     * @param event The event
+     * @param checked `true` if the magnifier was selected; `false` otherwise
+     */
     function handleMagnifierSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.MAGNIFIER, checked);
     }
@@ -169,9 +183,13 @@ export default function SensorSimulation(props: Props): JSX.Element {
      */
     async function handleCompile(): Promise<void> {
         try {
+            // create a sensor-simulation worker for compiling and running the sensor
+            sensorThreadRef.current = await newSensorThread();
+
             // attempt to compile the code-snippet as a simulator
             const generator = await sensorThreadRef.current.compileSimulator(codeSnippet, timeFactor);
 
+            // when successfully compiled, then set up the simulation
             setNeuronList(seriesList(generator.neuronIds));
             setSensorObservable(generator.observable);
             setExpressionState(ExpressionState.COMPILED);
@@ -216,7 +234,10 @@ export default function SensorSimulation(props: Props): JSX.Element {
         // while the simulation window is open, and in that case, we want to leave the expression
         // state as pre-compiled
         if (expressionState === ExpressionState.RUNNING) {
-            sensorThreadRef.current.stop();
+            sensorThreadRef.current.stop()
+                .then(() => sensorThreadRef.current.terminate())
+                .catch(reason => console.error(`Failed to stop or terminate worker thread; ${reason}`))
+            ;
             setSensorObservable(undefined);
             setExpressionState(ExpressionState.PRE_COMPILED);
         }
@@ -349,7 +370,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     </Stack.Item>
                     <Stack.Item tokens={{margin: '0 20px 0 30px'}}>
                         {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED ?
-                            <MessageBar messageBarType={MessageBarType.info}>
+                            <MessageBar>
                                 Please compile sensor description.
                             </MessageBar> :
                             <div/>

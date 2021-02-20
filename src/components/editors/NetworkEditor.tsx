@@ -29,7 +29,7 @@ import {
 } from '@fluentui/react';
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
-import { baseRouterPathFrom } from '../router/router';
+import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import SensorSimulation from "../sensors/SensorSimulation";
 import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
@@ -53,7 +53,7 @@ interface OwnProps extends RouteComponentProps<never> {
 }
 
 interface StateProps {
-    network: string;
+    networkDescription: string;
     modified: boolean;
     networkDescriptionPath?: string;
     templatePath?: string;
@@ -61,9 +61,9 @@ interface StateProps {
 
 interface DispatchProps {
     onChanged: (description: string) => void;
-    onLoadTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
-    onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onSave: (path: string, description: string) => Promise<NetworkDescriptionSavedAction>;
+    loadTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -78,11 +78,11 @@ function NetworkEditor(props: Props): JSX.Element {
     const {
         itheme,
         theme = DefaultTheme.DARK,
-        network,
+        networkDescription,
         templatePath,
         onChanged,
-        onLoadTemplate,
-        onLoadNetworkDescription,
+        loadTemplate,
+        loadNetworkDescription,
         onSave,
         modified,
         networkDescriptionPath,
@@ -116,12 +116,10 @@ function NetworkEditor(props: Props): JSX.Element {
 
             // listen to resize events so that the editor width and height can be updated
             window.addEventListener('resize', handleWindowResize);
-            // window.addEventListener('keydown', handleKeyboardShortcut, true);
 
             return () => {
                 // stop listening to resize events
                 window.removeEventListener('resize', handleWindowResize);
-                // window.removeEventListener('keydown', handleKeyboardShortcut, true);
             }
         },
         []
@@ -133,21 +131,15 @@ function NetworkEditor(props: Props): JSX.Element {
     useEffect(
         () => {
             const filePath = decodeURIComponent(networkPath);
-            // if (filePath !== path || filePath === '') {
-            //     // todo handle success and failure
-            //     onLoadNetworkDescription(filePath)
-            //         .then(() => console.log("loaded"))
-            // }
             if (filePath === networkDescriptionPath) {
                 return;
             }
             if (filePath === NEW_NETWORK_PATH || filePath === 'undefined') {
-                onLoadTemplate(templatePath)
-                .then(() => console.log("loaded"))
-                .catch(reason => setMessage(errorMessage(reason.message)))
+                loadTemplate(templatePath)
+                    .then(() => console.log("loaded"))
+                    .catch(reason => setMessage(errorMessage(reason.message)))
             } else {
-            // todo handle success and failure
-                onLoadNetworkDescription(filePath)
+                loadNetworkDescription(filePath)
                     .then(() => console.log("loaded"))
                     .catch(reason => setMessage(errorMessage(reason.message)))
             }
@@ -162,7 +154,7 @@ function NetworkEditor(props: Props): JSX.Element {
         },
         [path]
     )
-    
+
     /**
      * calculates the editors dimensions based on the `<div>`'s width and height
      * @return The dimension of the editor
@@ -200,7 +192,7 @@ function NetworkEditor(props: Props): JSX.Element {
                     break;
 
                 case KeyboardShortcut.SAVE: {
-                    handleSave(networkDescriptionPath, templatePath, network);
+                    handleSave(networkDescriptionPath, templatePath, networkDescription);
                     break;
                 }
 
@@ -209,7 +201,7 @@ function NetworkEditor(props: Props): JSX.Element {
                     break;
 
                 default:
-                    /* nothing to do */
+                /* nothing to do */
             }
         });
     }
@@ -218,7 +210,7 @@ function NetworkEditor(props: Props): JSX.Element {
      * Handles loading a new network from a template file.
      */
     function handleNew(): void {
-        onLoadTemplate(templatePath)
+        loadTemplate(templatePath)
             .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(templatePath)}`))
     }
 
@@ -314,7 +306,7 @@ function NetworkEditor(props: Props): JSX.Element {
             <TooltipHost content="Save network description">
                 <IconButton
                     iconProps={{iconName: 'save'}}
-                    onClick={() => handleSave(networkDescriptionPath, templatePath, network)}
+                    onClick={() => handleSave(networkDescriptionPath, templatePath, networkDescription)}
                     disabled={!(modified || networkDescriptionPath === templatePath)}
                 />
             </TooltipHost>
@@ -347,7 +339,7 @@ function NetworkEditor(props: Props): JSX.Element {
             <TooltipHost content="Deploy network description to server">
                 <IconButton
                     iconProps={{iconName: 'homegroup'}}
-                    disabled={modified || network === undefined || network.length < 31}
+                    disabled={modified || networkDescription === undefined || networkDescription.length < 31}
                 />
             </TooltipHost>
         </div>
@@ -362,7 +354,7 @@ function NetworkEditor(props: Props): JSX.Element {
             <TooltipHost content={showSimulation ? "Hide network visualization" : "Show network visualization"}>
                 <IconButton
                     iconProps={{iconName: showSimulation ? 'noEye' : 'eye'}}
-                    disabled={network?.length < 10}
+                    disabled={networkDescription?.length < 10}
                     onClick={toggleShowSimulationLayer}
                 />
             </TooltipHost>
@@ -426,7 +418,7 @@ function NetworkEditor(props: Props): JSX.Element {
                         language={SPIKES_LANGUAGE_ID}
                         theme={theme}
                         customThemes={customThemes}
-                        value={network}
+                        value={networkDescription}
                         options={editorOptions}
                         onChange={(value: string) => onChanged(value)}
                         editorDidMount={noop}
@@ -460,7 +452,7 @@ function NetworkEditor(props: Props): JSX.Element {
  * @param state The updated application state
  */
 const mapStateToProps = (state: AppState): StateProps => ({
-    network: state.networkDescription.description,
+    networkDescription: state.networkDescription.description,
     modified: state.networkDescription.modified,
     networkDescriptionPath: state.networkDescription.path,
     templatePath: state.settings.networkDescription.templatePath
@@ -475,9 +467,9 @@ const mapStateToProps = (state: AppState): StateProps => ({
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     onChanged: (description: string) => dispatch(updateNetworkDescription(description)),
-    onLoadTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
-    onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
     onSave: (path: string, description: string) => dispatch(persistNetworkDescription(path, description)),
+    loadTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
+    loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
 });
 
 const connectedNetworkEditor = connect(mapStateToProps, mapDispatchToProps)(NetworkEditor);

@@ -164,11 +164,6 @@ function RunDeployManager(props: Props): JSX.Element {
      * @private
      */
     function handleBuildDeleteNetwork(): void {
-        const {
-            networkId, networkDescription,
-            subscription, pauseSubscription,
-        } = props;
-
         networkId
             // if the network ID exists, then the button click is to delete the network, and
             // so we send a message down the websocket to delete the network, and then we
@@ -288,7 +283,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     networkId: state.networkManagement.networkId,
 
     networkDescription: state.networkDescription.description,
-    neuronIds: state.networkEvent.neurons.toVector().map(([_, info]) => info.name),
+    neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
     networkBuilt: state.networkEvent.networkBuilt,
     errorMessages: state.application.message,
 

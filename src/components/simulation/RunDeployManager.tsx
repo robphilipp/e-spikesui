@@ -1,7 +1,17 @@
 import * as React from 'react';
 import {useState} from 'react';
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
-import {IconButton, ITheme, Stack, StackItem, TooltipHost, Text} from "@fluentui/react";
+import {
+    IconButton,
+    ITheme,
+    Stack,
+    StackItem,
+    TooltipHost,
+    Text,
+    Tooltip,
+    IStackItemStyles,
+    Separator
+} from "@fluentui/react";
 import {
     ApplicationAction,
     clearMessage,
@@ -266,10 +276,103 @@ function RunDeployManager(props: Props): JSX.Element {
         </>
     }
 
+    function networkInfo(networkId: string): JSX.Element {
+        return <Stack horizontal>
+            <Stack.Item grow>
+                <Stack>
+                    <Stack.Item>
+                        <Text variant="small" style={{color: itheme.palette.themePrimary, marginBottom: '-10px'}}>
+                            Network ID
+                        </Text>
+                    </Stack.Item>
+                    <Stack.Item>
+                        <Text
+                            variant="medium"
+                            key={1}
+                            style={{
+                                color: itheme.palette.black,
+                                fontFamily: 'monospace',
+                                fontWeight: 800
+                            }}
+                        >
+                            {networkId}
+                        </Text>
+                    </Stack.Item>
+                </Stack>
+            </Stack.Item>
+            <Stack.Item grow={2}>
+                <Stack>
+                    <Stack.Item>
+                        <Text variant="small" style={{color: itheme.palette.themePrimary, marginBottom: '-10px'}}>
+                            Simulation Name
+                        </Text>
+                    </Stack.Item>
+                    <Stack.Item>
+                        <Text
+                            variant="medium"
+                            key={1}
+                            style={{
+                                color: itheme.palette.black,
+                                fontFamily: 'monospace',
+                                fontWeight: 800
+                            }}
+                        >
+                            {simulationName}
+                        </Text>
+                    </Stack.Item>
+                </Stack>
+            </Stack.Item>
+            <Stack.Item grow={1}>
+                <Stack>
+                    <Stack.Item>
+                        <Text variant="small" style={{color: itheme.palette.themePrimary, marginBottom: '-10px'}}>
+                            Duration
+                        </Text>
+                    </Stack.Item>
+                    <Stack.Item>
+                        <Text
+                            variant="medium"
+                            key={1}
+                            style={{
+                                color: itheme.palette.black,
+                                fontFamily: 'monospace',
+                                fontWeight: 800
+                            }}
+                        >
+                            {simulationDuration} s
+                        </Text>
+                    </Stack.Item>
+                </Stack>
+            </Stack.Item>
+            <Stack.Item grow={1}>
+                <Stack>
+                    <Stack.Item>
+                        <Text variant="small" style={{color: itheme.palette.themePrimary, marginBottom: '-10px'}}>
+                            Time Factor
+                        </Text>
+                    </Stack.Item>
+                    <Stack.Item>
+                        <Text
+                            variant="medium"
+                            key={1}
+                            style={{
+                                color: itheme.palette.black,
+                                fontFamily: 'monospace',
+                                fontWeight: 800
+                            }}
+                        >
+                            {timeFactor} (simulation/real)
+                        </Text>
+                    </Stack.Item>
+                </Stack>
+            </Stack.Item>
+        </Stack>
+    }
+
     return <>
         <Stack>
             <Stack horizontal>
-                <StackItem>
+                <Stack.Item>
                     <TooltipHost
                         content={networkId.isNone() ?
                             "Deploy network to server and build." :
@@ -286,38 +389,37 @@ function RunDeployManager(props: Props): JSX.Element {
                             onClick={handleBuildDeleteNetwork}
                         />
                     </TooltipHost>
-                </StackItem>
+                </Stack.Item>
             </Stack>
             <Stack>
-                <StackItem>
+                <Stack.Item>
                     {networkId.map(id => (
-                        <Card key={1} tokens={{childrenMargin: 12, boxShadow: "none"}}>
+                        <Card key={1} tokens={{childrenMargin: 12, boxShadow: "none", maxWidth: 'unset'}}>
+                            <Separator
+                                vertical={false}
+                                color={itheme.palette.neutralSecondary}
+                                styles={{root: {padding: 0, fontSize: 0}}}
+                            />
                             <Card.Section>
-                                <Text variant="small" style={{color: itheme.palette.themePrimary, marginBottom: '-10px'}}>
-                                    Network ID
-                                </Text>
-                                <Text
-                                    variant="medium"
-                                    key={1}
-                                    style={{
-                                        color: itheme.palette.themePrimary,
-                                        fontFamily: 'monospace',
-                                        fontWeight: 800
-                                    }}
-                                >
-                                    {id}
-                                </Text>
+                                {networkInfo(id)}
                             </Card.Section>
+                            <Separator
+                                vertical={false}
+                                color={itheme.palette.neutralSecondary}
+                                styles={{root: {padding: 0, fontSize: 0}}}
+                            />
                             <Card.Section>
-                                <IconButton
-                                    iconProps={{iconName: "play"}}
-                                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                                    // onClick={handleEditSensorDescription}
-                                />
+                                <TooltipHost content="Run network on server.">
+                                    <IconButton
+                                        iconProps={{iconName: "play"}}
+                                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                                        // onClick={handleEditSensorDescription}
+                                    />
+                                </TooltipHost>
                             </Card.Section>
                         </Card>
                 )).getOrElse(<span/>)}
-                </StackItem>
+                </Stack.Item>
             </Stack>
         </Stack>
     </>

@@ -5,7 +5,9 @@ import {
     ContextualMenuItemType,
     ICommandBarItemProps,
     ITheme,
+    Label,
     MessageBar,
+    Modal, Spinner, SpinnerSize,
     Stack,
     StackItem
 } from '@fluentui/react'
@@ -47,6 +49,8 @@ import {
     saveSimulationProject
 } from "./redux/actions/simulationProject";
 import {SimulationProject} from "./repos/simulationProjectRepo";
+import tinycolor from 'tinycolor2';
+import LoadingModal from "./common/LoadingModal";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -59,6 +63,8 @@ interface OwnProps extends RouteComponentProps<never> {
 }
 
 interface StateProps {
+    loading: boolean;
+    loadingMessage?: string;
     // holds an error message
     message: Option<FeedbackMessage>;
 
@@ -110,12 +116,15 @@ type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
     const {
+        itheme,
         name,
 
         settingsPanelVisible,
         onShowSettingsPanel,
         onHideSettingsPanel,
 
+        loading,
+        loadingMessage,
         message,
         onSetErrorMessage,
         onClearMessage,
@@ -518,69 +527,72 @@ function Main(props: Props): JSX.Element {
     }
 
     return (
-        <Stack>
-            <StackItem>
-                <CommandBar
-                    items={menuItems()}
-                    farItems={farMenuItems(handleSettingsPanelVisibility)}
-                />
-            </StackItem>
-            <StackItem>
-                {message.map(feedback => (
-                    <MessageBar
-                        key="feedback-messages"
-                        messageBarType={feedback.messageType}
-                        isMultiline={false}
-                        truncated={true}
-                        theme={props.itheme}
-                        onDismiss={onClearMessage}
-                        dismissButtonAriaLabel="Close"
-                        overflowButtonAriaLabel="See more"
-                    >
-                        {feedback.messageContent}
-                    </MessageBar>
-                )).getOrElse((<div/>))}
-            </StackItem>
-            <StackItem grow>
-                <SettingsPanel/>
-            </StackItem>
-            <StackItem>
-                <Switch>
-                    <Route
-                        path={`${AppPath.SIMULATION}/:simulationProjectPath`}
-                        render={(renderProps) =>
-                            <SimulationManager
-                                networkRouterPath={AppPath.NETWORK_EDITOR}
-                                sensorRouterPath={AppPath.SENSOR_EDITOR}
-                                theme={editorThemeFrom(name)}
-                                itheme={props.itheme}
-                                {...renderProps}
-                            />
-                        }
+        <>
+            <LoadingModal itheme={itheme} isLoading={loading} message={loadingMessage}/>
+            <Stack>
+                <StackItem>
+                    <CommandBar
+                        items={menuItems()}
+                        farItems={farMenuItems(handleSettingsPanelVisibility)}
                     />
-                    <Route
-                        path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
-                        render={(renderProps) =>
-                            <NetworkEditor
-                                theme={editorThemeFrom(name)}
-                                itheme={props.itheme}
-                                {...renderProps}
-                            />
-                        }
-                    />
-                    <Route
-                        path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
-                        render={(renderProps) =>
-                            <SensorsEditor
-                                theme={editorThemeFrom(name)}
-                                itheme={props.itheme}
-                                {...renderProps}
-                            />
-                        }
-                    />
-                </Switch>
-            </StackItem>
-        </Stack>
+                </StackItem>
+                <StackItem>
+                    {message.map(feedback => (
+                        <MessageBar
+                            key="feedback-messages"
+                            messageBarType={feedback.messageType}
+                            isMultiline={false}
+                            truncated={true}
+                            theme={props.itheme}
+                            onDismiss={onClearMessage}
+                            dismissButtonAriaLabel="Close"
+                            overflowButtonAriaLabel="See more"
+                        >
+                            {feedback.messageContent}
+                        </MessageBar>
+                    )).getOrElse((<div/>))}
+                </StackItem>
+                <StackItem grow>
+                    <SettingsPanel/>
+                </StackItem>
+                <StackItem>
+                    <Switch>
+                        <Route
+                            path={`${AppPath.SIMULATION}/:simulationProjectPath`}
+                            render={(renderProps) =>
+                                <SimulationManager
+                                    networkRouterPath={AppPath.NETWORK_EDITOR}
+                                    sensorRouterPath={AppPath.SENSOR_EDITOR}
+                                    theme={editorThemeFrom(name)}
+                                    itheme={props.itheme}
+                                    {...renderProps}
+                                />
+                            }
+                        />
+                        <Route
+                            path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
+                            render={(renderProps) =>
+                                <NetworkEditor
+                                    theme={editorThemeFrom(name)}
+                                    itheme={props.itheme}
+                                    {...renderProps}
+                                />
+                            }
+                        />
+                        <Route
+                            path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
+                            render={(renderProps) =>
+                                <SensorsEditor
+                                    theme={editorThemeFrom(name)}
+                                    itheme={props.itheme}
+                                    {...renderProps}
+                                />
+                            }
+                        />
+                    </Switch>
+                </StackItem>
+            </Stack>
+        </>
     )
 }
 
@@ -598,7 +610,8 @@ function Main(props: Props): JSX.Element {
  * @return the state props for this component
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    ...ownProps,
+    loading: state.application.loading,
+    loadingMessage: state.application.loadingMessage,
     message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
     itheme: state.settings.itheme,

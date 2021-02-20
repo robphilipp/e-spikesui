@@ -8,7 +8,7 @@ import {
     FeedbackMessage,
     MessageClearedAction,
     MessageSetAction,
-    setErrorMessage
+    setErrorMessage, setLoading
 } from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -87,6 +87,7 @@ interface StateProps {
 }
 
 interface DispatchProps {
+    onLoading: (isLoading: boolean, message?: string) => void;
     // onChange: (project: SimulationProject) => void;
     //
     // onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
@@ -122,6 +123,7 @@ type Props = OwnProps & StateProps & DispatchProps;
 
 function RunDeployManager(props: Props): JSX.Element {
     const {
+        onLoading,
         itheme,
         simulationName,
         timeFactor,
@@ -178,6 +180,7 @@ function RunDeployManager(props: Props): JSX.Element {
      * @private
      */
     function handleBuildDeleteNetwork(): void {
+        onLoading(true, networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`));
         networkId
             // if the network ID exists, then the button click is to delete the network, and
             // so we send a message down the websocket to delete the network, and then we
@@ -189,6 +192,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     onClearNetworkState();
                     return onUnsubscribe(subscription, pauseSubscription);
                 }))
+                .finally(() => onLoading(false))
             )
             // if the network ID doesn't exist, then the button click is for creating the network, and
             // so we call action creator for creating the network, and if that results in a failure, the
@@ -239,6 +243,7 @@ function RunDeployManager(props: Props): JSX.Element {
                             .catch(messages => onSetErrorMessages(messages))
                     })
                 )
+                .finally(() => onLoading(false))
             );
     }
 
@@ -330,7 +335,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    // loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
+    onLoading: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
 
     onBuildNetwork: (networkDescription: string) => dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),
     onDeleteNetwork: (networkId: string) => dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),

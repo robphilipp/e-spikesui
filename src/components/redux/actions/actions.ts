@@ -25,6 +25,9 @@ export interface FeedbackMessage {
 export const SET_MESSAGE = "set-messages";
 export const CLEAR_MESSAGE = "clear-messages";
 
+export const SET_LOADING_STATE = "set-loading-state";
+// export const CLEAR_LOADING = "clear-loading";
+
 /*
  |
  | Action definitions (for use by the reducers)
@@ -45,18 +48,40 @@ export interface MessageSetAction {
     message: Option<FeedbackMessage>;
 }
 
+
+// export interface SetLoadingAction {
+//     type: typeof SET_LOADING;
+// }
+//
+// export interface ClearLoadingAction {
+//     type: typeof CLEAR_LOADING;
+// }
+//
+// export type LoadingAction = SetLoadingAction | ClearLoadingAction;
+export interface LoadingAction {
+    type: typeof SET_LOADING_STATE;
+    loading: boolean;
+    message?: string;
+}
+
 /**
  * Lists all the actions that are part of the application action
  */
 export type ApplicationAction = MessageSetAction
     | MessageClearedAction
-    | NetworkManagementAction
+
+    | LoadingAction
+
     | SettingsAction
+
     | NetworkBuiltAction
     | NetworkEventAction
     | NetworkEventsAction
+
     | NetworkVisualizationAction
     | NetworkDescriptionAction
+
+    | NetworkManagementAction
     | SensorsAction
     | SimulationProjectAction
     ;
@@ -96,6 +121,28 @@ export function clearMessage(): MessageClearedAction {
     return {
         type: CLEAR_MESSAGE
     };
+}
+
+/**
+ * Sets or clears the loading flag.
+ * @param isLoading (optional, `default = true`) `true` if loading; `false` otherwise
+ * @param message (optional) The optional message to display on the loading modal
+ * @return the loading action
+ */
+export function setLoading(isLoading = true, message?: string): LoadingAction {
+    return {
+        type: SET_LOADING_STATE,
+        loading: isLoading,
+        message: message
+    }
+}
+
+/**
+ * Clears the loading state
+ * @return the loading action
+ */
+export function clearLoading(): LoadingAction {
+    return setLoading(false);
 }
 
 /*

@@ -1,7 +1,7 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
-import {IconButton, ITheme, Stack, StackItem, TooltipHost} from "@fluentui/react";
+import {IconButton, ITheme, Stack, StackItem, TooltipHost, Text} from "@fluentui/react";
 import {
     ApplicationAction,
     clearMessage,
@@ -41,7 +41,7 @@ import {
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
-import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
+import { Card } from '@uifabric/react-cards';
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -286,6 +286,37 @@ function RunDeployManager(props: Props): JSX.Element {
                             onClick={handleBuildDeleteNetwork}
                         />
                     </TooltipHost>
+                </StackItem>
+            </Stack>
+            <Stack>
+                <StackItem>
+                    {networkId.map(id => (
+                        <Card key={1} tokens={{childrenMargin: 12, boxShadow: "none"}}>
+                            <Card.Section>
+                                <Text variant="small" style={{color: itheme.palette.themePrimary, marginBottom: '-10px'}}>
+                                    Network ID
+                                </Text>
+                                <Text
+                                    variant="medium"
+                                    key={1}
+                                    style={{
+                                        color: itheme.palette.themePrimary,
+                                        fontFamily: 'monospace',
+                                        fontWeight: 800
+                                    }}
+                                >
+                                    {id}
+                                </Text>
+                            </Card.Section>
+                            <Card.Section>
+                                <IconButton
+                                    iconProps={{iconName: "play"}}
+                                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                                    // onClick={handleEditSensorDescription}
+                                />
+                            </Card.Section>
+                        </Card>
+                )).getOrElse(<span/>)}
                 </StackItem>
             </Stack>
         </Stack>

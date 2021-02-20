@@ -8,6 +8,13 @@ interface Props {
     message?: string;
 }
 
+/**
+ * Displays a modal with a spinner and message that covers and blocks the
+ * entire screen
+ * @param props The properties holding the theme, whether it is loading, and
+ * any messages to display
+ * @constructor
+ */
 export default function LoadingModal(props: Props): JSX.Element {
     const {
         itheme,
@@ -25,7 +32,6 @@ export default function LoadingModal(props: Props): JSX.Element {
                 background: tinycolor(itheme.palette.black).setAlpha(0.5).toRgbString(),
                 display: 'flex',
                 position: 'absolute',
-                // transition: 'background 2s ease-in-out',
                 transition: 'ease-in-out',
                 transitionProperty: 'background-color',
                 transitionDuration: '500ms',

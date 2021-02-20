@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
 import {IconButton, ITheme, Stack, StackItem, TooltipHost} from "@fluentui/react";
 import {
@@ -41,6 +41,7 @@ import {
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
+import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -53,6 +54,8 @@ interface StateProps {
     timeFactor: number;
     simulationDuration: number;
 
+    // holds the path to the network description
+    networkDescriptionPath?: string;
     // holds the network description
     networkDescription: string;
     // holds the network ID (once it has been built on the server)
@@ -90,6 +93,7 @@ interface DispatchProps {
     // onLoadNetwork: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     // onSetError: (messages: JSX.Element) => MessageSetAction;
     // onSetSuccess: (messages: JSX.Element) => MessageSetAction;
+    // loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onBuildNetwork: (networkDescription: string) => Promise<NetworkBuiltAction>;
     onDeleteNetwork: (networkId: string) => Promise<NetworkDeletedAction>;
     onClearNetworkState: () => DeleteNetworkAction;
@@ -124,6 +128,7 @@ function RunDeployManager(props: Props): JSX.Element {
         simulationDuration,
 
         networkId,
+        networkDescriptionPath,
         networkDescription,
         neuronIds,
         networkBuilt,
@@ -158,6 +163,15 @@ function RunDeployManager(props: Props): JSX.Element {
     // observable that streams the unadulterated network events
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
 
+    // useEffect(
+    //     () => {
+    //         if (networkDescriptionPath && networkDescription === undefined) {
+    //             loadNetworkDescriptionFrom(networkDescriptionPath);
+    //         }
+    //     },
+    //     [networkDescriptionPath]
+    // )
+
     /**
      * Handles the network build/delete button clicks. When the network is built, then deletes
      * the network. When no network is built, then builds the network.
@@ -173,7 +187,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 .then(action => action.result.ifLeft(messages => onSetErrorMessages(asErrorMessage(messages))))
                 .then(result => result.ifRight(() => {
                     onClearNetworkState();
-                    return props.onUnsubscribe(subscription, pauseSubscription);
+                    return onUnsubscribe(subscription, pauseSubscription);
                 }))
             )
             // if the network ID doesn't exist, then the button click is for creating the network, and
@@ -227,6 +241,14 @@ function RunDeployManager(props: Props): JSX.Element {
                 )
             );
     }
+
+    // function loadNetworkDescriptionIfNeeded(): boolean {
+    //     if (networkDescriptionPath && networkDescription === undefined) {
+    //         loadNetworkDescriptionFrom(networkDescriptionPath);
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
     function asErrorMessage(errors: Array<string>): JSX.Element {
         return <>{errors.map((error, key) => (<div key={key}>{error}</div>))}</>
@@ -282,6 +304,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     simulationDuration: state.simulationProject.simulationDuration,
     networkId: state.networkManagement.networkId,
 
+    networkDescriptionPath: state.simulationProject.networkDescriptionPath,
     networkDescription: state.networkDescription.description,
     neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
     networkBuilt: state.networkEvent.networkBuilt,
@@ -307,6 +330,8 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
+    // loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
+
     onBuildNetwork: (networkDescription: string) => dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),
     onDeleteNetwork: (networkId: string) => dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),
     onClearNetworkState: () => dispatch(deleteNetwork()),

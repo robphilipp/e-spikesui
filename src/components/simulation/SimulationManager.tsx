@@ -19,6 +19,8 @@ import {SimulationProject} from "../repos/simulationProjectRepo";
 import {baseRouterPathFrom} from "../router/router";
 import ProjectConfig from "./ProjectConfig";
 import RunDeployManager from "./RunDeployManager";
+import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
+import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -47,6 +49,9 @@ interface StateProps {
 }
 
 interface DispatchProps {
+    loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
+    loadSensorDescription: (path: string) => Promise<SensorsLoadedAction>;
+
     onCreate: () => void;
     onLoad: (path: string) => Promise<ProjectLoadedAction>;
     onSave: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
@@ -77,6 +82,8 @@ function SimulationManager(props: Props): JSX.Element {
         networkDescriptionPath,
         sensorDescriptionPath,
         modified,
+        loadNetworkDescription,
+        loadSensorDescription,
         onCreate,
         onLoad,
         onSave,
@@ -95,15 +102,19 @@ function SimulationManager(props: Props): JSX.Element {
     // the selected tab (i.e. configuration or execution)
     const [selectedTab, setSelectedTab] = useState<string>(TabName.PROJECT);
 
-    // when the environment code-snippet file path from the router has changed, and is
-    // not equal to the current state path, or is empty, then load the environment code-snippet,
-    // or a template
+    // when the simulation project path has changed, potentially load the project, and
+    // load the associated network description and sensor code snippet
     useEffect(
         () => {
             const filePath = decodeURIComponent(simulationProjectPath);
             if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH && !modified) {
                 onLoad(filePath)
-                    .then(() => console.log("loaded"))
+                    .then(action => {
+                        Promise.all([
+                            loadNetworkDescription(action.result.project.networkFilePath),
+                            loadSensorDescription(action.result.project.sensorFilePath)
+                        ]).catch(reason => onSetError(<div>{reason.message}</div>))
+                    })
                     .catch(reason => onSetError(<div>{reason.message}</div>))
             }
         },
@@ -399,6 +410,9 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
+    loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
+    loadSensorDescription: (path: string) => dispatch(loadSensorsFrom(path)),
+
     onCreate: () => dispatch(newSimulationProject()),
     onLoad: (path: string) => dispatch(loadSimulationProject(path)),
     onSave: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),

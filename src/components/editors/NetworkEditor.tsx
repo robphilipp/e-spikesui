@@ -106,10 +106,38 @@ function NetworkEditor(props: Props): JSX.Element {
 
     const [message, setMessage] = useState<JSX.Element>();
 
-    // when component mounts, sets the initial dimension of the editor and registers to listen
-    // to window resize events. when component unmounts, removes the window-resize event listener
+    // when the network description file path from the router has changed, and is
+    // not equal to the current state path, or is empty, then load the network description,
+    // or a template
     useEffect(
         () => {
+            // if the network description is not yet loaded, then leave it for the
+            // next useEffect to load
+            if (networkDescription === undefined || networkDescription === '') {
+                return;
+            }
+
+            // the network path must have changed, in which case, load the network description
+            // or a template
+            const filePath = decodeURIComponent(networkPath);
+            if (filePath !== networkDescriptionPath) {
+                loadNetworkDescriptionOrTemplate(filePath);
+            }
+        },
+        [networkPath]
+    )
+
+    // when component mounts, loads the network description if needed, sets the initial dimension
+    // of the editor and registers to listen to window resize events. when component unmounts,
+    // removes the window-resize event listener
+    useEffect(
+        () => {
+            // when the network description has not been loaded and handed to this component
+            // as a property, load it based on the file path
+            if (networkDescription === undefined || networkDescription === '') {
+                loadNetworkDescriptionOrTemplate(decodeURIComponent(networkPath));
+            }
+
             if (editorRef.current) {
                 setDimension(editorDimensions());
             }
@@ -125,27 +153,23 @@ function NetworkEditor(props: Props): JSX.Element {
         []
     )
 
-    // when the network description file path from the router has changed, and is
-    // not equal to the current state path, or is empty, then load the network description,
-    // or a template
-    useEffect(
-        () => {
-            const filePath = decodeURIComponent(networkPath);
-            if (filePath === networkDescriptionPath) {
-                return;
-            }
-            if (filePath === NEW_NETWORK_PATH || filePath === 'undefined') {
-                loadTemplate(templatePath)
-                    .then(() => console.log("loaded"))
-                    .catch(reason => setMessage(errorMessage(reason.message)))
-            } else {
-                loadNetworkDescription(filePath)
-                    .then(() => console.log("loaded"))
-                    .catch(reason => setMessage(errorMessage(reason.message)))
-            }
-        },
-        [networkPath]
-    )
+    /**
+     * Loads the network description from the specified file path, or, if the
+     * file path is for a new network description, then loads the network desription
+     * template
+     * @param filePath The path to the network description file
+     */
+    function loadNetworkDescriptionOrTemplate(filePath: string): void {
+        if (filePath === NEW_NETWORK_PATH || filePath === 'undefined') {
+            loadTemplate(templatePath)
+                .then(() => console.log("loaded"))
+                .catch(reason => setMessage(errorMessage(reason.message)))
+        } else {
+            loadNetworkDescription(filePath)
+                .then(() => console.log("loaded"))
+                .catch(reason => setMessage(errorMessage(reason.message)))
+        }
+    }
 
     // recalculate the base path when the path changes (note that the base path won't change)
     useEffect(

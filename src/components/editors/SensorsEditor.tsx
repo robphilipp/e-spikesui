@@ -112,10 +112,38 @@ function SensorsEditor(props: Props): JSX.Element {
 
     const [message, setMessage] = useState<JSX.Element>();
 
-    // when component mounts, sets the initial dimension of the editor and registers to listen
-    // to window resize events. when component un-mounts, removes the window-resize event listener
+
+    // when the environment code-snippet file path from the router has changed, and is
+    // not equal to the current state path, or is empty, then load the environment code-snippet,
+    // or a template
     useEffect(
         () => {
+            // when the code snippet hasn't been loaded, then defer to the next useEffect
+            // to handle loading it
+            if (codeSnippet === undefined || codeSnippet === '') {
+                return;
+            }
+
+            // the path to the sensor code snippet must have changed, so load it
+            const filePath = decodeURIComponent(sensorsPath);
+            if (filePath !== sensorDescriptionPath) {
+                loadCodeSnippetOrTemplate(filePath);
+            }
+        },
+        [sensorsPath]
+    );
+
+    // when component mounts, loads the code snippet if needed, sets the initial dimension of the
+    // editor and registers to listen to window resize events. when component un-mounts, removes
+    // the window-resize event listener
+    useEffect(
+        () => {
+            // when the network description has not been loaded and handed to this component
+            // as a property, load it based on the file path
+            if (codeSnippet === undefined || codeSnippet === '') {
+                loadCodeSnippetOrTemplate(decodeURIComponent(sensorsPath));
+            }
+
             if (editorRef.current) {
                 setDimension(editorDimensions());
             }
@@ -131,28 +159,22 @@ function SensorsEditor(props: Props): JSX.Element {
         []
     );
 
-    // when the environment code-snippet file path from the router has changed, and is
-    // not equal to the current state path, or is empty, then load the environment code-snippet,
-    // or a template
-    useEffect(
-        () => {
-            const filePath = decodeURIComponent(sensorsPath);
-            if (filePath === sensorDescriptionPath) {
-                return;
-            }
-            if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
-                onLoadTemplate(templatePath)
-                    .then(() => console.log("loaded"))
-                    .catch(reason => setMessage(errorMessage(reason.message)))
-            } else {
-                // todo handle success and failure
-                onLoadSensor(filePath)
-                    .then(() => console.log("loaded"))
-                    .catch(reason => setMessage(errorMessage(reason.message)))
-            }
-        },
-        [sensorsPath]
-    );
+    /**
+     * Loads the code snippet describing the sensor, or if the file path is for a new
+     * code snippet, then loads the template
+     * @param filePath The path to the file holding the code snippet
+     */
+    function loadCodeSnippetOrTemplate(filePath: string): void {
+        if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
+            onLoadTemplate(templatePath)
+                .then(() => console.log("loaded"))
+                .catch(reason => setMessage(errorMessage(reason.message)))
+        } else {
+            onLoadSensor(filePath)
+                .then(() => console.log("loaded"))
+                .catch(reason => setMessage(errorMessage(reason.message)))
+        }
+    }
 
     // recalculate the base path when the path changes (note that the base path won't change)
     useEffect(

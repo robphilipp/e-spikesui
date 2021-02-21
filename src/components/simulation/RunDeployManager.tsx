@@ -1,24 +1,15 @@
 import * as React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
-import {
-    IconButton,
-    ITheme,
-    Stack,
-    StackItem,
-    TooltipHost,
-    Text,
-    Tooltip,
-    IStackItemStyles,
-    Separator, Layer
-} from "@fluentui/react";
+import {IconButton, ITheme, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
 import {
     ApplicationAction,
     clearMessage,
     FeedbackMessage,
     MessageClearedAction,
     MessageSetAction,
-    setErrorMessage, setLoading
+    setErrorMessage,
+    setLoading
 } from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -51,9 +42,7 @@ import {
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
-import { Card } from '@uifabric/react-cards';
-import {CardSection} from "@uifabric/react-cards/dist/react-cards";
-import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
+import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
 
 interface OwnProps extends RouteComponentProps<never> {
@@ -100,7 +89,7 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    onLoading: (isLoading: boolean, message?: string) => void;
+    updateLoadingState: (isLoading: boolean, message?: string) => void;
     // onChange: (project: SimulationProject) => void;
     //
     // onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
@@ -136,7 +125,7 @@ type Props = OwnProps & StateProps & DispatchProps;
 
 function RunDeployManager(props: Props): JSX.Element {
     const {
-        onLoading,
+        updateLoadingState,
         itheme,
         simulationName,
         timeFactor,
@@ -171,13 +160,22 @@ function RunDeployManager(props: Props): JSX.Element {
         onClearErrorMessages
     } = props;
 
-    const [loading, setLoading] = useState<boolean>(false);
+    // const [loading, setLoading] = useState<boolean>(false);
 
     const history = useHistory();
 
     // observable that streams the unadulterated network events
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
 
+
+    useEffect(
+        () => {
+            if (networkBuilt) {
+                updateLoadingState(false);
+            }
+        },
+        [networkBuilt]
+    )
     // useEffect(
     //     () => {
     //         if (networkDescriptionPath && networkDescription === undefined) {
@@ -193,7 +191,7 @@ function RunDeployManager(props: Props): JSX.Element {
      * @private
      */
     function handleBuildDeleteNetwork(): void {
-        onLoading(true, networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`));
+        updateLoadingState(true, networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`));
         networkId
             // if the network ID exists, then the button click is to delete the network, and
             // so we send a message down the websocket to delete the network, and then we
@@ -205,7 +203,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     onClearNetworkState();
                     return onUnsubscribe(subscription, pauseSubscription);
                 }))
-                .finally(() => onLoading(false))
+                .finally(() => updateLoadingState(false))
             )
             // if the network ID doesn't exist, then the button click is for creating the network, and
             // so we call action creator for creating the network, and if that results in a failure, the
@@ -241,17 +239,17 @@ function RunDeployManager(props: Props): JSX.Element {
                                 // set the build observable
                                 setNetworkObservable(observableAction.observable);
                             })
-                            .catch(messages => onSetErrorMessages(messages))
-                            .finally(() => {
-                                console.log("done building")
-                                onLoading(false)
+                            .catch(messages => {
+                                onSetErrorMessages(messages);
+                                updateLoadingState(false);
                             })
+                            .finally(() => console.log("done building"))
                     })
                 )
                 .catch(reason => {
                     console.log("unable to build network", reason);
                     onSetErrorMessages(reason.toString());
-                    onLoading(false);
+                    updateLoadingState(false);
                 })
             );
     }
@@ -391,7 +389,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         }
                     >
                         <IconButton
-                            disabled={loading}
+                            // disabled={loading}
                             iconProps={networkId.isNone() ?
                                 {iconName: "build"} :
                                 {iconName: "delete"}
@@ -438,17 +436,20 @@ function RunDeployManager(props: Props): JSX.Element {
                         </Card>
                 )).getOrElse(<span/>)}
                 </Stack.Item>
-                <Stack.Item>
-                    {networkId.map(id => (
+            </Stack>
+            <Stack>
+                <Stack.Item grow>
+                    {networkId.isSome() && networkBuilt ?
                         <NetworkVisualization
                             key="net-1"
                             // itheme={itheme}
                             networkObservable={networkObservable}
                             sceneHeight={500}
-                            sceneWidth={1000}
+                            sceneWidth={800}
                             // onClose={hideSimulationLayer}
-                        />
-                    )).getOrElse(<span/>)}
+                        /> :
+                        <div/>
+                    }
                 </Stack.Item>
             </Stack>
         </Stack>
@@ -498,7 +499,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onLoading: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
+    updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
 
     onBuildNetwork: (networkDescription: string) => dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),
     onDeleteNetwork: (networkId: string) => dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),

@@ -52,6 +52,7 @@ import {
 import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
 import { Card } from '@uifabric/react-cards';
+import {CardSection} from "@uifabric/react-cards/dist/react-cards";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -230,19 +231,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         // messages so that we can construct the network visualization. to do this we create the
                         // build observable that filters out all non-build messages, and then subscribe to it,
                         // sending all the network build messages as network events
-                        subscribeWebsocket(
-                            buildObservable,
-                            5000,
-                            events => {
-                                console.log(events)
-                                const actions = networkBuildEventsActionCreator(events);
-                                if (actions.events.length > 0) {
-                                    onNetworkBuildEvents(actions);
-                                }
-                            },
-                            observableAction.pauseSubject,
-                            false
-                        )
+                        subscribeWebsocket(buildObservable, 5000, processNetworkBuildEvents, observableAction.pauseSubject, false)
                             .then(() => {
                                 // send the command to build the network
                                 websocketCreatedAction.webSocketSubject.next(BUILD_MESSAGE.command);
@@ -251,10 +240,30 @@ function RunDeployManager(props: Props): JSX.Element {
                                 setNetworkObservable(observableAction.observable);
                             })
                             .catch(messages => onSetErrorMessages(messages))
+                            .finally(() => {
+                                console.log("done building")
+                                onLoading(false)
+                            })
                     })
                 )
-                .finally(() => onLoading(false))
+                .catch(reason => {
+                    console.log("unable to build network", reason);
+                    onSetErrorMessages(reason.toString());
+                    onLoading(false);
+                })
             );
+    }
+
+    /**
+     * Processes and dispatches network build events
+     * @param events An array of incoming network events
+     */
+    function processNetworkBuildEvents(events: Array<NetworkEvent>): void {
+        console.log(events)
+        const actions = networkBuildEventsActionCreator(events);
+        if (actions.events.length > 0) {
+            onNetworkBuildEvents(actions);
+        }
     }
 
     // function loadNetworkDescriptionIfNeeded(): boolean {
@@ -408,10 +417,17 @@ function RunDeployManager(props: Props): JSX.Element {
                                 color={itheme.palette.neutralSecondary}
                                 styles={{root: {padding: 0, fontSize: 0}}}
                             />
-                            <Card.Section>
+                            <Card.Section horizontal>
                                 <TooltipHost content="Run network on server.">
                                     <IconButton
                                         iconProps={{iconName: "play"}}
+                                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                                        // onClick={handleEditSensorDescription}
+                                    />
+                                </TooltipHost>
+                                <TooltipHost content="Pause processing of events.">
+                                    <IconButton
+                                        iconProps={{iconName: "pause"}}
                                         style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                                         // onClick={handleEditSensorDescription}
                                     />

@@ -43,6 +43,11 @@ interface DispatchProps {
 
 type Props = StateProps & DispatchProps & OwnProps;
 
+/**
+ * Visualization of the network topology with simulation neuron firings
+ * @param props The properties for displaying the simulated network
+ * @constructor
+ */
 function NetworkTopologyVisualization(props: Props): JSX.Element {
     const {
         itheme,

@@ -10,7 +10,7 @@ import {
     Text,
     Tooltip,
     IStackItemStyles,
-    Separator
+    Separator, Layer
 } from "@fluentui/react";
 import {
     ApplicationAction,
@@ -53,6 +53,8 @@ import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
 import { Card } from '@uifabric/react-cards';
 import {CardSection} from "@uifabric/react-cards/dist/react-cards";
+import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
+import NetworkVisualization from "./NetworkVisualization";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -435,6 +437,18 @@ function RunDeployManager(props: Props): JSX.Element {
                             </Card.Section>
                         </Card>
                 )).getOrElse(<span/>)}
+                </Stack.Item>
+                <Stack.Item>
+                    {networkId.map(id => (
+                        <NetworkVisualization
+                            key="net-1"
+                            // itheme={itheme}
+                            networkObservable={networkObservable}
+                            sceneHeight={500}
+                            sceneWidth={1000}
+                            // onClose={hideSimulationLayer}
+                        />
+                    )).getOrElse(<span/>)}
                 </Stack.Item>
             </Stack>
         </Stack>

@@ -398,8 +398,8 @@ function RunDeployManager(props: Props): JSX.Element {
                             <Separator
                                 vertical={false}
                                 color={itheme.palette.neutralSecondary}
-                                styles={{root: {padding: 0, fontSize: 0}}}
-                            />
+                                styles={{root: {padding: 0, fontSize: 14}}}
+                            >Simulation Information</Separator>
                             <Card.Section>
                                 {networkInfo(id)}
                             </Card.Section>

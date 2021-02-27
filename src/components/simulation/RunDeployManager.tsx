@@ -188,7 +188,6 @@ function RunDeployManager(props: Props): JSX.Element {
     /**
      * Handles the network build/delete button clicks. When the network is built, then deletes
      * the network. When no network is built, then builds the network.
-     * @private
      */
     function handleBuildDeleteNetwork(): void {
         updateLoadingState(true, networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`));
@@ -210,7 +209,10 @@ function RunDeployManager(props: Props): JSX.Element {
             // we call the action creator for setting the error messages.
             .ifNone(() => onBuildNetwork(networkDescription)
                 .then(action => action.result
-                    .ifLeft(messages => onSetErrorMessages(asErrorMessage(messages)))
+                    .ifLeft(messages => {
+                        onSetErrorMessages(asErrorMessage(messages))
+                        updateLoadingState(false)
+                    })
                     .ifRight(networkId => {
                         // create the rxjs web-socket subject and then hand it to the pipeline for
                         // processing spikes network events
@@ -243,11 +245,9 @@ function RunDeployManager(props: Props): JSX.Element {
                                 onSetErrorMessages(messages);
                                 updateLoadingState(false);
                             })
-                            .finally(() => console.log("done building"))
                     })
                 )
                 .catch(reason => {
-                    console.log("unable to build network", reason);
                     onSetErrorMessages(reason.toString());
                     updateLoadingState(false);
                 })
@@ -259,10 +259,19 @@ function RunDeployManager(props: Props): JSX.Element {
      * @param events An array of incoming network events
      */
     function processNetworkBuildEvents(events: Array<NetworkEvent>): void {
-        console.log(events)
+        // convert the network build events into a action holding those events and dispatch
+        // if there are any events
         const actions = networkBuildEventsActionCreator(events);
         if (actions.events.length > 0) {
-            onNetworkBuildEvents(actions);
+            // as the network build events are dispatched, the reducer updates the neurons and
+            // connections. to build connections, the reducer must reconcile the pre- and post-
+            // synaptic neurons in the connection event with the existing neurons in the state.
+            // In some cases, that may fail, so we wrap the events in a try and report any errors.
+            try {
+                onNetworkBuildEvents(actions);
+            } catch (error) {
+                onSetErrorMessages(<div>{error.message}</div>);
+            }
         }
     }
 
@@ -434,7 +443,7 @@ function RunDeployManager(props: Props): JSX.Element {
                                 </TooltipHost>
                             </Card.Section>
                         </Card>
-                )).getOrElse(<span/>)}
+                    )).getOrElse(<span/>)}
                 </Stack.Item>
             </Stack>
             <Stack>

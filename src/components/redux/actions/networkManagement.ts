@@ -325,13 +325,17 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
                 .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to deploy and build network on server."];
-                    if (reason.response?.status === 404) {
-                        messages.push(`Server endpoint not found; ${reason.response.config.url}`)
-                    } else {
-                        messages.push(reason.response.statusText)
-                        if (reason.response.data) {
-                            messages.push(reason.response.data)
+                    if (reason.response) {
+                        if (reason.response.status === 404) {
+                            messages.push(`Server endpoint not found; ${reason.response.config.url}`)
+                        } else {
+                            messages.push(reason.response.statusText)
+                            if (reason.response.data) {
+                                messages.push(reason.response.data)
+                            }
                         }
+                    } else {
+                        messages.push(reason.message)
                     }
                     return dispatch(failedAction(NETWORK_BUILT, messages))
                 })
@@ -476,12 +480,12 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      * todo need to update the "error" and "complete" callbacks in the observable.subscribe(...)
      * Subscribes to the observable that listens for messages on the websocket, and to the subject
      * used for pausing the message processing
-     * @param {Observable<string[]>} observable The observable attached to the websocket
      * @param {number} timeWindow The time window
-     * @param {(messages: string[]) => void} eventProcessor The message processor
-     * @param {Subject<boolean>} pauseSubject The observable for pausing the message processing
-     * @param {boolean} paused `true` when paused; `false` when running
-     * @return {ThunkAction<Promise<SubscribeWebsocketAction>, any, any, SubscribeWebsocketAction>}
+     * @param observable The observable attached to the websocket
+     * @param eventProcessor The message processor
+     * @param pauseSubject The observable for pausing the message processing
+     * @param paused `true` when paused; `false` when running
+     * @return A subscribe-websocket thunk action
      */
     function subscribe(observable: Observable<Array<NetworkEvent>>,
                        timeWindow: number,

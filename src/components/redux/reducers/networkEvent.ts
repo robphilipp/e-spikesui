@@ -54,6 +54,8 @@ function convertNeuron(neuron: Neuron): NeuronInfo {
     }
 }
 
+// todo return an Option<NeuronInfo> and let the calling function deal with missing data
+//      Need to figure out how to recover when there is an error (which has happened a few times)
 function retrieveNeuronInfo(neuronId: string, neurons: HashMap<string, NeuronInfo>): NeuronInfo {
     return neurons.get(neuronId).getOrThrow(`Neuron ${neuronId} not found`);
 }

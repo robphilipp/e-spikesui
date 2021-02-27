@@ -25,6 +25,7 @@ export const SCENES_UPDATED = "network-visualization-scenes-updates";
  */
 export interface NetworkVisualizationAxesChangeAction {
     type: typeof AXES_VISIBILITY_CHANGED;
+    id: string;
     visible: boolean;
 }
 
@@ -33,6 +34,7 @@ export interface NetworkVisualizationAxesChangeAction {
  */
 export interface NetworkVisualizationGridChangeAction {
     type: typeof GRID_VISIBILITY_CHANGED;
+    id: string;
     visible: boolean;
 }
 
@@ -42,6 +44,7 @@ export interface NetworkVisualizationGridChangeAction {
  */
 export interface NetworkVisualizationCameraUpdateAction {
     type: typeof CAMERA_UPDATED;
+    id: string;
     camera: Option<PerspectiveCamera>;
 }
 
@@ -51,6 +54,7 @@ export interface NetworkVisualizationCameraUpdateAction {
  */
 export interface NetworkVisualizationRendererUpdateAction {
     type: typeof RENDERER_UPDATED;
+    id: string;
     renderer: Option<Renderer>;
 }
 
@@ -60,6 +64,7 @@ export interface NetworkVisualizationRendererUpdateAction {
  */
 export interface NetworkVisualizationScenesUpdateAction {
     type: typeof SCENES_UPDATED;
+    id: string;
     scenes: Option<Vector<SceneInfo>>;
 }
 
@@ -79,62 +84,70 @@ export type NetworkVisualizationAction = NetworkVisualizationAxesChangeAction |
 
 /**
  * Action creator that creates an action to represent the visibility of the network-visualization's axes
- * @param {boolean} visible `true` if the network visualization axes are visible; `false` otherwise
- * @return {NetworkVisualizationAxesChangeAction} The action representing the change in axes visibility 
- * of network visualization
+ * @param id The visualization ID that is unique for each <Network> component
+ * @param visible `true` if the network visualization axes are visible; `false` otherwise
+ * @return The action representing the change in axes visibility of network visualization
  */
-export function axesVisibilityChanged(visible: boolean): NetworkVisualizationAxesChangeAction {
+export function axesVisibilityChanged(id: string, visible: boolean): NetworkVisualizationAxesChangeAction {
     return ({
         type: AXES_VISIBILITY_CHANGED,
+        id: id,
         visible: visible
     });
 }
 
 /**
  * Action creator that creates an action to represent the visibility of the network-visualization's grid
- * @param {boolean} visible `true` if the network visualization grid are visible; `false` otherwise
- * @return {NetworkVisualizationGridChangeAction} The action representing the change in grid visibility
- * of network visualization
+ * @param id The visualization ID that is unique for each <Network> component
+ * @param visible `true` if the network visualization grid are visible; `false` otherwise
+ * @return The action representing the change in grid visibility of network visualization
  */
-export function gridVisibilityChanged(visible: boolean): NetworkVisualizationGridChangeAction {
+export function gridVisibilityChanged(id: string, visible: boolean): NetworkVisualizationGridChangeAction {
     return ({
         type: GRID_VISIBILITY_CHANGED,
+        id: id,
         visible: visible
     });
 }
 
 /**
  * Action creator that creates an action that the camera has be changed.
- * @param {PerspectiveCamera} camera The camera for viewing the three-js scene
- * @return {NetworkVisualizationCameraUpdateAction} The action that the camera has be changed.
+ * @param id The visualization ID that is unique for each <Network> component
+ * @param camera The camera for viewing the three-js scene
+ * @return The action that the camera has be changed.
  */
-export function cameraUpdated(camera: PerspectiveCamera): NetworkVisualizationCameraUpdateAction {
+export function cameraUpdated(id: string, camera: PerspectiveCamera): NetworkVisualizationCameraUpdateAction {
     return ({
         type: CAMERA_UPDATED,
+        id: id,
         camera: Option.ofNullable(camera)
     });
 }
 
 /**
  * Action creator that creates an action that the renderer has been changed.
- * @param {Renderer} renderer The three-js renderer that renders the scenes.
- * @return {NetworkVisualizationRendererUpdateAction} The action that the renderer has been changed.
+ * @param id The visualization ID that is unique for each <Network> component
+ * @param renderer The three-js renderer that renders the scenes.
+ * @return The action that the renderer has been changed.
  */
-export function rendererUpdated(renderer: Renderer): NetworkVisualizationRendererUpdateAction {
+export function rendererUpdated(id: string, renderer: Renderer): NetworkVisualizationRendererUpdateAction {
     return ({
         type: RENDERER_UPDATED,
+        id: id,
         renderer: Option.ofNullable(renderer)
     });
 }
 
 /**
  * Action creator that creates an action that the scenes have changed (i.e. a scene has been added or removed)
- * @param {Vector<SceneInfo>} scenes The list of scene information
- * @return {NetworkVisualizationScenesUpdateAction} The action that the scenes have been changed.
+ * @param id The visualization ID that is unique for each <Network> component
+ * @param scenes The list of scene information
+ * @return The action that the scenes have been changed.
  */
-export function scenesUpdated(scenes: Vector<SceneInfo>): NetworkVisualizationScenesUpdateAction {
+export function scenesUpdated(id: string, scenes: Vector<SceneInfo>): NetworkVisualizationScenesUpdateAction {
     return ({
         type: SCENES_UPDATED,
+        id: id,
         scenes: Option.ofNullable(scenes)
     });
 }

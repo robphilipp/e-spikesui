@@ -33,6 +33,7 @@ import {
 } from "../../redux/actions/networkVisualization";
 import {NetworkEvent} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
+import {initialNetVisState} from "../../redux/reducers/networkVisualization";
 
 export interface ColorRange {
     excitatory: { min: Color, max: Color };
@@ -40,6 +41,7 @@ export interface ColorRange {
 }
 
 export interface OwnProps {
+    visualizationId: string;
     sceneHeight: number;
     sceneWidth: number;
     excitationColor?: Color;
@@ -67,11 +69,11 @@ export interface StateProps {
 }
 
 export interface DispatchProps {
-    onAxisVisibilityChange: (visible: boolean) => NetworkVisualizationAxesChangeAction;
-    onGridVisibilityChange: (visible: boolean) => NetworkVisualizationGridChangeAction;
-    onCameraUpdate: (camera: PerspectiveCamera) => NetworkVisualizationCameraUpdateAction;
-    onRendererUpdate: (renderer: Renderer) => NetworkVisualizationRendererUpdateAction;
-    onScenesUpdate: (scenes: Vector<SceneInfo>) => NetworkVisualizationScenesUpdateAction;
+    onAxisVisibilityChange: (id: string, visible: boolean) => NetworkVisualizationAxesChangeAction;
+    onGridVisibilityChange: (id: string, visible: boolean) => NetworkVisualizationGridChangeAction;
+    onCameraUpdate: (id: string, camera: PerspectiveCamera) => NetworkVisualizationCameraUpdateAction;
+    onRendererUpdate: (id: string, renderer: Renderer) => NetworkVisualizationRendererUpdateAction;
+    onScenesUpdate: (id: string, scenes: Vector<SceneInfo>) => NetworkVisualizationScenesUpdateAction;
 }
 
 type Props = StateProps & DispatchProps & OwnProps
@@ -108,6 +110,7 @@ function colorRange(itheme: ITheme, excitationColor: Color, inhibitionColor: Col
  */
 function Network(props: Props): JSX.Element {
     const {
+        visualizationId,
         itheme,
         sceneWidth,
         sceneHeight,
@@ -187,7 +190,7 @@ function Network(props: Props): JSX.Element {
      */
     function setAxesVisibility(visible: boolean): void {
         scenesContext.visibility(AXES_SCENE_ID, visible);
-        onAxisVisibilityChange(visible)
+        onAxisVisibilityChange(visualizationId, visible)
     }
 
     /**
@@ -198,7 +201,7 @@ function Network(props: Props): JSX.Element {
      */
     function setGridVisibility(visible: boolean): void {
         scenesContext.visibility(GRID_SCENE_ID, visible);
-        onGridVisibilityChange(visible)
+        onGridVisibilityChange(visualizationId, visible)
     }
 
     /**
@@ -225,20 +228,20 @@ function Network(props: Props): JSX.Element {
             .getOrCall(() => {
                 const camera = new PerspectiveCamera(45, offsetWidth / offsetHeight, 0.1, 10000,);
                 camera.position.set(position.x, position.y, position.z);
-                onCameraUpdate(camera);
+                onCameraUpdate(visualizationId, camera);
                 return camera;
             })
     }
 
-    function getAxesCamera(offsetWidth: number, offsetHeight: number): PerspectiveCamera {
-        return camera
-            .map(cam => {
-                const camera = new PerspectiveCamera(45, offsetHeight / offsetHeight, 0.1, 100);
-                camera.up = cam.up;
-                return camera;
-            })
-            .getOrUndefined()
-    }
+    // function getAxesCamera(offsetWidth: number, offsetHeight: number): PerspectiveCamera {
+    //     return camera
+    //         .map(cam => {
+    //             const camera = new PerspectiveCamera(45, offsetHeight / offsetHeight, 0.1, 100);
+    //             camera.up = cam.up;
+    //             return camera;
+    //         })
+    //         .getOrUndefined()
+    // }
 
     /**
      * Resets the camera position to the original, and has the camera look at the origin
@@ -249,7 +252,7 @@ function Network(props: Props): JSX.Element {
             cam.position.set(position.x, position.y, position.z);
             cam.lookAt(new Vector3(boundingSphere.origin.x, boundingSphere.origin.y, boundingSphere.origin.z));
             cam.updateProjectionMatrix();
-            onCameraUpdate(cam);
+            onCameraUpdate(visualizationId, cam);
         })
     }
 
@@ -289,7 +292,7 @@ function Network(props: Props): JSX.Element {
                 {name: AXES_SCENE_ID, scene: axesScene, visible: axesVisible},
                 {name: NETWORK_SCENE_ID, scene: networkScene, visible: true}
             );
-            onScenesUpdate(scenes);
+            onScenesUpdate(visualizationId, scenes);
             return scenes;
         });
     }
@@ -398,21 +401,37 @@ function Network(props: Props): JSX.Element {
 
 /**
  * react-redux function that maps the network-events slice of the application state to the components state-props.
- * @param {AppState} state The application state from the redux root store
- * @return {StateProps} The updated the state-properties, which in our case is the network neurons and connections
+ * @param state The application state from the redux root store
+ * @param ownProps The Network components own properties (holding the visualization ID)
+ * @return The updated the state-properties, which in our case is the network neurons and connections
  */
-const mapStateToProps = (state: AppState): StateProps => ({
+const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     itheme: state.settings.itheme,
 
     networkId: state.networkManagement.networkId,
     neurons: state.networkEvent.neurons,
     connections: state.networkEvent.connections,
 
-    axesVisible: state.networkVisualizationEvent.axesVisible,
-    gridVisible: state.networkVisualizationEvent.gridVisible,
-    camera: state.networkVisualizationEvent.camera,
-    renderer: state.networkVisualizationEvent.renderer,
-    scenes: state.networkVisualizationEvent.scenes
+    axesVisible: state.networkVisualizationEvent.states
+        .get(ownProps.visualizationId)
+        .map(vizState => vizState.axesVisible)
+        .getOrElse(initialNetVisState.axesVisible),
+    gridVisible: state.networkVisualizationEvent.states
+        .get(ownProps.visualizationId)
+        .map(vizState => vizState.gridVisible)
+        .getOrElse(initialNetVisState.gridVisible),
+    camera: state.networkVisualizationEvent.states
+        .get(ownProps.visualizationId)
+        .map(vizState => vizState.camera)
+        .getOrElse(initialNetVisState.camera),
+    renderer: state.networkVisualizationEvent.states
+        .get(ownProps.visualizationId)
+        .map(vizState => vizState.renderer)
+        .getOrElse(initialNetVisState.renderer),
+    scenes: state.networkVisualizationEvent.states
+        .get(ownProps.visualizationId)
+        .map(vizState => vizState.scenes)
+        .getOrElse(initialNetVisState.scenes),
 });
 
 /**
@@ -423,11 +442,11 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<unknown, unknown, ApplicationAction>): DispatchProps => ({
-    onAxisVisibilityChange: (visible: boolean) => dispatch(axesVisibilityChanged(visible)),
-    onGridVisibilityChange: (visible: boolean) => dispatch(gridVisibilityChanged(visible)),
-    onCameraUpdate: (camera: PerspectiveCamera) => dispatch(cameraUpdated(camera)),
-    onRendererUpdate: (renderer: Renderer) => dispatch(rendererUpdated(renderer)),
-    onScenesUpdate: (scenes: Vector<SceneInfo>) => dispatch(scenesUpdated(scenes)),
+    onAxisVisibilityChange: (id: string, visible: boolean) => dispatch(axesVisibilityChanged(id, visible)),
+    onGridVisibilityChange: (id: string, visible: boolean) => dispatch(gridVisibilityChanged(id, visible)),
+    onCameraUpdate: (id: string, camera: PerspectiveCamera) => dispatch(cameraUpdated(id, camera)),
+    onRendererUpdate: (id: string, renderer: Renderer) => dispatch(rendererUpdated(id, renderer)),
+    onScenesUpdate: (id: string, scenes: Vector<SceneInfo>) => dispatch(scenesUpdated(id, scenes)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Network)

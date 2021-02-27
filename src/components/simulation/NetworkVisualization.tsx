@@ -76,6 +76,7 @@ function NetworkVisualization(props: Props): JSX.Element {
     return (
         <div>
             <Network
+                visualizationId="live-visualization"
                 sceneHeight={sceneHeight}
                 sceneWidth={sceneWidth}
                 excitationColor={excitationColor}

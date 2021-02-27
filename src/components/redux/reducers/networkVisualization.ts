@@ -1,14 +1,14 @@
 import {
     AXES_VISIBILITY_CHANGED,
     CAMERA_UPDATED,
-    GRID_VISIBILITY_CHANGED,
+    GRID_VISIBILITY_CHANGED, NetworkVisualizationAction,
     RENDERER_UPDATED,
     SCENES_UPDATED,
 } from "../actions/networkVisualization";
 import {ApplicationAction} from "../actions/actions";
 import {SceneInfo} from "../../visualization/basethree/useScenes";
 import {PerspectiveCamera, Renderer} from "three";
-import {Option, Vector} from "prelude-ts";
+import {HashMap, Option, Vector} from "prelude-ts";
 import {NETWORK_DELETED, NETWORK_DESCRIPTION_CHANGED} from "../actions/networkManagement";
 
 /*
@@ -17,7 +17,19 @@ import {NETWORK_DELETED, NETWORK_DESCRIPTION_CHANGED} from "../actions/networkMa
  |
  */
 
+// there are several network visualizations in the application, and
+// each of their state is stored in the map. the string is the
+// visualization ID, specified in each instance of the <Network> component,
+// and should be unique in the application.
 interface NetworkVisualizationState {
+    states: HashMap<string, NetVisualizationState>;
+}
+
+const initialVisState: NetworkVisualizationState = {
+    states: HashMap.empty()
+};
+
+interface NetVisualizationState {
     axesVisible: boolean;
     gridVisible: boolean;
     camera: Option<PerspectiveCamera>;
@@ -25,7 +37,7 @@ interface NetworkVisualizationState {
     scenes: Option<Vector<SceneInfo>>;
 }
 
-const initialVisState: NetworkVisualizationState = {
+export const initialNetVisState: NetVisualizationState = {
     axesVisible: false,
     gridVisible: true,
     camera: Option.none(),
@@ -41,45 +53,44 @@ const initialVisState: NetworkVisualizationState = {
  */
 export function networkVisualizationReducer(state: NetworkVisualizationState = initialVisState,
                                             action: ApplicationAction): NetworkVisualizationState {
+    const id = (action as NetworkVisualizationAction).id;
+    const vizState = state.states.get(id).getOrElse(initialNetVisState);
     switch(action.type) {
         case AXES_VISIBILITY_CHANGED:
             return {
-                ...state,
-                axesVisible: action.visible
-            };
+                states: state.states.put(id, {...vizState, axesVisible: action.visible})
+            }
 
         case GRID_VISIBILITY_CHANGED:
             return {
-                ...state,
-                gridVisible: action.visible
-            };
+                states: state.states.put(id, {...vizState, gridVisible: action.visible})
+            }
 
         case CAMERA_UPDATED:
             return {
-                ...state,
-                camera: action.camera
-            };
+                states: state.states.put(id, {...vizState, camera: action.camera})
+            }
 
         case RENDERER_UPDATED:
             return {
-                ...state,
-                renderer: action.renderer
-            };
+                states: state.states.put(id, {...vizState, renderer: action.renderer})
+            }
 
         case SCENES_UPDATED:
             return {
-                ...state,
-                scenes: action.scenes
-            };
+                states: state.states.put(id, {...vizState, scenes: action.scenes})
+            }
 
         case NETWORK_DELETED:
         case NETWORK_DESCRIPTION_CHANGED:
             return {
-                ...state,
-                camera: Option.none(),
-                renderer: Option.none(),
-                scenes: Option.none()
-            };
+                states: state.states.put(id, {
+                    ...vizState,
+                    camera: Option.none(),
+                    renderer: Option.none(),
+                    scenes: Option.none()
+                })
+            }
 
         default:
             return state;

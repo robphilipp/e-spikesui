@@ -145,6 +145,7 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                     <Stack horizontal tokens={{childrenGap: 5}}>
                         <Stack.Item grow>
                             <Network
+                                visualizationId="editor-visualization"
                                 sceneHeight={sceneHeight}
                                 sceneWidth={sceneWidth}
                                 excitationColor={excitationColor}

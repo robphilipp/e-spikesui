@@ -44,6 +44,8 @@ import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
 import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
+import {newSensorThread, SensorThread, SignalGenerator} from "../threads/SensorThread";
+import {ExpressionState} from "../editors/SensorsEditor";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -60,6 +62,11 @@ interface StateProps {
     networkDescriptionPath?: string;
     // holds the network description
     networkDescription: string;
+    // holds the path to the sensor code snippet
+    sensorDescriptionPath?: string;
+    // holds the sensor description
+    sensorDescription: string;
+
     // holds the network ID (once it has been built on the server)
     networkId: Option<string>;
     // whether or not the network is built
@@ -68,8 +75,6 @@ interface StateProps {
     networkBuilt: boolean;
     // neuron ids for the built network
     errorMessages: Option<FeedbackMessage>;
-    // // the current application theme
-    // itheme: ITheme;
     // the base websocket subscription subject
     webSocketSubject: Option<WebSocketSubject<string>>;
     // the subject for pausing the processing of the incoming messages
@@ -131,10 +136,14 @@ function RunDeployManager(props: Props): JSX.Element {
         timeFactor,
         simulationDuration,
 
-        networkId,
         networkDescriptionPath,
         networkDescription,
+        sensorDescriptionPath,
+        sensorDescription,
+
+        networkId,
         neuronIds,
+
         networkBuilt,
         errorMessages,
         webSocketSubject,
@@ -155,6 +164,8 @@ function RunDeployManager(props: Props): JSX.Element {
 
         onNetworkBuildEvents,
         onNetworkEvent,
+        onStartSimulation,
+        onStopSimulation,
 
         onSetErrorMessages,
         onClearErrorMessages
@@ -170,7 +181,25 @@ function RunDeployManager(props: Props): JSX.Element {
     const subscriptionsRef = useRef<Set<Subscription>>(new Set());
 
     // subscription to the web-socket subject to which to send (sensor) signals
-    const [signalSubscriptions, setSignalSubscriptions] = useState<Vector<Subscription>>(Vector.empty());
+    const [signalSubscription, setSignalSubscription] = useState<Subscription>();
+
+    // const [sensors, setSensors] = useState<Vector<Sensor>>(Vector.empty());
+
+    // sensor thread
+    const sensorThreadRef = useRef<SensorThread>();
+
+    // creates the new sensor simulation thread that runs the javascript code snippet
+    useEffect(
+        () => {
+            return () => {
+                // terminate sensor-simulation worker thread on dismount, in case it is
+                // still hanging around
+                sensorThreadRef.current.terminate()
+                    .catch(reason => console.error(`Failed to terminate worker thread; ${reason}`));
+            }
+        },
+        []
+    )
 
     useEffect(
         () => {
@@ -280,48 +309,79 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
-    // /**
-    //  * Handles the web-socket connection when the start/stop button is clicked
-    //  */
-    // function handleStartStop(): void {
-    //     const {running, webSocketSubject} = props;
-    //     webSocketSubject.ifSome(websocket => {
-    //         // when the simulation is not running, the set it up and start it
-    //         if (!running) {
-    //             // add sensors to the network (backend). these sensor send signals to the selected
-    //             // input neurons
-    //             sensors.forEach(
-    //                 sensor => websocket.next(JSON.stringify({
-    //                     name: sensor.description.name,
-    //                     selector: sensor.description.selector.source
-    //                 }))
-    //             );
-    //
-    //             // start the simulation and then create and subscribe to the sensor observables
-    //             // (that will send signals to the network) and then
-    //             props
-    //                 .onStartSimulation(websocket)
-    //                 .then(_ => {
-    //                     const subscriptions = sensors.map(sensor => {
-    //                         const neuronIds = neuronIdsRef.current
-    //                             .filter(id => id.match(sensor.description.selector) !== null)
-    //                             .toArray();
-    //                         return sensor
-    //                             .observableFactory(sensor.description.name, neuronIds)
-    //                             .subscribe(output => websocket.next(JSON.stringify(output)))
-    //                     });
-    //                     setSignalSubscriptions(subscriptions);
-    //                 });
-    //         }
-    //         // when the simulation is running, then stop it
-    //         else {
-    //             subscriptionsRef.current.forEach(subscription => subscription.unsubscribe());
-    //             props.onStopSimulation(websocket).then(action => {
-    //                 signalSubscriptions.forEach(subscription => subscription.unsubscribe());
-    //             });
-    //         }
-    //     });
-    // }
+    async function compileSensor(): Promise<SignalGenerator> {
+        // create a sensor-simulation worker for compiling and running the sensor
+        sensorThreadRef.current = await newSensorThread();
+
+        // attempt to compile the code-snippet as a simulator
+        return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
+    }
+
+    /**
+     * Handles the web-socket connection when the start/stop button is clicked
+     */
+    function handleStartStop(): void {
+        webSocketSubject.ifSome(async websocket => {
+            // when the simulation is not running, the set it up and start it
+            if (!running) {
+                updateLoadingState(true, "Attempting to start neural network")
+
+                // attempt to compile the sensor code snippet
+                const signalGenerator = await compileSensor();
+
+                // create the regex selector for determining the input neurons for the sensor,
+                // required by the back-end
+                const selector = signalGenerator.neuronIds.map(id => `^${id}$`).join("|")
+
+                // add sensor to the network (backend). this sensor sends signals to the selected
+                // input neurons
+                websocket.next(JSON.stringify({
+                    name: networkId,
+                    selector: selector
+                }));
+                // sensors.forEach(
+                //     sensor => websocket.next(JSON.stringify({
+                //         name: sensor.description.name,
+                //         selector: sensor.description.selector.source
+                //     }))
+                // );
+
+                // start the simulation and then create and subscribe to the sensor observables
+                // (that will send signals to the network) and then
+                const startAction = await onStartSimulation(websocket);
+                console.log(startAction);
+                const subscription = signalGenerator
+                    .observable
+                    .subscribe(output => websocket.next(JSON.stringify(output)));
+                setSignalSubscription(subscription);
+
+                updateLoadingState(false);
+                // onStartSimulation(websocket)
+                //     .then(() => {
+                //         const subscriptions = sensors.map(sensor => {
+                //             const neuronIds = neuronIdsRef.current
+                //                 .filter(id => id.match(sensor.description.selector) !== null)
+                //                 .toArray();
+                //             return sensor
+                //                 .observableFactory(sensor.description.name, neuronIds)
+                //                 .subscribe(output => websocket.next(JSON.stringify(output)))
+                //         });
+                //         setSignalSubscription(subscriptions);
+                //     });
+            }
+            // when the simulation is running, then stop it
+            else {
+                updateLoadingState(true, "Stopping simulation");
+                subscriptionsRef.current.forEach(subscription => subscription.unsubscribe());
+                // onStopSimulation(websocket).then(action => {
+                //     signalSubscription.forEach(subscription => subscription.unsubscribe());
+                // });
+                await onStopSimulation(websocket);
+                signalSubscription.unsubscribe();
+                updateLoadingState(false);
+            }
+        });
+    }
 
     /**
      * Handle the user click on the pause button. Calls `setState(...)` method to toggle the `pause` state.
@@ -484,9 +544,9 @@ function RunDeployManager(props: Props): JSX.Element {
                             <Card.Section horizontal>
                                 <TooltipHost content="Run network on server.">
                                     <IconButton
-                                        iconProps={{iconName: "play"}}
+                                        iconProps={running ? {iconName: "stop"} : {iconName: "play"}}
                                         style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                                        // onClick={handleEditSensorDescription}
+                                        onClick={handleStartStop}
                                     />
                                 </TooltipHost>
                                 <TooltipHost content="Pause processing of events.">
@@ -539,6 +599,9 @@ const mapStateToProps = (state: AppState): StateProps => ({
 
     networkDescriptionPath: state.simulationProject.networkDescriptionPath,
     networkDescription: state.networkDescription.description,
+    sensorDescriptionPath: state.sensorDescription.path,
+    sensorDescription: state.sensorDescription.codeSnippet,
+
     neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
     networkBuilt: state.networkEvent.networkBuilt,
     errorMessages: state.application.message,
@@ -551,7 +614,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
     paused: state.networkManagement.paused
 
     // networkDescriptionPath: state.simulationProject.networkDescriptionPath,
-    // sensorDescriptionPath: state.simulationProject.sensorDescriptionPath,
     // modified: state.simulationProject.modified,
 });
 

@@ -33,8 +33,8 @@ const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
 
 enum TabName {
-    PROJECT = 'simulation-project',
-    EXECUTE = 'simulation-execution'
+    PROJECT_CONFIG = 'simulation-project',
+    DEPLOY_EXECUTE = 'simulation-execution'
 }
 
 interface OwnProps extends RouteComponentProps<never> {
@@ -79,7 +79,6 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function SimulationManager(props: Props): JSX.Element {
     const {
-        // theme = DefaultTheme.DARK,
         itheme,
         networkRouterPath,
         sensorRouterPath,
@@ -109,7 +108,7 @@ function SimulationManager(props: Props): JSX.Element {
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     // the selected tab (i.e. configuration or execution)
-    const [selectedTab, setSelectedTab] = useState<string>(TabName.PROJECT);
+    const [selectedTab, setSelectedTab] = useState<string>(TabName.PROJECT_CONFIG);
 
     // when the simulation project path has changed, potentially load the project, and
     // load the associated network description and sensor code snippet
@@ -145,7 +144,7 @@ function SimulationManager(props: Props): JSX.Element {
      * Handles creating a new project with default settings.
      */
     function handleNewProject(): void {
-        setSelectedTab(TabName.PROJECT);
+        setSelectedTab(TabName.PROJECT_CONFIG);
         onCreate();
         history.push(`${baseRouterPath}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
     }
@@ -164,7 +163,7 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                setSelectedTab(TabName.PROJECT);
+                setSelectedTab(TabName.PROJECT_CONFIG);
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
             .catch(reason => onSetError(<>
@@ -369,7 +368,7 @@ function SimulationManager(props: Props): JSX.Element {
                         >
                             <PivotItem
                                 headerText="Project Config"
-                                itemKey={TabName.PROJECT}
+                                itemKey={TabName.PROJECT_CONFIG}
                             >
                                 <ProjectConfig
                                     itheme={itheme}
@@ -379,7 +378,7 @@ function SimulationManager(props: Props): JSX.Element {
                             </PivotItem>
                             <PivotItem
                                 headerText="Deploy and Run"
-                                itemKey={TabName.EXECUTE}
+                                itemKey={TabName.DEPLOY_EXECUTE}
                             >
                                 <RunDeployManager
                                     itheme={itheme}

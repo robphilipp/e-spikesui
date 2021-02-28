@@ -28,6 +28,11 @@ import {noop} from "../../../commons";
  * the network, managing the websocket connections, and managing rxjs subscriptions.
  */
 
+export interface Sensor {
+    name: string,
+    selector: string;
+}
+
 /*
  |
  | Action names (for use by actions, redux action creators, and reducers)
@@ -213,7 +218,7 @@ export interface NetworkManagementActionCreators {
                 pauseSubject: Subject<boolean>,
                 paused: boolean) => SubscribeWebsocketThunkAction;
     unsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => UnsubscribeWebsocketThunkAction;
-    startSimulation: (websocket: WebSocketSubject<string>) => StartSimulationThunkAction;
+    startSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) => StartSimulationThunkAction;
     stopSimulation: (websocket: WebSocketSubject<string>) => StopSimulationThunkAction;
     pauseSimulation: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction;
 }
@@ -588,11 +593,12 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      * @param {WebSocketSubject<string>} websocket The websocket subject for sending messages to the server
      * @return {ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>} The thunk action
      */
-    function startSimulation(websocket: WebSocketSubject<string>): StartSimulationThunkAction {
+    function startSimulation(websocket: WebSocketSubject<string>, sensor: Sensor): StartSimulationThunkAction {
 
         return (dispatch: ThunkDispatch<any, any, StartSimulationAction>): Promise<StartSimulationAction> => {
             return Promise.resolve().then(() => {
-                websocket.next(START_MESSAGE.command);
+                // websocket.next(START_MESSAGE.command);
+                websocket.next(JSON.stringify(sensor));
 
                 return dispatch({
                     type: SIMULATION_STARTED

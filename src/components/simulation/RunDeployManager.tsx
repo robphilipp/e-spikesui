@@ -23,6 +23,7 @@ import {
     NetworkBuiltAction,
     NetworkDeletedAction,
     PauseSimulationAction,
+    Sensor,
     StartSimulationAction,
     StopSimulationAction,
     SubscribeWebsocketAction,
@@ -115,7 +116,7 @@ interface DispatchProps {
                          paused: boolean) => Promise<SubscribeWebsocketAction>;
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => Promise<UnsubscribeWebsocketAction>;
 
-    onStartSimulation: (websocket: WebSocketSubject<string>) => Promise<StartSimulationAction>;
+    onStartSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) => Promise<StartSimulationAction>;
     onStopSimulation: (websocket: WebSocketSubject<string>) => Promise<StopSimulationAction>;
     onSimulationPause: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction;
 
@@ -178,7 +179,7 @@ function RunDeployManager(props: Props): JSX.Element {
     // observable that streams the unadulterated network events
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
 
-    const subscriptionsRef = useRef<Set<Subscription>>(new Set());
+    // const subscriptionsRef = useRef<Set<Subscription>>(new Set());
 
     // subscription to the web-socket subject to which to send (sensor) signals
     const [signalSubscription, setSignalSubscription] = useState<Subscription>();
@@ -333,49 +334,20 @@ function RunDeployManager(props: Props): JSX.Element {
                 // required by the back-end
                 const selector = signalGenerator.neuronIds.map(id => `^${id}$`).join("|")
 
-                // add sensor to the network (backend). this sensor sends signals to the selected
-                // input neurons
-                websocket.next(JSON.stringify({
-                    name: networkId,
-                    selector: selector
-                }));
-                // sensors.forEach(
-                //     sensor => websocket.next(JSON.stringify({
-                //         name: sensor.description.name,
-                //         selector: sensor.description.selector.source
-                //     }))
-                // );
-
-                // start the simulation and then create and subscribe to the sensor observables
-                // (that will send signals to the network) and then
-                const startAction = await onStartSimulation(websocket);
-                console.log(startAction);
+                // hand the simulator the sensor information, and the send the server the message
+                // to start the simulation, create and subscribe to the sensor observables
+                // (that will send signals to the network)
+                await onStartSimulation(websocket, {name: 'test-sensor', selector: selector});
                 const subscription = signalGenerator
                     .observable
                     .subscribe(output => websocket.next(JSON.stringify(output)));
                 setSignalSubscription(subscription);
 
                 updateLoadingState(false);
-                // onStartSimulation(websocket)
-                //     .then(() => {
-                //         const subscriptions = sensors.map(sensor => {
-                //             const neuronIds = neuronIdsRef.current
-                //                 .filter(id => id.match(sensor.description.selector) !== null)
-                //                 .toArray();
-                //             return sensor
-                //                 .observableFactory(sensor.description.name, neuronIds)
-                //                 .subscribe(output => websocket.next(JSON.stringify(output)))
-                //         });
-                //         setSignalSubscription(subscriptions);
-                //     });
             }
             // when the simulation is running, then stop it
             else {
                 updateLoadingState(true, "Stopping simulation");
-                subscriptionsRef.current.forEach(subscription => subscription.unsubscribe());
-                // onStopSimulation(websocket).then(action => {
-                //     signalSubscription.forEach(subscription => subscription.unsubscribe());
-                // });
                 await onStopSimulation(websocket);
                 signalSubscription.unsubscribe();
                 updateLoadingState(false);
@@ -640,7 +612,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
                          paused: boolean) => dispatch(remoteActionCreators.networkManagement.subscribe(observable, timeWindow, eventProcessor, pauseSubject, paused)),
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => dispatch(remoteActionCreators.networkManagement.unsubscribe(subscription, pauseSubscription)),
 
-    onStartSimulation: (websocket: WebSocketSubject<string>) => dispatch(remoteActionCreators.networkManagement.startSimulation(websocket)),
+    onStartSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) => dispatch(remoteActionCreators.networkManagement.startSimulation(websocket, sensor)),
     onStopSimulation: (websocket: WebSocketSubject<string>) => dispatch(remoteActionCreators.networkManagement.stopSimulation(websocket)),
     onSimulationPause: (pause: boolean, pauseSubject: Subject<boolean>) => dispatch(remoteActionCreators.networkManagement.pauseSimulation(pause, pauseSubject)),
 

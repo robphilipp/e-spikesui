@@ -6,7 +6,13 @@ import {connect} from "react-redux";
 import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {ThunkDispatch} from "redux-thunk";
 import {KeyboardShortcut, keyboardShortcutFor} from "../editors/keyboardShortcuts";
-import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage} from "../redux/actions/actions";
+import {
+    ApplicationAction,
+    MessageSetAction,
+    setErrorMessage,
+    setLoading,
+    setSuccessMessage
+} from "../redux/actions/actions";
 import {
     loadSimulationProject,
     newSimulationProject,
@@ -49,6 +55,8 @@ interface StateProps {
 }
 
 interface DispatchProps {
+    updateLoadingState: (isLoading: boolean, message?: string) => void;
+
     loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     loadSensorDescription: (path: string) => Promise<SensorsLoadedAction>;
 
@@ -82,6 +90,7 @@ function SimulationManager(props: Props): JSX.Element {
         networkDescriptionPath,
         sensorDescriptionPath,
         modified,
+        updateLoadingState,
         loadNetworkDescription,
         loadSensorDescription,
         onCreate,
@@ -106,6 +115,7 @@ function SimulationManager(props: Props): JSX.Element {
     // load the associated network description and sensor code snippet
     useEffect(
         () => {
+            updateLoadingState(true, "Loading simulation project")
             const filePath = decodeURIComponent(simulationProjectPath);
             if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH && !modified) {
                 onLoad(filePath)
@@ -116,6 +126,7 @@ function SimulationManager(props: Props): JSX.Element {
                         ]).catch(reason => onSetError(<div>{reason.message}</div>))
                     })
                     .catch(reason => onSetError(<div>{reason.message}</div>))
+                    .finally(() => updateLoadingState(false))
             }
         },
         [simulationProjectPath]
@@ -410,6 +421,8 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
+    updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
+
     loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
     loadSensorDescription: (path: string) => dispatch(loadSensorsFrom(path)),
 

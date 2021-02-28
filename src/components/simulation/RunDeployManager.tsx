@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
 import {IconButton, ITheme, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
 import {
@@ -167,6 +167,10 @@ function RunDeployManager(props: Props): JSX.Element {
     // observable that streams the unadulterated network events
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
 
+    const subscriptionsRef = useRef<Set<Subscription>>(new Set());
+
+    // subscription to the web-socket subject to which to send (sensor) signals
+    const [signalSubscriptions, setSignalSubscriptions] = useState<Vector<Subscription>>(Vector.empty());
 
     useEffect(
         () => {
@@ -274,6 +278,56 @@ function RunDeployManager(props: Props): JSX.Element {
                 updateLoadingState(false);
             }
         }
+    }
+
+    // /**
+    //  * Handles the web-socket connection when the start/stop button is clicked
+    //  */
+    // function handleStartStop(): void {
+    //     const {running, webSocketSubject} = props;
+    //     webSocketSubject.ifSome(websocket => {
+    //         // when the simulation is not running, the set it up and start it
+    //         if (!running) {
+    //             // add sensors to the network (backend). these sensor send signals to the selected
+    //             // input neurons
+    //             sensors.forEach(
+    //                 sensor => websocket.next(JSON.stringify({
+    //                     name: sensor.description.name,
+    //                     selector: sensor.description.selector.source
+    //                 }))
+    //             );
+    //
+    //             // start the simulation and then create and subscribe to the sensor observables
+    //             // (that will send signals to the network) and then
+    //             props
+    //                 .onStartSimulation(websocket)
+    //                 .then(_ => {
+    //                     const subscriptions = sensors.map(sensor => {
+    //                         const neuronIds = neuronIdsRef.current
+    //                             .filter(id => id.match(sensor.description.selector) !== null)
+    //                             .toArray();
+    //                         return sensor
+    //                             .observableFactory(sensor.description.name, neuronIds)
+    //                             .subscribe(output => websocket.next(JSON.stringify(output)))
+    //                     });
+    //                     setSignalSubscriptions(subscriptions);
+    //                 });
+    //         }
+    //         // when the simulation is running, then stop it
+    //         else {
+    //             subscriptionsRef.current.forEach(subscription => subscription.unsubscribe());
+    //             props.onStopSimulation(websocket).then(action => {
+    //                 signalSubscriptions.forEach(subscription => subscription.unsubscribe());
+    //             });
+    //         }
+    //     });
+    // }
+
+    /**
+     * Handle the user click on the pause button. Calls `setState(...)` method to toggle the `pause` state.
+     */
+    function handlePause() {
+        props.onSimulationPause(!props.paused, props.pauseSubject);
     }
 
     // function loadNetworkDescriptionIfNeeded(): boolean {

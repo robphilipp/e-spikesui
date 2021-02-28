@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {useMemo} from 'react';
 import {connect} from "react-redux";
 import {HashMap, Option} from "prelude-ts";
 import {ITheme} from "@uifabric/styling";
@@ -10,6 +9,7 @@ import {NetworkEvent} from '../redux/actions/networkEvent';
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
+import {useNeuronColors} from "../visualization/useNeuronColors";
 
 export interface OwnProps {
     sceneHeight: number;
@@ -49,29 +49,7 @@ function NetworkVisualization(props: Props): JSX.Element {
         networkObservable
     } = props;
 
-    const excitationMinColor = useMemo<Color>(
-        () => new Color(excitationColor).lerp(new Color(itheme.palette.white), colorAttenuation),
-        [itheme, excitationColor, colorAttenuation]
-    );
-    const excitationMaxColor = useMemo<Color>(
-        () => new Color(excitationColor),
-        [excitationColor]
-    );
-    const inhibitionMinColor = useMemo<Color>(
-        () => new Color(inhibitionColor).lerpHSL(new Color(itheme.palette.white), colorAttenuation),
-        [itheme, inhibitionColor, colorAttenuation]
-    );
-    const inhibitionMaxColor = useMemo<Color>(
-        () => new Color(inhibitionColor),
-        [inhibitionColor]
-    );
-    const colors = useMemo(
-        () => ({
-            excitatory: {min: new Color(excitationMinColor), max: new Color(excitationMaxColor)},
-            inhibitory: {min: new Color(inhibitionMinColor), max: new Color(inhibitionMaxColor)}
-        }),
-        [excitationMinColor, excitationMaxColor, inhibitionMinColor, inhibitionMaxColor]
-    )
+    const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation);
 
     return (
         <div>

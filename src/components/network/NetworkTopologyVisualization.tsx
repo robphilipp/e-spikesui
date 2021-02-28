@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {HashMap, HashSet} from "prelude-ts";
 import {ITheme} from "@uifabric/styling";
 import Network from "../visualization/neuralthree/Network"
@@ -17,6 +17,7 @@ import {connect} from "react-redux";
 import {RouteComponentProps, withRouter} from "react-router-dom";
 import {networkTopology, NetworkTopology} from "./networkTopology";
 import {map} from "rxjs/operators";
+import {useNeuronColors} from "../visualization/useNeuronColors";
 
 export interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -66,29 +67,7 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
 
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>()
 
-    const excitationMinColor = useMemo<Color>(
-        () => new Color(excitationColor).lerp(new Color(itheme.palette.white), colorAttenuation),
-        [itheme, excitationColor, colorAttenuation]
-    );
-    const excitationMaxColor = useMemo<Color>(
-        () => new Color(excitationColor),
-        [excitationColor]
-    );
-    const inhibitionMinColor = useMemo<Color>(
-        () => new Color(inhibitionColor).lerpHSL(new Color(itheme.palette.white), colorAttenuation),
-        [itheme, inhibitionColor, colorAttenuation]
-    );
-    const inhibitionMaxColor = useMemo<Color>(
-        () => new Color(inhibitionColor),
-        [inhibitionColor]
-    );
-    const colors = useMemo(
-        () => ({
-            excitatory: {min: new Color(excitationMinColor), max: new Color(excitationMaxColor)},
-            inhibitory: {min: new Color(inhibitionMinColor), max: new Color(inhibitionMaxColor)}
-        }),
-        [excitationMinColor, excitationMaxColor, inhibitionMinColor, inhibitionMaxColor]
-    )
+    const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation);
 
     // updates the network topology when the network description changes
     useEffect(

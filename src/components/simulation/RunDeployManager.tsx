@@ -271,6 +271,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 onNetworkBuildEvents(actions);
             } catch (error) {
                 onSetErrorMessages(<div>{error.message}</div>);
+                updateLoadingState(false);
             }
         }
     }

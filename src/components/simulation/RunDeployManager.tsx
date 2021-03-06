@@ -23,7 +23,7 @@ import {
     NetworkBuiltAction,
     NetworkDeletedAction,
     PauseSimulationAction,
-    Sensor,
+    Sensor, START_MESSAGE,
     StartSimulationAction,
     StopSimulationAction,
     SubscribeWebsocketAction,
@@ -311,10 +311,12 @@ function RunDeployManager(props: Props): JSX.Element {
     }
 
     async function compileSensor(): Promise<SignalGenerator> {
+    // async function compileSensor(): Promise<SignalGenerator> {
         // create a sensor-simulation worker for compiling and running the sensor
         sensorThreadRef.current = await newSensorThread();
 
         // attempt to compile the code-snippet as a simulator
+        // return sensorThreadRef.current.compileSender(sensorDescription, timeFactor, websocket);
         return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
     }
 
@@ -328,6 +330,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 updateLoadingState(true, "Attempting to start neural network")
 
                 // attempt to compile the sensor code snippet
+                // const signalGenerator = await compileSensor(websocket);
                 const signalGenerator = await compileSensor();
 
                 // create the regex selector for determining the input neurons for the sensor,
@@ -337,7 +340,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 // hand the simulator the sensor information, and the send the server the message
                 // to start the simulation, create and subscribe to the sensor observables
                 // (that will send signals to the network)
-                await onStartSimulation(websocket, {name: 'test-sensor', selector: selector});
+                await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
                 const subscription = signalGenerator
                     .observable
                     .subscribe(output => websocket.next(JSON.stringify(output)));

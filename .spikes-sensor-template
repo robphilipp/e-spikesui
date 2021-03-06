@@ -46,4 +46,4 @@ const observable =  interval(timeFactor * 50).pipe(
    map(index => randomSignal(sensorName, neuronIds)),
 )
 
-return {neuronIds, observable};
+return {sensorName, neuronIds, observable};

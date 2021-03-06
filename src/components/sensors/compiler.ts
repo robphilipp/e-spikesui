@@ -25,6 +25,8 @@ export interface SensorOutput {
  * The result of compiling the sensor code snippet.
  */
 export interface CompilerResult {
+    // then name of the sensor described by the code
+    sensorName: string;
     // an optional array of all the input neurons needed for simulating the sensor
     neuronIds?: Array<string>;
     // the observable that generates the sensor signals for the input neurons
@@ -57,7 +59,7 @@ export interface CompilerResult {
         map(() => randomSignal(sensorName, neuronIds)),
     )
 
-    return {neuronIds, observable};
+    return {sensorName, neuronIds, observable};
  */
 export function compileSensorDescription(sensorDescription: string, timeFactor: number): Either<string, CompilerResult> {
     try {
@@ -80,9 +82,9 @@ export function compileSensorDescription(sensorDescription: string, timeFactor: 
         const tempVars = {};
 
         // executing the compiled sensor description yields an observable
-        const {neuronIds, observable} = code(context, tempVars);
+        const {sensorName, neuronIds, observable} = code(context, tempVars);
         if (isObservable<SensorOutput>(observable)) {
-            return Either.right({neuronIds, observable});
+            return Either.right({sensorName, neuronIds, observable});
         } else {
             return Either.left(
                 "Sensor description must return an Observable<{" +

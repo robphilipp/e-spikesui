@@ -3,11 +3,13 @@ import {Observable as RxjsObservable} from 'rxjs';
 import {expose} from 'threads/worker';
 import {compileSensorDescription, SensorOutput} from '../sensors/compiler';
 import {WorkerModule} from "threads/dist/types/worker";
+import {WebSocketSubject} from "rxjs/internal-compatibility";
 
 // *** NOTE *** (worker thread for generating a stream of sensor signals)
 //
 // The variables below are global for the worker, and only the worker
 let subject: Subject<SensorOutput>;
+let sensorName: string;
 let neuronIds: Array<string>;
 let rxjsObservable: RxjsObservable<SensorOutput>;
 
@@ -20,19 +22,20 @@ let rxjsObservable: RxjsObservable<SensorOutput>;
  * @param timeFactor The simulation time-factor
  * @return An array of the neuron IDs to which the sensor signals are sent
  */
-function compile(codeSnippet: string, timeFactor: number): Array<string> {
+function compile(codeSnippet: string, timeFactor: number): CompiledResult {
     const result = compileSensorDescription(codeSnippet, timeFactor);
     if (result.isLeft()) {
         throw new Error(result.getLeft());
     }
     return result
         .map(result => {
+            sensorName = result.sensorName;
             neuronIds = result.neuronIds;
             rxjsObservable = result.observable;
             
-            return neuronIds;
+            return {sensorName, neuronIds};
         })
-        .getOrElse([])
+        .getOrElse(emptyResult())
 }
 // function compile(codeSnippet: string): Array<string> {
 //     return compileSensorDescription(codeSnippet)
@@ -78,9 +81,11 @@ function simulate(): void {
  */
 function sendSignals(websocket: string): void {
     // TODO connect to the websocket
+    console.log("starting to send signals")
     rxjsObservable?.subscribe(output => {
         // TODO send signal down the websocket
-
+        // websocket.next(JSON.stringify(output));
+        // console.log(output);
         // stream the signal back to the master thread
         subject.next(output);
     })
@@ -96,8 +101,17 @@ function stop(): void {
     }
 }
 
+export interface CompiledResult {
+    sensorName: string;
+    neuronIds: Array<string>;
+}
+
+function emptyResult(): CompiledResult {
+    return {sensorName: '', neuronIds: []}
+}
+
 export interface SensorSignals extends WorkerModule<string> {
-    compile: (codeSnippet: string, timeFactor: number) => Array<string>;
+    compile: (codeSnippet: string, timeFactor: number) => CompiledResult;
     neurons: () => Array<string>;
     observable: () => Observable<SensorOutput>;
     simulate: () => void;

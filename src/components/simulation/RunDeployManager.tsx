@@ -272,7 +272,7 @@ function RunDeployManager(props: Props): JSX.Element {
                                 // send the command to build the network
                                 websocketCreatedAction.webSocketSubject.next(BUILD_MESSAGE.command);
 
-                                // set the build observable
+                                // set the network observable that accepts messages when the network is running
                                 setNetworkObservable(observableAction.observable);
                             })
                             .catch(messages => {
@@ -317,7 +317,8 @@ function RunDeployManager(props: Props): JSX.Element {
 
         // attempt to compile the code-snippet as a simulator
         // return sensorThreadRef.current.compileSender(sensorDescription, timeFactor, websocket);
-        return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
+        return sensorThreadRef.current.compileSender(sensorDescription, timeFactor);
+        // return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
     }
 
     /**

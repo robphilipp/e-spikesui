@@ -3,7 +3,6 @@ import {Observable as RxjsObservable} from 'rxjs';
 import {expose} from 'threads/worker';
 import {compileSensorDescription, SensorOutput} from '../sensors/compiler';
 import {WorkerModule} from "threads/dist/types/worker";
-import {WebSocketSubject} from "rxjs/internal-compatibility";
 
 // *** NOTE *** (worker thread for generating a stream of sensor signals)
 //
@@ -77,9 +76,9 @@ function simulate(): void {
  * from the compiled code, then starts sending the sensor signals down the websocket,
  * and streams the sensor signals to the master thread (in case the master thread 
  * needs the sensor signals).
- * @param websocket The websocket URL
  */
-function sendSignals(websocket: string): void {
+// function sendSignals(websocket: string): void {
+function sendSignals(): void {
     // TODO connect to the websocket
     console.log("starting to send signals")
     rxjsObservable?.subscribe(output => {

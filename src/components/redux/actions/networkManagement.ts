@@ -21,6 +21,7 @@ import {TimeEvent, TimeSeries} from "../../timeseries/TimeSeries";
 import {NetworkEvent} from "./networkEvent";
 import ServerSettings from "../../settings/serverSettings";
 import {noop} from "../../../commons";
+import {remoteRepositories} from "../../../app";
 
 /**
  * Actions for managing the network. For example, actions for updating the
@@ -315,19 +316,22 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      */
     function buildNetwork(networkDescription: string): NetworkBuildThunkAction {
         return (dispatch: ThunkDispatch<unknown, unknown, NetworkBuiltAction>): Promise<NetworkBuiltAction> => {
-            return axios
-                .post(
-                    `http://${serverSettings.host}:${serverSettings.port}/network-management/network`,
-                    {
-                        networkDescription: networkDescription,
-                        kafkaSettings: {
-                            bootstrapServers: [
-                                {host: 'localhost', port: 9092}
-                            ]
-                        }
-                    }
-                )
-                .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
+            return remoteRepositories.networkManagement
+                .buildNetwork(networkDescription)
+            // return axios
+            //     .post(
+            //         `http://${serverSettings.host}:${serverSettings.port}/network-management/network`,
+            //         {
+            //             networkDescription: networkDescription,
+            //             kafkaSettings: {
+            //                 bootstrapServers: [
+            //                     {host: 'localhost', port: 9092}
+            //                 ]
+            //             }
+            //         }
+            //     )
+            //     .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
+                .then(networkId => dispatch(successAction(NETWORK_BUILT, networkId)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to deploy and build network on server."];
                     if (reason.response) {
@@ -356,8 +360,9 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      */
     function deleteNetwork(networkId: string): NetworkDeletedThunkAction {
         return (dispatch: ThunkDispatch<unknown, unknown, NetworkDeletedAction>): Promise<NetworkDeletedAction> => {
-            return axios
-                .delete(`http://${serverSettings.host}:${serverSettings.port}/network-management/network/${networkId}`)
+            // return axios
+            //     .delete(`http://${serverSettings.host}:${serverSettings.port}/network-management/network/${networkId}`)
+            return remoteRepositories.networkManagement.deleteNetwork(networkId)
                 .then(() => dispatch(successAction(NETWORK_DELETED, networkId)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to delete network from server."];
@@ -395,14 +400,13 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      */
     function webSocketSubject(networkId: string): WebsocketCreatedAction {
         // create the rxjs subject that connects to the web-socket
-        const webSocketSubject: WebSocketSubject<string> = webSocket({
-            url: `ws://${serverSettings.host}:${serverSettings.port}/web-socket/${networkId}`,
-            deserializer: e => e.data
-        });
-
+        // const webSocketSubject: WebSocketSubject<string> = webSocket({
+        //     url: `ws://${serverSettings.host}:${serverSettings.port}/web-socket/${networkId}`,
+        //     deserializer: e => e.data
+        // });
         return {
             type: WEBSOCKET_SUBJECT_CREATED,
-            webSocketSubject: webSocketSubject
+            webSocketSubject: remoteRepositories.networkManagement.webSocketSubjectFor(networkId)
         }
     }
 

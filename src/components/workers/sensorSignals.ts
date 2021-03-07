@@ -12,6 +12,15 @@ let sensorName: string;
 let neuronIds: Array<string>;
 let rxjsObservable: RxjsObservable<SensorOutput>;
 
+export interface CompiledResult {
+    sensorName: string;
+    neuronIds: Array<string>;
+}
+
+function emptyResult(): CompiledResult {
+    return {sensorName: '', neuronIds: []}
+}
+
 /**
  * Compiles the code snippet, returns the neuron IDs from the snippet, and modifies
  * the (worker) global variable with the RxJs observable that, on subscription, generates
@@ -98,15 +107,6 @@ function stop(): void {
         subject.complete();
         subject = undefined;
     }
-}
-
-export interface CompiledResult {
-    sensorName: string;
-    neuronIds: Array<string>;
-}
-
-function emptyResult(): CompiledResult {
-    return {sensorName: '', neuronIds: []}
 }
 
 export interface SensorSignals extends WorkerModule<string> {

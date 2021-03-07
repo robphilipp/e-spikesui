@@ -5,14 +5,14 @@ import {ObservablePromise} from 'threads/dist/observable-promise';
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from 'threads/dist/types/master';
 import {spawn, Thread, Worker} from 'threads';
 
-type SimulationType = ((...args: never) =>
-    ObservablePromise<StripAsync<SensorOutput>>) &
+type SimulationType = ((...args: never) => ObservablePromise<StripAsync<SensorOutput>>) &
     PrivateThreadProps & ModuleProxy<ModuleMethods>;
 
 export interface SensorThread {
     compileSimulator: (codeSnippet: string, timeFactor: number) => Promise<SignalGenerator>;
     compileSender: (codeSnippet: string, timeFactor: number) => Promise<SignalGenerator>;
     // compileSender: (codeSnippet: string, timeFactor: number, websocket: string) => Promise<SignalGenerator>;
+    compileSenderForWorker: (codeSnippet: string, timeFactor: number) => Promise<SignalGeneratorForWorker>;
     stop: () => Promise<void>;
     terminate: () => Promise<void>;
 }
@@ -22,6 +22,13 @@ export interface SignalGenerator {
     neuronIds: Array<string>;
     timeFactor: number;
     observable: Observable<SensorOutput>;
+}
+
+export interface SignalGeneratorForWorker {
+    sensorName: string;
+    neuronIds: Array<string>;
+    timeFactor: number;
+    observable: FnsObservable<SensorOutput>;
 }
 
 /**
@@ -80,6 +87,22 @@ export async function newSensorThread(): Promise<SensorThread> {
         };
     }
 
+    async function compileSenderForWorker(codeSnippet: string, timeFactor: number): Promise<SignalGeneratorForWorker> {
+        const {sensorName, neuronIds} = await worker.compile(codeSnippet, timeFactor);
+        const fnsObs: FnsObservable<SensorOutput> = worker.observable();
+        // const observable = new Observable<SensorOutput>(observer => {
+        //     worker.sendSignals().then(
+        //         () => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
+        //     );
+        // });
+        return {
+            sensorName,
+            neuronIds,
+            timeFactor: timeFactor,
+            observable: fnsObs,
+        };
+    }
+
     /**
      * Stops sending signals
      * @return An empty promise
@@ -98,6 +121,7 @@ export async function newSensorThread(): Promise<SensorThread> {
     return {
         compileSimulator,
         compileSender,
+        compileSenderForWorker,
         stop,
         terminate,
     }

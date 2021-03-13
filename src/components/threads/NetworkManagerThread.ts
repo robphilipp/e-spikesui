@@ -15,6 +15,9 @@ interface NetworkManagerThread {
     remove: () => Promise<string>;
 }
 
+// todo uses these methods in the run-deploy manager, and deal with all the redux stuff that may
+//      need to be updated.
+
 /**
  * Creates a new network manager thread for deploying, building, starting, stopping and
  * removing networks.

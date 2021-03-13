@@ -20,7 +20,8 @@ prepareIcons();
 const applicationSettings = loadOrInitializeSetting();
 
 // generate the wrapper so that action-creators can be enriched with the server settings
-export const remoteActionCreators = generateRemoteActionCreators(applicationSettings.server);
+// export const remoteActionCreators = generateRemoteActionCreators(applicationSettings.server);
+export const remoteActionCreators = generateRemoteActionCreators();
 
 // generator the closure on the server settings for the remote repositories
 export const remoteRepositories = createRemoteRepositories(applicationSettings.server);

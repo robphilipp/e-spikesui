@@ -2,7 +2,6 @@ import ServerSettings from "../settings/serverSettings";
 import axios from "axios";
 import {WebSocketSubject} from "rxjs/internal-compatibility";
 import {webSocket} from "rxjs/webSocket";
-import {WEBSOCKET_SUBJECT_CREATED, WebsocketCreatedAction} from "../redux/actions/networkManagement";
 
 export interface NetworkManagementRepo {
     buildNetwork: (networkDescription: string) => Promise<string>;
@@ -12,7 +11,9 @@ export interface NetworkManagementRepo {
 }
 
 export function networkManagementRepo(serverSettings: ServerSettings): NetworkManagementRepo {
-    const baseUrl = `http://${serverSettings.host}:${serverSettings.port}/network-management/network`
+    const baseUrl = `http://${serverSettings.host}:${serverSettings.port}/network-management/network`;
+    const baseWebSocketUrl = `ws://${serverSettings.host}:${serverSettings.port}/web-socket`
+
     /**
      * Deploys the network to the server and returns the network ID
      * @param networkDescription The network description
@@ -52,13 +53,13 @@ export function networkManagementRepo(serverSettings: ServerSettings): NetworkMa
     function webSocketSubjectFor(networkId: string): WebSocketSubject<string> {
         // create the rxjs subject that connects to the web-socket
         return webSocket({
-            url: `ws://${serverSettings.host}:${serverSettings.port}/web-socket/${networkId}`,
+            url: `${baseWebSocketUrl}/${networkId}`,
             deserializer: e => e.data
         });
     }
 
     function webSocketFor(networkId: string): WebSocket {
-        return new WebSocket(`ws://${serverSettings.host}:${serverSettings.port}/web-socket/${networkId}`)
+        return new WebSocket(`${baseWebSocketUrl}/${networkId}`)
     }
 
     return {

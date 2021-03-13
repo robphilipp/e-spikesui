@@ -1,15 +1,15 @@
 import {ThunkAction, ThunkDispatch} from "redux-thunk";
 import {Either} from "prelude-ts";
-import axios, {AxiosError, AxiosResponse} from "axios";
+import {AxiosError} from "axios";
 import {WebSocketSubject} from "rxjs/internal-compatibility";
-import {webSocket} from "rxjs/webSocket";
 import {merge, Observable, Subject, Subscription} from "rxjs";
 import {
     bufferTime,
     bufferToggle,
     distinctUntilChanged,
     filter,
-    flatMap, map, mergeMap,
+    map,
+    mergeMap,
     multicast,
     refCount,
     share,
@@ -19,7 +19,6 @@ import {TimeRange, timeRangeFrom} from "../../timeseries/TimeRange";
 import {List, Map} from "immutable";
 import {TimeEvent, TimeSeries} from "../../timeseries/TimeSeries";
 import {NetworkEvent} from "./networkEvent";
-import ServerSettings from "../../settings/serverSettings";
 import {noop} from "../../../commons";
 import {remoteRepositories} from "../../../app";
 
@@ -226,10 +225,11 @@ export interface NetworkManagementActionCreators {
 
 /**
  * Wraps around the action creators, forming a closure on the network settings
- * @param {ServerSettings} serverSettings The server host and port against which to make calls
- * @return {{networkDescriptionUpdate: (networkDescription: string) => NetworkDescriptionChangedAction; stopSimulation: (websocket: WebSocketSubject<string>) => ThunkAction<Promise<StopSimulationAction>, any, any, StopSimulationAction>; webSocketSubject: (networkId: string) => CreateWebsocketAction; buildNetwork: (networkDescription: string) => ThunkAction<Promise<NetworkBuiltAction>, any, any, NetworkBuiltAction>; subscribe: (observable: Observable<NetworkEvent>, timeWindow: number, messageProcessor: (messages: NetworkEvent) => void, pauseSubject: Subject<boolean>, paused: boolean) => ThunkAction<Promise<SubscribeWebsocketAction>, any, any, SubscribeWebsocketAction>; unsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => ThunkAction<Promise<UnsubscribeWebsocketAction>, any, any, UnsubscribeWebsocketAction>; networkEventsObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction; pauseSimulation: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction; loadNetworkDescription: (networkDescriptionFile: File) => ThunkAction<Promise<NetworkDescriptionLoadedAction>, any, any, NetworkDescriptionLoadedAction>; startSimulation: (websocket: WebSocketSubject<string>) => ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>; deleteNetwork: (networkId: string) => ThunkAction<Promise<NetworkDeletedAction>, any, any, NetworkDeletedAction>}}
+ * @return The action creators for managing the network on the server and the events emitted by
+ * the network on the server.
  */
-export function networkManagementActionCreators(serverSettings: ServerSettings): NetworkManagementActionCreators {
+// export function networkManagementActionCreators(serverSettings: ServerSettings): NetworkManagementActionCreators {
+export function networkManagementActionCreators(): NetworkManagementActionCreators {
     /* **--< WARNING >--**
      | changing this to a thunk action breaks the editing...each character sends the cursor to the
      | bottom of the text field. Further experimentation reveals that even when this plain action

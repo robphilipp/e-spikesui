@@ -245,28 +245,43 @@ function RunDeployManager(props: Props): JSX.Element {
         }
         const networkManager = networkManagerThreadRef.current;
 
-        updateLoadingState(true, networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`));
+        updateLoadingState(
+            true,
+            networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`)
+        );
+
         networkId
             // if the network ID exists, then the button click is to delete the network, and
             // so we send a message down the websocket to delete the network, and then we
             // unsubscribe to the observable instance that listen for websocket messages and for
             // pausing the message processing
-            .ifSome(id => onDeleteNetwork(id)
-                .then(action => action.result.ifLeft(messages => onSetErrorMessages(asErrorMessage(messages))))
-                .then(result => result.ifRight(() => {
-                    onClearNetworkState();
-                    return onUnsubscribe(subscription, pauseSubscription);
-                }))
-                .finally(() => updateLoadingState(false))
-            )
-            // if the network ID doesn't exist, then the button click is for creating the network, and
-            // so we call action creator for creating the network, and if that results in a failure, the
-            // we call the action creator for setting the error messages.
-            .ifNone(() => networkManager.deploy(networkDescription)
-                .then(id => {
+            .ifSome(async id => {
+                try {
+                    const action = await onDeleteNetwork(id);
+                    action.result
+                        .ifLeft(messages => onSetErrorMessages(asErrorMessage(messages)))
+                        .ifRight(() => {
+                            // clear out the network ID and let the network manager
+                            // thread know to remove the network
+                            setNetworkId(Option.none());
+                            networkManager.remove();
+                            // clear the network state and unsubscribe from the network events
+                            onClearNetworkState();
+                            return onUnsubscribe(subscription, pauseSubscription);
+                        })
+                } finally {
+                    updateLoadingState(false)
+                }
+            })
+            .ifNone(async () => {
+                try {
+                    // attempt to deploy the server
+                    updateLoadingState(true, "Deploying network")
+                    const id = await networkManager.deploy(networkDescription);
                     // now that the network has been deployed, we need to tell the server to build it
                     // and we need to respond to the network build events emitted by the network on the
                     // server
+                    updateLoadingState(true, `Building network ${id}`)
                     networkManager.build(id).then(networkEvents => {
                         // emits array's for build (neuron creation and connection) events that occur within a
                         // 100 ms windows. drops non building events, and emits nothing when no events occur in the
@@ -280,75 +295,12 @@ function RunDeployManager(props: Props): JSX.Element {
                         buildObservable.subscribe(processNetworkBuildEvents);
 
                         setNetworkId(Option.of(id));
-                        // setNetworkBuilt(true);
                     })
-                })
-                .catch(reason => {
-                    onSetErrorMessages(reason.toString());
+                } catch (error) {
+                    onSetErrorMessages(error.toString());
                     updateLoadingState(false);
-                })
-            );
-        // networkId
-        //     // if the network ID exists, then the button click is to delete the network, and
-        //     // so we send a message down the websocket to delete the network, and then we
-        //     // unsubscribe to the observable instance that listen for websocket messages and for
-        //     // pausing the message processing
-        //     .ifSome(id => onDeleteNetwork(id)
-        //         .then(action => action.result.ifLeft(messages => onSetErrorMessages(asErrorMessage(messages))))
-        //         .then(result => result.ifRight(() => {
-        //             onClearNetworkState();
-        //             return onUnsubscribe(subscription, pauseSubscription);
-        //         }))
-        //         .finally(() => updateLoadingState(false))
-        //     )
-        //     // if the network ID doesn't exist, then the button click is for creating the network, and
-        //     // so we call action creator for creating the network, and if that results in a failure, the
-        //     // we call the action creator for setting the error messages.
-        //     .ifNone(() => onBuildNetwork(networkDescription)
-        //         .then(action => action.result
-        //             .ifLeft(messages => {
-        //                 onSetErrorMessages(asErrorMessage(messages))
-        //                 updateLoadingState(false)
-        //             })
-        //             .ifRight(networkId => {
-        //                 // create the rxjs web-socket subject and then hand it to the pipeline for
-        //                 // processing spikes network events
-        //                 const websocketCreatedAction = createWebSocketSubject(networkId);
-        //                 const observableAction = createNetworkObservable(websocketCreatedAction.webSocketSubject, 50);
-        //
-        //                 // emits array's for build (neuron creation and connection) events that occur within a
-        //                 // 100 ms windows. drops non building events, and emits nothing when no events occur in the
-        //                 // time window
-        //                 const buildObservable: Observable<Array<NetworkEvent>> = observableAction.observable.pipe(
-        //                     filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
-        //                     bufferTime(100),
-        //                     filter(events => events.length > 0)
-        //                 );
-        //
-        //                 // we need to subscribe to the web-socket (through the observable) so that it sends a
-        //                 // message to the web-socket to build the network. we also need to process all the build
-        //                 // messages so that we can construct the network visualization. to do this we create the
-        //                 // build observable that filters out all non-build messages, and then subscribe to it,
-        //                 // sending all the network build messages as network events
-        //                 subscribeWebsocket(buildObservable, 5000, processNetworkBuildEvents, observableAction.pauseSubject, false)
-        //                     .then(() => {
-        //                         // send the command to build the network
-        //                         websocketCreatedAction.webSocketSubject.next(BUILD_MESSAGE.command);
-        //
-        //                         // set the network observable that accepts messages when the network is running
-        //                         setNetworkObservable(observableAction.observable);
-        //                     })
-        //                     .catch(messages => {
-        //                         onSetErrorMessages(messages);
-        //                         updateLoadingState(false);
-        //                     })
-        //             })
-        //         )
-        //         .catch(reason => {
-        //             onSetErrorMessages(reason.toString());
-        //             updateLoadingState(false);
-        //         })
-        //     );
+                }
+            });
     }
 
     /**
@@ -356,7 +308,6 @@ function RunDeployManager(props: Props): JSX.Element {
      * @param events An array of incoming network events
      */
     function processNetworkBuildEvents(events: Array<NetworkEvent>): void {
-        // console.log(events);
         // convert the network build events into a action holding those events and dispatch
         // if there are any events
         const actions = networkBuildEventsActionCreator(events);

@@ -85,8 +85,8 @@ interface StateProps {
     subscription: Subscription;
     // subscription to the observable for pausing the message processing
     pauseSubscription: Subscription;
-    // whether or not the simulation is running
-    running: boolean;
+    // // whether or not the simulation is running
+    // running: boolean;
     // whether or not the front-end is paused, while continuing to buffer back-end events
     paused: boolean;
 
@@ -152,7 +152,7 @@ function RunDeployManager(props: Props): JSX.Element {
         pauseSubject,
         subscription,
         pauseSubscription,
-        running,
+        // running,
         paused,
 
         onBuildNetwork,
@@ -178,7 +178,9 @@ function RunDeployManager(props: Props): JSX.Element {
     const history = useHistory();
 
     // observable that streams the unadulterated network events
+    const buildSubscriptionRef = useRef<Subscription>()
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
+    const [running, setRunning] = useState(false);
 
     // const subscriptionsRef = useRef<Set<Subscription>>(new Set());
 
@@ -215,6 +217,7 @@ function RunDeployManager(props: Props): JSX.Element {
         () => {
             if (networkBuilt) {
                 updateLoadingState(false);
+                buildSubscriptionRef.current.unsubscribe();
             }
         },
         [networkBuilt]
@@ -292,7 +295,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         );
 
                         // subscribe to the network build events
-                        buildObservable.subscribe(processNetworkBuildEvents);
+                        buildSubscriptionRef.current = buildObservable.subscribe(processNetworkBuildEvents);
 
                         // set the network ID
                         setNetworkId(Option.of(id));
@@ -341,12 +344,31 @@ function RunDeployManager(props: Props): JSX.Element {
     /**
      * Handles the web-socket connection when the start/stop button is clicked
      */
-    function handleStartStop(): void {
-        webSocketSubject.ifSome(async websocket => {
+    async function handleStartStop(): Promise<void> {
+        if (networkManagerThreadRef.current === undefined) {
+            onSetErrorMessages(<div>Cannot start/stop the network because the network manager thread is undefined</div>)
+            return;
+        }
+        // webSocketSubject.ifSome(async websocket => {
+            const networkManager = networkManagerThreadRef.current;
+
             // when the simulation is not running, the set it up and start it
             if (!running) {
                 updateLoadingState(true, "Attempting to start neural network")
-
+                // networkManager.start(sensorDescription, timeFactor)
+                //     .then(observable => setNetworkObservable(observable))
+                //     .catch(error => onSetErrorMessages(<div>{error.toString()}</div>))
+                //     .finally(() => updateLoadingState(false))
+                try {
+                    const observable = await networkManager.start(sensorDescription, timeFactor);
+                    console.log("started network")
+                    setNetworkObservable(observable);
+                    setRunning(true);
+                } catch(error) {
+                    onSetErrorMessages(<div>{error.toString()}</div>)
+                } finally {
+                    updateLoadingState(false);
+                }
                 // // attempt to compile the sensor code snippet
                 // // const signalGenerator = await compileSensor(websocket);
                 // const signalGenerator = await compileSensor();
@@ -363,17 +385,22 @@ function RunDeployManager(props: Props): JSX.Element {
                 //     .observable
                 //     .subscribe(output => websocket.next(JSON.stringify(output)));
                 // setSignalSubscription(subscription);
-
-                updateLoadingState(false);
+                //
+                // updateLoadingState(false);
             }
             // when the simulation is running, then stop it
             else {
                 updateLoadingState(true, "Stopping simulation");
-                await onStopSimulation(websocket);
-                signalSubscription.unsubscribe();
-                updateLoadingState(false);
+                networkManager.stop().then(() => {
+                    updateLoadingState(false);
+                    setNetworkObservable(undefined);
+                    setRunning(false);
+                })
+                // await onStopSimulation(websocket);
+                // signalSubscription.unsubscribe();
+                // updateLoadingState(false);
             }
-        });
+        // });
     }
 
     /**
@@ -603,7 +630,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     pauseSubject: state.networkManagement.pauseSubject,
     subscription: state.networkManagement.subscription,
     pauseSubscription: state.networkManagement.pauseSubscription,
-    running: state.networkManagement.running,
+    // running: state.networkManagement.running,
     paused: state.networkManagement.paused
 
     // networkDescriptionPath: state.simulationProject.networkDescriptionPath,

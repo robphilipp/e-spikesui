@@ -1,5 +1,5 @@
 import {Observable, Subject, filter, Subscription} from 'observable-fns';
-import {Observable as RxjsObservable} from 'rxjs';
+import {Observable as RxjsObservable, Subject as RxjsSubject, Subscription as RxjsSubscription} from 'rxjs';
 import {expose} from 'threads/worker';
 import {WorkerModule} from "threads/dist/types/worker";
 import {NetworkEvent} from "../redux/actions/networkEvent";
@@ -27,12 +27,13 @@ let websocket: WebSocket | undefined;
 let networkEventObservable: Observable<NetworkEvent> | undefined;
 let buildEventsObservable:  Observable<NetworkEvent> | undefined;
 // // let sensorThread: SensorThread | undefined;
-let signalGeneratorSubscription: Subscription<SensorOutput>;
+// let signalGeneratorSubscription: Subscription<SensorOutput>;
 
-let subject: Subject<SensorOutput>;
+let rxjsSubject: RxjsSubject<SensorOutput>;
 let sensorName: string;
 let neuronIds: Array<string>;
 let rxjsObservable: RxjsObservable<SensorOutput>;
+let signalGeneratorSubscription: RxjsSubscription;
 
 interface CompiledResult {
     sensorName: string;
@@ -133,29 +134,29 @@ function compile(codeSnippet: string, timeFactor: number): CompiledResult {
  * and streams the sensor signals to the master thread (in case the master thread
  * needs the sensor signals).
  */
-function sendSignals(): void {
-    // TODO connect to the websocket
-    console.log("starting to send signals")
-    rxjsObservable?.subscribe(output => {
-        // TODO send signal down the websocket
-        // websocket.next(JSON.stringify(output));
-        // console.log(output);
-        // stream the signal back to the master thread
-        subject.next(output);
-    })
-}
+// function sendSignals(): void {
+//     // TODO connect to the websocket
+//     console.log("starting to send signals")
+//     rxjsObservable?.subscribe(output => {
+//         // TODO send signal down the websocket
+//         // websocket.next(JSON.stringify(output));
+//         // console.log(output);
+//         // stream the signal back to the master thread
+//         rxjsSubject.next(output);
+//     })
+// }
 
 /**
  * Stops the subscription and sets the the subject to undefined
  */
 function stop(): void {
-    if (subject !== undefined) {
-        subject.complete();
-        subject = undefined;
+    if (rxjsSubject !== undefined) {
+        rxjsSubject.complete();
+        rxjsSubject = undefined;
     }
 }
 
-async function startNetwork(sensorDescription: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
+function startNetwork(sensorDescription: string, timeFactor: number): void {
     if (networkId === undefined) {
         throw new Error("Cannot start network because network ID is undefined");
     }
@@ -163,16 +164,25 @@ async function startNetwork(sensorDescription: string, timeFactor: number): Prom
         throw new Error("Cannot start network because the websocket or network-events observable are undefined")
     }
 
-    // const worker: SimulationType = await spawn(new Worker('./sensorSignals'));
-
     const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
-    subject = new Subject<SensorOutput>();
-    const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(subject);
+    // rxjsSubject = new RxjsSubject<SensorOutput>();
+    // const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(rxjsSubject);
 
-    sendSignals();
-    const observable = new Observable<SensorOutput>(observer => {
-        fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
-    });
+    // signalGeneratorSubscription = rxjsObservable?.subscribe(output => {
+    //     rxjsSubject.next(output);
+    // })
+
+    // const observable = new Observable<SensorOutput>(observer => {
+    //     fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
+    // });
+    // const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
+    // subject = new Subject<SensorOutput>();
+    // const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(subject);
+    //
+    // sendSignals();
+    // const observable = new Observable<SensorOutput>(observer => {
+    //     fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
+    // });
 
     // create the regex selector for determining the input neurons for the sensor,
     // required by the back-end
@@ -184,10 +194,15 @@ async function startNetwork(sensorDescription: string, timeFactor: number): Prom
     websocket.send(JSON.stringify({name: sensorName, selector: selector}))
 
     // await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
-    signalGeneratorSubscription = observable
-        .subscribe(output => websocket.send(JSON.stringify(output)));
+    // signalGeneratorSubscription = observable
+    //     .subscribe(output => websocket.send(JSON.stringify(output)));
 
-    return networkEventObservable;
+    signalGeneratorSubscription = rxjsObservable.subscribe(output => {
+        // rxjsSubject.next(output);
+        websocket.send(JSON.stringify(output));
+    })
+
+    return;
 }
 // async function startNetwork(sensorDescription: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
 //     if (networkId === undefined) {
@@ -242,8 +257,8 @@ async function deleteNetwork(): Promise<string> {
     return oldId;
 }
 
-function observable(): Observable<NetworkEvent> {
-    return networkEventObservable;
+function networkObservable(): Observable<NetworkEvent> {
+    return networkEventObservable.pipe(filter(event => event.type === SPIKE));
 }
 
 function buildObservable(): Observable<NetworkEvent> {
@@ -254,19 +269,17 @@ function deployedNetworkId(): string | undefined {
     return networkId;
 }
 
-
 export interface NetworkManager extends WorkerModule<string> {
     configure: (serverSettings: ServerSettings) => Promise<void>;
     deployNetwork: (networkDescription: string) => Promise<string>;
     buildNetwork: () => void;
-    // buildNetwork: () => Observable<NetworkEvent>;
-    // buildNetwork: () => Promise<Observable<NetworkEvent>>;
-    startNetwork: (sensorDescription: string, timeFactor: number) => Promise<Observable<NetworkEvent>>;
+    startNetwork: (sensorDescription: string, timeFactor: number) => void;
+    // startNetwork: (sensorDescription: string, timeFactor: number) => Promise<Observable<NetworkEvent>>;
     stopNetwork: () => void;
     deleteNetwork: () => Promise<string>;
 
     deployedNetworkId: () => string | undefined;
-    observable: () => Observable<NetworkEvent>;
+    networkObservable: () => Observable<NetworkEvent>;
     buildObservable: () => Observable<NetworkEvent>;
 }
 
@@ -279,7 +292,7 @@ const manager: NetworkManager = {
     stopNetwork,
 
     deployedNetworkId,
-    observable,
+    networkObservable,
     buildObservable
 }
 

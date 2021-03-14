@@ -1,5 +1,6 @@
 import {Observable as FnsObservable} from 'observable-fns';
-import {Observable} from "rxjs";
+import {Observable, Subject} from "rxjs";
+import {mergeMap} from "rxjs/operators"
 import {NetworkEvent} from "../redux/actions/networkEvent";
 import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";
@@ -48,10 +49,11 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
         await worker.buildNetwork();
         const buildEvents: FnsObservable<NetworkEvent> = worker.buildObservable();
 
-        // convert the fns-observable to a rxjs observable
-        return new Observable<NetworkEvent>(
-            observer => buildEvents.subscribe(event => observer.next(event))
-        );
+        // todo hold on to the subscription so that it can be cancelled
+        // convert the fns-observable into an rxjs observable
+        const subject = new Subject<NetworkEvent>();
+        buildEvents.subscribe(event => subject.next(event));
+        return subject;
     }
 
     /**
@@ -62,11 +64,14 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
      * @return A promise to an observable of network events
      */
     async function start(sensorDescription: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
-        const networkEvents: FnsObservable<NetworkEvent> = await worker.startNetwork(sensorDescription, timeFactor);
-        // convert the fns-observable to a rxjs observable
-        return new Observable<NetworkEvent>(
-            observer => networkEvents.subscribe(event => observer.next(event))
-        );
+        await worker.startNetwork(sensorDescription, timeFactor);
+        const networkEvents: FnsObservable<NetworkEvent> = worker.networkObservable();
+
+        // todo hold on to the subscription so that it can be cancelled
+        // convert the fns-observable to an rxjs observable
+        const subject = new Subject<NetworkEvent>();
+        networkEvents.subscribe(event => subject.next(event))
+        return subject;
     }
 
     /**

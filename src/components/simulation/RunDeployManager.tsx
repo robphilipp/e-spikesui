@@ -45,8 +45,9 @@ import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
 import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
-import {newSensorThread, SensorThread, SignalGenerator} from "../threads/SensorThread";
-import {ExpressionState} from "../editors/SensorsEditor";
+// import {newSensorThread, SensorThread, SignalGenerator} from "../threads/SensorThread";
+import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
+import {spawn, Worker} from "threads";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -68,12 +69,12 @@ interface StateProps {
     // holds the sensor description
     sensorDescription: string;
 
-    // holds the network ID (once it has been built on the server)
-    networkId: Option<string>;
+    // // holds the network ID (once it has been built on the server)
+    // networkId: Option<string>;
     // whether or not the network is built
     neuronIds: Vector<string>;
-    // holds an error message
-    networkBuilt: boolean;
+    // // holds an error message
+    // networkBuilt: boolean;
     // neuron ids for the built network
     errorMessages: Option<FeedbackMessage>;
     // the base websocket subscription subject
@@ -142,10 +143,10 @@ function RunDeployManager(props: Props): JSX.Element {
         sensorDescriptionPath,
         sensorDescription,
 
-        networkId,
+        // networkId,
         neuronIds,
 
-        networkBuilt,
+        // networkBuilt,
         errorMessages,
         webSocketSubject,
         pauseSubject,
@@ -187,29 +188,37 @@ function RunDeployManager(props: Props): JSX.Element {
     // const [sensors, setSensors] = useState<Vector<Sensor>>(Vector.empty());
 
     // sensor thread
-    const sensorThreadRef = useRef<SensorThread>();
+    // const sensorThreadRef = useRef<SensorThread>();
+
+    // const [networkManager, setNetworkManager] = useState<NetworkManagerThread>();
+    const networkManagerThreadRef = useRef<NetworkManagerThread>();
+    const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
+    const [networkBuilt, setNetworkBuilt] = useState(false);
 
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
         () => {
+            // set up the network manager thread for managing the network and the sensor
+            newNetworkManagerThread().then(managerThread => networkManagerThreadRef.current = managerThread);
+
             return () => {
-                // terminate sensor-simulation worker thread on dismount, in case it is
-                // still hanging around
-                sensorThreadRef.current.terminate()
-                    .catch(reason => console.error(`Failed to terminate worker thread; ${reason}`));
+                networkManagerThreadRef.current?.stop()
+                    .then(() => networkManagerThreadRef.current?.remove()
+                        .then(() => networkManagerThreadRef.current?.terminate())
+                    );
             }
         },
         []
     )
 
-    useEffect(
-        () => {
-            if (networkBuilt) {
-                updateLoadingState(false);
-            }
-        },
-        [networkBuilt]
-    )
+    // useEffect(
+    //     () => {
+    //         if (networkBuilt) {
+    //             updateLoadingState(false);
+    //         }
+    //     },
+    //     [networkBuilt]
+    // )
     // useEffect(
     //     () => {
     //         if (networkDescriptionPath && networkDescription === undefined) {
@@ -224,6 +233,16 @@ function RunDeployManager(props: Props): JSX.Element {
      * the network. When no network is built, then builds the network.
      */
     function handleBuildDeleteNetwork(): void {
+        if (networkManagerThreadRef.current === undefined) {
+            newNetworkManagerThread()
+                .then(managerThread => {
+                    networkManagerThreadRef.current = managerThread;
+                    handleBuildDeleteNetwork();
+                });
+            return;
+        }
+        const networkManager = networkManagerThreadRef.current;
+
         updateLoadingState(true, networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`));
         networkId
             // if the network ID exists, then the button click is to delete the network, and
@@ -241,51 +260,93 @@ function RunDeployManager(props: Props): JSX.Element {
             // if the network ID doesn't exist, then the button click is for creating the network, and
             // so we call action creator for creating the network, and if that results in a failure, the
             // we call the action creator for setting the error messages.
-            .ifNone(() => onBuildNetwork(networkDescription)
-                .then(action => action.result
-                    .ifLeft(messages => {
-                        onSetErrorMessages(asErrorMessage(messages))
-                        updateLoadingState(false)
-                    })
-                    .ifRight(networkId => {
-                        // create the rxjs web-socket subject and then hand it to the pipeline for
-                        // processing spikes network events
-                        const websocketCreatedAction = createWebSocketSubject(networkId);
-                        const observableAction = createNetworkObservable(websocketCreatedAction.webSocketSubject, 50);
-
+            .ifNone(() => networkManager.deploy(networkDescription)
+                .then(id => {
+                    // now that the network has been deployed, we need to tell the server to build it
+                    // and we need to respond to the network build events emitted by the network on the
+                    // server
+                    networkManager.build(id).then(networkEvents => {
                         // emits array's for build (neuron creation and connection) events that occur within a
                         // 100 ms windows. drops non building events, and emits nothing when no events occur in the
                         // time window
-                        const buildObservable: Observable<Array<NetworkEvent>> = observableAction.observable.pipe(
+                        const buildObservable: Observable<Array<NetworkEvent>> = networkEvents.pipe(
                             filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
                             bufferTime(100),
                             filter(events => events.length > 0)
                         );
 
-                        // we need to subscribe to the web-socket (through the observable) so that it sends a
-                        // message to the web-socket to build the network. we also need to process all the build
-                        // messages so that we can construct the network visualization. to do this we create the
-                        // build observable that filters out all non-build messages, and then subscribe to it,
-                        // sending all the network build messages as network events
-                        subscribeWebsocket(buildObservable, 5000, processNetworkBuildEvents, observableAction.pauseSubject, false)
-                            .then(() => {
-                                // send the command to build the network
-                                websocketCreatedAction.webSocketSubject.next(BUILD_MESSAGE.command);
+                        buildObservable.subscribe(processNetworkBuildEvents);
 
-                                // set the network observable that accepts messages when the network is running
-                                setNetworkObservable(observableAction.observable);
-                            })
-                            .catch(messages => {
-                                onSetErrorMessages(messages);
-                                updateLoadingState(false);
-                            })
+                        setNetworkId(Option.of(id));
+                        setNetworkBuilt(true);
                     })
-                )
+                })
                 .catch(reason => {
                     onSetErrorMessages(reason.toString());
                     updateLoadingState(false);
                 })
             );
+        // networkId
+        //     // if the network ID exists, then the button click is to delete the network, and
+        //     // so we send a message down the websocket to delete the network, and then we
+        //     // unsubscribe to the observable instance that listen for websocket messages and for
+        //     // pausing the message processing
+        //     .ifSome(id => onDeleteNetwork(id)
+        //         .then(action => action.result.ifLeft(messages => onSetErrorMessages(asErrorMessage(messages))))
+        //         .then(result => result.ifRight(() => {
+        //             onClearNetworkState();
+        //             return onUnsubscribe(subscription, pauseSubscription);
+        //         }))
+        //         .finally(() => updateLoadingState(false))
+        //     )
+        //     // if the network ID doesn't exist, then the button click is for creating the network, and
+        //     // so we call action creator for creating the network, and if that results in a failure, the
+        //     // we call the action creator for setting the error messages.
+        //     .ifNone(() => onBuildNetwork(networkDescription)
+        //         .then(action => action.result
+        //             .ifLeft(messages => {
+        //                 onSetErrorMessages(asErrorMessage(messages))
+        //                 updateLoadingState(false)
+        //             })
+        //             .ifRight(networkId => {
+        //                 // create the rxjs web-socket subject and then hand it to the pipeline for
+        //                 // processing spikes network events
+        //                 const websocketCreatedAction = createWebSocketSubject(networkId);
+        //                 const observableAction = createNetworkObservable(websocketCreatedAction.webSocketSubject, 50);
+        //
+        //                 // emits array's for build (neuron creation and connection) events that occur within a
+        //                 // 100 ms windows. drops non building events, and emits nothing when no events occur in the
+        //                 // time window
+        //                 const buildObservable: Observable<Array<NetworkEvent>> = observableAction.observable.pipe(
+        //                     filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
+        //                     bufferTime(100),
+        //                     filter(events => events.length > 0)
+        //                 );
+        //
+        //                 // we need to subscribe to the web-socket (through the observable) so that it sends a
+        //                 // message to the web-socket to build the network. we also need to process all the build
+        //                 // messages so that we can construct the network visualization. to do this we create the
+        //                 // build observable that filters out all non-build messages, and then subscribe to it,
+        //                 // sending all the network build messages as network events
+        //                 subscribeWebsocket(buildObservable, 5000, processNetworkBuildEvents, observableAction.pauseSubject, false)
+        //                     .then(() => {
+        //                         // send the command to build the network
+        //                         websocketCreatedAction.webSocketSubject.next(BUILD_MESSAGE.command);
+        //
+        //                         // set the network observable that accepts messages when the network is running
+        //                         setNetworkObservable(observableAction.observable);
+        //                     })
+        //                     .catch(messages => {
+        //                         onSetErrorMessages(messages);
+        //                         updateLoadingState(false);
+        //                     })
+        //             })
+        //         )
+        //         .catch(reason => {
+        //             onSetErrorMessages(reason.toString());
+        //             updateLoadingState(false);
+        //         })
+        //     );
     }
 
     /**
@@ -310,16 +371,16 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
-    async function compileSensor(): Promise<SignalGenerator> {
     // async function compileSensor(): Promise<SignalGenerator> {
-        // create a sensor-simulation worker for compiling and running the sensor
-        sensorThreadRef.current = await newSensorThread();
-
-        // attempt to compile the code-snippet as a simulator
-        // return sensorThreadRef.current.compileSender(sensorDescription, timeFactor, websocket);
-        return sensorThreadRef.current.compileSender(sensorDescription, timeFactor);
-        // return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
-    }
+    // // async function compileSensor(): Promise<SignalGenerator> {
+    //     // create a sensor-simulation worker for compiling and running the sensor
+    //     sensorThreadRef.current = await newSensorThread();
+    //
+    //     // attempt to compile the code-snippet as a simulator
+    //     // return sensorThreadRef.current.compileSender(sensorDescription, timeFactor, websocket);
+    //     return sensorThreadRef.current.compileSender(sensorDescription, timeFactor);
+    //     // return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
+    // }
 
     /**
      * Handles the web-socket connection when the start/stop button is clicked
@@ -330,22 +391,22 @@ function RunDeployManager(props: Props): JSX.Element {
             if (!running) {
                 updateLoadingState(true, "Attempting to start neural network")
 
-                // attempt to compile the sensor code snippet
-                // const signalGenerator = await compileSensor(websocket);
-                const signalGenerator = await compileSensor();
-
-                // create the regex selector for determining the input neurons for the sensor,
-                // required by the back-end
-                const selector = signalGenerator.neuronIds.map(id => `^${id}$`).join("|")
-
-                // hand the simulator the sensor information, and the send the server the message
-                // to start the simulation, create and subscribe to the sensor observables
-                // (that will send signals to the network)
-                await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
-                const subscription = signalGenerator
-                    .observable
-                    .subscribe(output => websocket.next(JSON.stringify(output)));
-                setSignalSubscription(subscription);
+                // // attempt to compile the sensor code snippet
+                // // const signalGenerator = await compileSensor(websocket);
+                // const signalGenerator = await compileSensor();
+                //
+                // // create the regex selector for determining the input neurons for the sensor,
+                // // required by the back-end
+                // const selector = signalGenerator.neuronIds.map(id => `^${id}$`).join("|")
+                //
+                // // hand the simulator the sensor information, and the send the server the message
+                // // to start the simulation, create and subscribe to the sensor observables
+                // // (that will send signals to the network)
+                // await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
+                // const subscription = signalGenerator
+                //     .observable
+                //     .subscribe(output => websocket.next(JSON.stringify(output)));
+                // setSignalSubscription(subscription);
 
                 updateLoadingState(false);
             }
@@ -571,7 +632,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     simulationName: state.simulationProject.name,
     timeFactor: state.simulationProject.timeFactor,
     simulationDuration: state.simulationProject.simulationDuration,
-    networkId: state.networkManagement.networkId,
+    // networkId: state.networkManagement.networkId,
 
     networkDescriptionPath: state.simulationProject.networkDescriptionPath,
     networkDescription: state.networkDescription.description,
@@ -579,7 +640,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     sensorDescription: state.sensorDescription.codeSnippet,
 
     neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
-    networkBuilt: state.networkEvent.networkBuilt,
+    // networkBuilt: state.networkEvent.networkBuilt,
     errorMessages: state.application.message,
 
     webSocketSubject: Option.ofNullable(state.networkManagement.websocketSubject),

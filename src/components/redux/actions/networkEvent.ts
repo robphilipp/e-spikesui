@@ -40,7 +40,6 @@ export interface Location {
     x: number;
     y: number;
     z: number;
-    // asCoordinate: () => Coordinate;
 }
 
 export interface EventTime {

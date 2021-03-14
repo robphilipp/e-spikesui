@@ -7,7 +7,9 @@ const CopyPlugin = require('copy-webpack-plugin');
 module.exports = [
     new MonacoWebpackPlugin(),
     new ForkTsCheckerWebpackPlugin(),
-    new ThreadsPlugin(),
+    new ThreadsPlugin({
+        target: 'electron-node-worker'
+    }),
     new CopyPlugin({
         patterns: [
             {from: path.resolve(__dirname, 'src', 'resources'), to: 'resources'}

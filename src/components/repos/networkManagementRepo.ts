@@ -6,7 +6,8 @@ import {webSocket} from "rxjs/webSocket";
 export interface NetworkManagementRepo {
     buildNetwork: (networkDescription: string) => Promise<string>;
     deleteNetwork: (networkId: string) => Promise<string>;
-    webSocketFor: (networkId: string) => WebSocket;
+    rawWebSocketFor: (networkId: string) => WebSocket;
+    webSocketFor: (networkId: string) => Promise<WebSocket>;
     webSocketSubjectFor: (networkId: string) => WebSocketSubject<string>;
 }
 
@@ -58,13 +59,29 @@ export function networkManagementRepo(serverSettings: ServerSettings): NetworkMa
         });
     }
 
-    function webSocketFor(networkId: string): WebSocket {
-        return new WebSocket(`${baseWebSocketUrl}/${networkId}`)
+    function rawWebSocketFor(networkId: string): WebSocket {
+        return new WebSocket(`${baseWebSocketUrl}/${networkId}`);
+    }
+
+    function webSocketFor(networkId: string): Promise<WebSocket> {
+        return new Promise<WebSocket>((resolve, reject) => {
+            try {
+                const webSocket = new WebSocket(`${baseWebSocketUrl}/${networkId}`);
+                webSocket.onopen = () => resolve(webSocket);
+                webSocket.onerror = (error) => {
+                    console.log(error);
+                    reject(error);
+                }
+            } catch(error) {
+                reject(error);
+            }
+        });
     }
 
     return {
         buildNetwork,
         deleteNetwork,
+        rawWebSocketFor,
         webSocketFor,
         webSocketSubjectFor,
     }

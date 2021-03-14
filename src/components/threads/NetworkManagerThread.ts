@@ -1,32 +1,32 @@
 import {Observable as FnsObservable} from 'observable-fns';
 import {Observable} from "rxjs";
 import {NetworkEvent} from "../redux/actions/networkEvent";
-import {spawn, Worker} from "threads";
+import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
+import {remoteRepositories} from "../../app";
 
 type NetworkManagerWorker = ((() => ObservablePromise<StripAsync<NetworkEvent>>) & PrivateThreadProps & ModuleProxy<ModuleMethods>) ;
 
-interface NetworkManagerThread {
+export interface NetworkManagerThread {
     deploy: (networkDescription: string) => Promise<string>;
     build: (networkId: string) => Promise<Observable<NetworkEvent>>;
     start: (sensorDescription: string, timeFactor: number) => Promise<Observable<NetworkEvent>>;
     stop: () => Promise<void>;
     remove: () => Promise<string>;
+    terminate: () => Promise<void>;
 }
-
-// todo uses these methods in the run-deploy manager, and deal with all the redux stuff that may
-//      need to be updated.
 
 /**
  * Creates a new network manager thread for deploying, building, starting, stopping and
  * removing networks.
  * @return A promise the functions for managing the network.
  */
-export async function networkManagerThread(): Promise<NetworkManagerThread> {
+export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
 
     // spawn a new worker that handles all the websocket stuff
     const worker: NetworkManagerWorker = await spawn(new Worker('../workers/networkManager'));
+    await worker.configure(remoteRepositories.serverSettings)
 
     /**
      * Attempts to deploy the network to the backend
@@ -43,10 +43,18 @@ export async function networkManagerThread(): Promise<NetworkManagerThread> {
      * @return A promise to an observable of network build events
      */
     async function build(): Promise<Observable<NetworkEvent>> {
-        const buildEvents: FnsObservable<NetworkEvent> = await worker.buildNetwork();
+        console.log("attempting to build network")
+        // const buildEvents: FnsObservable<NetworkEvent> = await worker.buildNetwork();
+        await worker.buildNetwork();
+        console.log("network built")
+        const buildEvents: FnsObservable<NetworkEvent> = worker.buildObservable();
+        console.log("got build-events observable");
         // convert the fns-observable to a rxjs observable
         return new Observable<NetworkEvent>(
-            observer => buildEvents.subscribe(event => observer.next(event))
+            observer => buildEvents.subscribe(event => {
+                console.log(event);
+                observer.next(event)
+            })
         );
     }
 
@@ -81,11 +89,16 @@ export async function networkManagerThread(): Promise<NetworkManagerThread> {
         return worker.deleteNetwork();
     }
 
+    async function terminate(): Promise<void> {
+        return Thread.terminate(worker);
+    }
+
     return {
         deploy,
         build,
         start,
         stop,
         remove,
+        terminate,
     }
 }

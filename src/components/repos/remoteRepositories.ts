@@ -2,11 +2,13 @@ import {networkManagementRepo, NetworkManagementRepo} from "./networkManagementR
 import ServerSettings from "../settings/serverSettings";
 
 export interface RemoteRepositories {
-    networkManagement: NetworkManagementRepo
+    serverSettings: ServerSettings;
+    networkManagement: NetworkManagementRepo;
 }
 
 export function createRemoteRepositories(serverSettings: ServerSettings): RemoteRepositories {
     return {
+        serverSettings,
         networkManagement: networkManagementRepo(serverSettings),
     }
 }

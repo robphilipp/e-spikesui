@@ -69,17 +69,6 @@ async function deployNetwork(networkDescription: string): Promise<string> {
     return repo.buildNetwork(networkDescription).then(id => networkId = id);
 }
 
-function webSocketObservable(): Observable<NetworkEvent> {
-    websocket = repo.rawWebSocketFor(networkId)
-    const subject = new Subject<NetworkEvent>();
-    websocket.onmessage = (event: MessageEvent) => {
-        console.log(JSON.parse(event.data) as NetworkEvent);
-        console.log("**********")
-        subject.next(JSON.parse(event.data) as NetworkEvent);
-    }
-    return Observable.from(subject);
-}
-
 /**
  * Creates a websocket to the server, sends the build command, and returns an observable
  * of network build events. This function has the side effect of setting the worker's global
@@ -92,93 +81,25 @@ function buildNetwork(): void {
     if (networkId === undefined) {
         throw new Error("Cannot build network because the network ID is undefined");
     }
-    console.log(`network ID exists: ${networkId}`);
 
     // create the websocket and an observable that listens for websocket messages
-    // networkEventObservable = webSocketObservable();
     websocket = repo.rawWebSocketFor(networkId);
 
     const subject = new Subject<NetworkEvent>();
     networkEventObservable = Observable.from(subject);
-    console.log(`created and connected web socket`);
     if (networkEventObservable === undefined) {
         throw new Error("Unable to create the websocket")
     }
 
-    websocket.onopen = () => {
-        websocket.send(BUILD_MESSAGE.command);
-        console.log(`sent build command to server`);
-    }
-
+    // set the web-socket callbacks for then the connection is complete and when a message arrives
+    websocket.onopen = () => websocket.send(BUILD_MESSAGE.command);
     websocket.onmessage = (event: MessageEvent) => subject.next(JSON.parse(event.data) as NetworkEvent)
 
-    // // send the build command to server so that it starts building the network
-    // websocket.send(BUILD_MESSAGE.command);
-    // console.log(`sent build command to server`);
-
-    // emits an observable of network build events from the server
-    // const subject = new Subject<NetworkEvent>();
-    // return new Observable<NetworkEvent>(observer => observer.next({type: 'networkCreated', payload:{networkId: 'test'}}))
-    // return Observable.from(subject);
-
-    // return networkEventObservable;
+    // set the observable that only sends back build events
     buildEventsObservable = networkEventObservable.pipe(
-        // filter(message => isBuildEvent(message.type)),
         filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
     );
-    console.log('returning from build network')
     return;
-}
-// async function webSocketObservable(): Promise<Observable<NetworkEvent>> {
-//     websocket = await repo.webSocketFor(networkId)
-//     const subject = new Subject<NetworkEvent>();
-//     websocket.onmessage = (event: MessageEvent) => {
-//         console.log(JSON.parse(event.data) as NetworkEvent);
-//         console.log("**********")
-//         subject.next(JSON.parse(event.data) as NetworkEvent);
-//     }
-//     return Observable.from(subject);
-// }
-//
-// /**
-//  * Creates a websocket to the server, sends the build command, and returns an observable
-//  * of network build events. This function has the side effect of setting the worker's global
-//  * network-event observable
-//  * @return An observable of network events
-//  * @throws An error if the network ID is undefined, which means that the network has not
-//  * been deployed to the server yet.
-//  */
-// async function buildNetwork(): Promise<Observable<NetworkEvent>> {
-//     if (networkId === undefined) {
-//         throw new Error("Cannot build network because the network ID is undefined");
-//     }
-//     console.log(`network ID exists: ${networkId}`);
-//
-//     // create the websocket and an observable that listens for websocket messages
-//     networkEventObservable = await webSocketObservable();
-//     console.log(`created and connected web socket`);
-//     if (networkEventObservable === undefined) {
-//         throw new Error("Unable to create the websocket")
-//     }
-//
-//     // send the build command to server so that it starts building the network
-//     websocket.send(BUILD_MESSAGE.command);
-//     console.log(`sent build command to server`);
-//
-//     // emits an observable of network build events from the server
-//     const subject = new Subject<NetworkEvent>();
-//     // return new Observable<NetworkEvent>(observer => observer.next({type: 'networkCreated', payload:{networkId: 'test'}}))
-//     return Observable.from(subject);
-//
-//     // return networkEventObservable;
-//     // return networkEventObservable.pipe(
-//     //     // filter(message => isBuildEvent(message.type)),
-//     //     filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
-//     // );
-// }
-
-function isBuildEvent(eventType: string): boolean {
-    return eventType === NEURON || eventType === CONNECTION || eventType === NETWORK;
 }
 
 /**
@@ -268,6 +189,40 @@ async function startNetwork(sensorDescription: string, timeFactor: number): Prom
 
     return networkEventObservable;
 }
+// async function startNetwork(sensorDescription: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
+//     if (networkId === undefined) {
+//         throw new Error("Cannot start network because network ID is undefined");
+//     }
+//     if (websocket === undefined || networkEventObservable === undefined) {
+//         throw new Error("Cannot start network because the websocket or network-events observable are undefined")
+//     }
+//
+//     // const worker: SimulationType = await spawn(new Worker('./sensorSignals'));
+//
+//     const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
+//     subject = new Subject<SensorOutput>();
+//     const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(subject);
+//
+//     sendSignals();
+//     const observable = new Observable<SensorOutput>(observer => {
+//         fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
+//     });
+//
+//     // create the regex selector for determining the input neurons for the sensor,
+//     // required by the back-end
+//     const selector = neuronIds.map(id => `^${id}$`).join("|")
+//
+//     // hand the simulator the sensor information, and the send the server the message
+//     // to start the simulation, create and subscribe to the sensor observables
+//     // (that will send signals to the network)
+//     websocket.send(JSON.stringify({name: sensorName, selector: selector}))
+//
+//     // await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
+//     signalGeneratorSubscription = observable
+//         .subscribe(output => websocket.send(JSON.stringify(output)));
+//
+//     return networkEventObservable;
+// }
 
 function stopNetwork(): void {
     websocket.send(STOP_MESSAGE.command);

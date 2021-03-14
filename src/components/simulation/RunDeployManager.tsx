@@ -287,13 +287,14 @@ function RunDeployManager(props: Props): JSX.Element {
                         // 100 ms windows. drops non building events, and emits nothing when no events occur in the
                         // time window
                         const buildObservable: Observable<Array<NetworkEvent>> = networkEvents.pipe(
-                            // filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
                             bufferTime(100),
                             filter(events => events.length > 0)
                         );
 
+                        // subscribe to the network build events
                         buildObservable.subscribe(processNetworkBuildEvents);
 
+                        // set the network ID
                         setNetworkId(Option.of(id));
                     })
                 } catch (error) {

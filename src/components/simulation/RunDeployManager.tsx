@@ -73,8 +73,8 @@ interface StateProps {
     // networkId: Option<string>;
     // whether or not the network is built
     neuronIds: Vector<string>;
-    // // holds an error message
-    // networkBuilt: boolean;
+    // holds an error message
+    networkBuilt: boolean;
     // neuron ids for the built network
     errorMessages: Option<FeedbackMessage>;
     // the base websocket subscription subject
@@ -146,7 +146,7 @@ function RunDeployManager(props: Props): JSX.Element {
         // networkId,
         neuronIds,
 
-        // networkBuilt,
+        networkBuilt,
         errorMessages,
         webSocketSubject,
         pauseSubject,
@@ -193,7 +193,7 @@ function RunDeployManager(props: Props): JSX.Element {
     // const [networkManager, setNetworkManager] = useState<NetworkManagerThread>();
     const networkManagerThreadRef = useRef<NetworkManagerThread>();
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
-    const [networkBuilt, setNetworkBuilt] = useState(false);
+    // const [networkBuilt, setNetworkBuilt] = useState(false);
 
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
@@ -211,14 +211,14 @@ function RunDeployManager(props: Props): JSX.Element {
         []
     )
 
-    // useEffect(
-    //     () => {
-    //         if (networkBuilt) {
-    //             updateLoadingState(false);
-    //         }
-    //     },
-    //     [networkBuilt]
-    // )
+    useEffect(
+        () => {
+            if (networkBuilt) {
+                updateLoadingState(false);
+            }
+        },
+        [networkBuilt]
+    )
     // useEffect(
     //     () => {
     //         if (networkDescriptionPath && networkDescription === undefined) {
@@ -233,12 +233,14 @@ function RunDeployManager(props: Props): JSX.Element {
      * the network. When no network is built, then builds the network.
      */
     function handleBuildDeleteNetwork(): void {
+        // in most cases, the network thread should have been created already. but in
+        // case it hasn't, attempt to create the network manager thread, and then call
+        // this function once it has been built
         if (networkManagerThreadRef.current === undefined) {
-            newNetworkManagerThread()
-                .then(managerThread => {
-                    networkManagerThreadRef.current = managerThread;
-                    handleBuildDeleteNetwork();
-                });
+            newNetworkManagerThread().then(managerThread => {
+                networkManagerThreadRef.current = managerThread;
+                handleBuildDeleteNetwork();
+            });
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -270,7 +272,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         // 100 ms windows. drops non building events, and emits nothing when no events occur in the
                         // time window
                         const buildObservable: Observable<Array<NetworkEvent>> = networkEvents.pipe(
-                            filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
+                            // filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
                             bufferTime(100),
                             filter(events => events.length > 0)
                         );
@@ -278,7 +280,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         buildObservable.subscribe(processNetworkBuildEvents);
 
                         setNetworkId(Option.of(id));
-                        setNetworkBuilt(true);
+                        // setNetworkBuilt(true);
                     })
                 })
                 .catch(reason => {
@@ -354,9 +356,11 @@ function RunDeployManager(props: Props): JSX.Element {
      * @param events An array of incoming network events
      */
     function processNetworkBuildEvents(events: Array<NetworkEvent>): void {
+        // console.log(events);
         // convert the network build events into a action holding those events and dispatch
         // if there are any events
         const actions = networkBuildEventsActionCreator(events);
+        console.log(actions)
         if (actions.events.length > 0) {
             // as the network build events are dispatched, the reducer updates the neurons and
             // connections. to build connections, the reducer must reconcile the pre- and post-
@@ -640,7 +644,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     sensorDescription: state.sensorDescription.codeSnippet,
 
     neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
-    // networkBuilt: state.networkEvent.networkBuilt,
+    networkBuilt: state.networkEvent.networkBuilt,
     errorMessages: state.application.message,
 
     webSocketSubject: Option.ofNullable(state.networkManagement.websocketSubject),

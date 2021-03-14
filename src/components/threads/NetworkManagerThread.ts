@@ -43,18 +43,14 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
      * @return A promise to an observable of network build events
      */
     async function build(): Promise<Observable<NetworkEvent>> {
-        console.log("attempting to build network")
-        // const buildEvents: FnsObservable<NetworkEvent> = await worker.buildNetwork();
+        // ask the worker to build the network, and then once build, ask for the build
+        // observable
         await worker.buildNetwork();
-        console.log("network built")
         const buildEvents: FnsObservable<NetworkEvent> = worker.buildObservable();
-        console.log("got build-events observable");
+
         // convert the fns-observable to a rxjs observable
         return new Observable<NetworkEvent>(
-            observer => buildEvents.subscribe(event => {
-                console.log(event);
-                observer.next(event)
-            })
+            observer => buildEvents.subscribe(event => observer.next(event))
         );
     }
 

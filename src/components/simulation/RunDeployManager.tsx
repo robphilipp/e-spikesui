@@ -218,86 +218,104 @@ function RunDeployManager(props: Props): JSX.Element {
         () => {
             if (networkBuilt) {
                 updateLoadingState(false);
+                setUsedUp(false);
                 buildSubscriptionRef.current.unsubscribe();
             }
         },
         [networkBuilt]
     )
 
-    /**
-     * Handles the network build/delete button clicks. When the network is built, then deletes
-     * the network. When no network is built, then builds the network.
-     */
-    function handleBuildDeleteNetwork(): void {
+    async function handleBuildNetwork(): Promise<void> {
         // in most cases, the network thread should have been created already. but in
         // case it hasn't, attempt to create the network manager thread, and then call
         // this function once it has been built
         if (networkManagerThreadRef.current === undefined) {
-            newNetworkManagerThread().then(managerThread => {
-                networkManagerThreadRef.current = managerThread;
-                handleBuildDeleteNetwork();
-            });
-            return;
+            try {
+                networkManagerThreadRef.current = await newNetworkManagerThread()
+                await handleBuildNetwork();
+            } catch(error) {
+                onSetErrorMessages(<div>Cannot build network; {error.toString()}</div>)
+                return;
+            }
         }
         const networkManager = networkManagerThreadRef.current;
 
-        updateLoadingState(
-            true,
-            networkId.map(id => `Deleting network ${id}`).getOrElse(`Building network`)
-        );
+        updateLoadingState(true, `Building network`);
 
-        networkId
-            // if the network ID exists, then the button click is to delete the network, and
-            // so we send a message down the websocket to delete the network, and then we
-            // unsubscribe to the observable instance that listen for websocket messages and for
-            // pausing the message processing
-            .ifSome(async id => {
-                try {
-                    const action = await onDeleteNetwork(id);
-                    action.result
-                        .ifLeft(messages => onSetErrorMessages(asErrorMessage(messages)))
-                        .ifRight(() => {
-                            // clear out the network ID and let the network manager
-                            // thread know to remove the network
-                            setNetworkId(Option.none());
-                            networkManager.remove();
-                            // clear the network state and unsubscribe from the network events
-                            onClearNetworkState();
-                            return onUnsubscribe(subscription, pauseSubscription);
-                        })
-                } finally {
-                    updateLoadingState(false)
-                }
+        try {
+            // attempt to deploy the server
+            updateLoadingState(true, "Deploying network")
+            const id = await networkManager.deploy(networkDescription);
+            // now that the network has been deployed, we need to tell the server to build it
+            // and we need to respond to the network build events emitted by the network on the
+            // server
+            updateLoadingState(true, `Building network ${id}`)
+            networkManager.build(id).then(networkEvents => {
+                // emits array's for build (neuron creation and connection) events that occur within a
+                // 100 ms windows. drops non building events, and emits nothing when no events occur in the
+                // time window
+                const buildObservable: Observable<Array<NetworkEvent>> = networkEvents.pipe(
+                    bufferTime(100),
+                    filter(events => events.length > 0)
+                );
+
+                // subscribe to the network build events
+                buildSubscriptionRef.current = buildObservable.subscribe(processNetworkBuildEvents);
+
+                // set the network ID
+                setNetworkId(Option.of(id));
             })
-            .ifNone(async () => {
-                try {
-                    // attempt to deploy the server
-                    updateLoadingState(true, "Deploying network")
-                    const id = await networkManager.deploy(networkDescription);
-                    // now that the network has been deployed, we need to tell the server to build it
-                    // and we need to respond to the network build events emitted by the network on the
-                    // server
-                    updateLoadingState(true, `Building network ${id}`)
-                    networkManager.build(id).then(networkEvents => {
-                        // emits array's for build (neuron creation and connection) events that occur within a
-                        // 100 ms windows. drops non building events, and emits nothing when no events occur in the
-                        // time window
-                        const buildObservable: Observable<Array<NetworkEvent>> = networkEvents.pipe(
-                            bufferTime(100),
-                            filter(events => events.length > 0)
-                        );
+        } catch (error) {
+            onSetErrorMessages(error.toString());
+            updateLoadingState(false);
+        }
+    }
 
-                        // subscribe to the network build events
-                        buildSubscriptionRef.current = buildObservable.subscribe(processNetworkBuildEvents);
+    async function handleDeleteNetwork(): Promise<void> {
+        const id = networkId.getOrUndefined();
+        if (id === undefined) {
+            onSetErrorMessages(<div>Cannot delete network because the network ID is undefined</div>)
+            return;
+        }
 
-                        // set the network ID
-                        setNetworkId(Option.of(id));
-                    })
-                } catch (error) {
-                    onSetErrorMessages(error.toString());
-                    updateLoadingState(false);
-                }
-            });
+        // in most cases, the network thread should have been created already. but in
+        // case it hasn't, attempt to create the network manager thread, and then call
+        // this function once it has been built
+        if (networkManagerThreadRef.current === undefined) {
+            try {
+                networkManagerThreadRef.current = await newNetworkManagerThread()
+                await handleBuildNetwork();
+            } catch(error) {
+                onSetErrorMessages(<div>Cannot delete network {id}; {error.toString()}</div>)
+                return;
+            }
+        }
+        const networkManager = networkManagerThreadRef.current;
+
+        updateLoadingState(true, `Deleting network`);
+
+        try {
+            const action = await onDeleteNetwork(id);
+            action.result
+                .ifLeft(messages => onSetErrorMessages(asErrorMessage(messages)))
+                .ifRight(() => {
+                    // clear out the network ID and let the network manager
+                    // thread know to remove the network
+                    setNetworkId(Option.none());
+                    networkManager.remove();
+                    // clear the network state and unsubscribe from the network events
+                    onClearNetworkState();
+                    return onUnsubscribe(subscription, pauseSubscription);
+                })
+        } finally {
+            updateLoadingState(false)
+        }
+    }
+
+    async function handleBuildDeleteNetwork(): Promise<void> {
+        await handleDeleteNetwork();
+        await handleBuildNetwork();
+        return;
     }
 
     /**
@@ -323,52 +341,41 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
-    // async function compileSensor(): Promise<SignalGenerator> {
-    // // async function compileSensor(): Promise<SignalGenerator> {
-    //     // create a sensor-simulation worker for compiling and running the sensor
-    //     sensorThreadRef.current = await newSensorThread();
-    //
-    //     // attempt to compile the code-snippet as a simulator
-    //     // return sensorThreadRef.current.compileSender(sensorDescription, timeFactor, websocket);
-    //     return sensorThreadRef.current.compileSender(sensorDescription, timeFactor);
-    //     // return sensorThreadRef.current.compileSimulator(sensorDescription, timeFactor);
-    // }
-
-    /**
-     * Handles the web-socket connection when the start/stop button is clicked
-     */
-    async function handleStartStop(): Promise<void> {
+    async function handleStart(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
-            onSetErrorMessages(<div>Cannot start/stop the network because the network manager thread is undefined</div>)
+            onSetErrorMessages(<div>Cannot start the network because the network manager thread is undefined</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
 
-        // when the simulation is not running, the set it up and start it
-        if (!running) {
-            updateLoadingState(true, "Attempting to start neural network")
-            try {
-                const observable = await networkManager.start(sensorDescription, timeFactor);
-                console.log("started network")
-                setNetworkObservable(observable);
-                setRunning(true);
-            } catch (error) {
-                onSetErrorMessages(<div>{error.toString()}</div>)
-            } finally {
-                updateLoadingState(false);
-            }
+        updateLoadingState(true, "Attempting to start neural network")
+        try {
+            const observable = await networkManager.start(sensorDescription, timeFactor);
+            console.log("started network")
+            setNetworkObservable(observable);
+            setRunning(true);
+        } catch (error) {
+            onSetErrorMessages(<div>{error.toString()}</div>)
+        } finally {
+            updateLoadingState(false);
         }
-        // when the simulation is running, then stop it
-        else {
-            updateLoadingState(true, "Stopping simulation");
-            try {
-                await networkManager.stop();
-                updateLoadingState(false);
-                setRunning(false);
-                setUsedUp(true);
-            } catch (error) {
-                onSetErrorMessages(<div>{error.toString()}</div>);
-            }
+    }
+
+    async function handleStop(): Promise<void> {
+        if (networkManagerThreadRef.current === undefined) {
+            onSetErrorMessages(<div>Cannot stop the network because the network manager thread is undefined</div>)
+            return;
+        }
+        const networkManager = networkManagerThreadRef.current;
+
+        updateLoadingState(true, "Stopping simulation");
+        try {
+            await networkManager.stop();
+            updateLoadingState(false);
+            setRunning(false);
+            setUsedUp(true);
+        } catch (error) {
+            onSetErrorMessages(<div>{error.toString()}</div>);
         }
     }
 
@@ -378,14 +385,6 @@ function RunDeployManager(props: Props): JSX.Element {
     function handlePause() {
         props.onSimulationPause(!props.paused, props.pauseSubject);
     }
-
-    // function loadNetworkDescriptionIfNeeded(): boolean {
-    //     if (networkDescriptionPath && networkDescription === undefined) {
-    //         loadNetworkDescriptionFrom(networkDescriptionPath);
-    //         return true;
-    //     }
-    //     return false;
-    // }
 
     function asErrorMessage(errors: Array<string>): JSX.Element {
         return <>{errors.map((error, key) => (<div key={key}>{error}</div>))}</>
@@ -491,25 +490,61 @@ function RunDeployManager(props: Props): JSX.Element {
         </Stack>
     }
 
+    function networkManagementButton(): JSX.Element {
+        if (networkId.isNone()) {
+            return <TooltipHost content="Deploy network to server and build.">
+                <IconButton
+                    iconProps={{iconName: "build"}}
+                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                    onClick={handleBuildNetwork}
+                />
+            </TooltipHost>
+        }
+        return <TooltipHost
+            content="Delete network from server.">
+            <IconButton
+                iconProps={{iconName: "delete"}}
+                style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                onClick={handleDeleteNetwork}
+            />
+        </TooltipHost>
+
+    }
+
+    function networkSimulationButton(): JSX.Element {
+        if (usedUp) {
+            return <TooltipHost content="Redeploy network (delete and deploy)">
+                <IconButton
+                    iconProps={{iconName: "build"}}
+                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                    onClick={handleBuildDeleteNetwork}
+                />
+            </TooltipHost>
+        }
+        if (running) {
+            return <TooltipHost content="Stop network.">
+                <IconButton
+                    iconProps={{iconName: "stop"}}
+                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                    onClick={handleStop}
+                />
+            </TooltipHost>
+        }
+        return <TooltipHost content="Run network on server.">
+            <IconButton
+                iconProps={{iconName: "play"}}
+                style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                onClick={handleStart}
+            />
+        </TooltipHost>
+
+    }
+
     return <>
         <Stack>
             <Stack horizontal>
                 <Stack.Item>
-                    <TooltipHost
-                        content={networkId.isNone() ?
-                            "Deploy network to server and build." :
-                            "Delete network from server."
-                        }
-                    >
-                        <IconButton
-                            iconProps={networkId.isNone() ?
-                                {iconName: "build"} :
-                                {iconName: "delete"}
-                            }
-                            style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                            onClick={handleBuildDeleteNetwork}
-                        />
-                    </TooltipHost>
+                    {networkManagementButton()}
                 </Stack.Item>
             </Stack>
             <Stack>
@@ -530,18 +565,7 @@ function RunDeployManager(props: Props): JSX.Element {
                                 styles={{root: {padding: 0, fontSize: 0}}}
                             />
                             <Card.Section horizontal>
-                                <TooltipHost content={
-                                    usedUp ?
-                                        "Please redeploy the network." :
-                                        running ? "Stop network." : "Run network on server."
-                                }>
-                                    <IconButton
-                                        disabled={usedUp}
-                                        iconProps={running ? {iconName: "stop"} : {iconName: "play"}}
-                                        style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                                        onClick={handleStartStop}
-                                    />
-                                </TooltipHost>
+                                {networkSimulationButton()}
                                 <TooltipHost content="Pause processing of events.">
                                     <IconButton
                                         disabled={usedUp || !running}
@@ -571,7 +595,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 </Stack.Item>
             </Stack>
         </Stack>
-    </>
+    </>;
 }
 
 

@@ -1,6 +1,5 @@
 import {Observable as FnsObservable} from 'observable-fns';
-import {Observable, Subject} from "rxjs";
-import {mergeMap} from "rxjs/operators"
+import {Observable, Subject, Subscription} from "rxjs";
 import {NetworkEvent} from "../redux/actions/networkEvent";
 import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";

@@ -257,6 +257,7 @@ async function deleteNetwork(): Promise<string> {
     return oldId;
 }
 
+// todo change function to accept an array of values to filter on
 function networkObservable(): Observable<NetworkEvent> {
     return networkEventObservable.pipe(filter(event => event.type === SPIKE));
 }

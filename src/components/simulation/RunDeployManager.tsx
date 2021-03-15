@@ -181,6 +181,7 @@ function RunDeployManager(props: Props): JSX.Element {
     const buildSubscriptionRef = useRef<Subscription>()
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
     const [running, setRunning] = useState(false);
+    const [usedUp, setUsedUp] = useState(false);
 
     // const subscriptionsRef = useRef<Set<Subscription>>(new Set());
 
@@ -222,14 +223,6 @@ function RunDeployManager(props: Props): JSX.Element {
         },
         [networkBuilt]
     )
-    // useEffect(
-    //     () => {
-    //         if (networkDescriptionPath && networkDescription === undefined) {
-    //             loadNetworkDescriptionFrom(networkDescriptionPath);
-    //         }
-    //     },
-    //     [networkDescriptionPath]
-    // )
 
     /**
      * Handles the network build/delete button clicks. When the network is built, then deletes
@@ -349,58 +342,34 @@ function RunDeployManager(props: Props): JSX.Element {
             onSetErrorMessages(<div>Cannot start/stop the network because the network manager thread is undefined</div>)
             return;
         }
-        // webSocketSubject.ifSome(async websocket => {
-            const networkManager = networkManagerThreadRef.current;
+        const networkManager = networkManagerThreadRef.current;
 
-            // when the simulation is not running, the set it up and start it
-            if (!running) {
-                updateLoadingState(true, "Attempting to start neural network")
-                // networkManager.start(sensorDescription, timeFactor)
-                //     .then(observable => setNetworkObservable(observable))
-                //     .catch(error => onSetErrorMessages(<div>{error.toString()}</div>))
-                //     .finally(() => updateLoadingState(false))
-                try {
-                    const observable = await networkManager.start(sensorDescription, timeFactor);
-                    console.log("started network")
-                    setNetworkObservable(observable);
-                    setRunning(true);
-                } catch(error) {
-                    onSetErrorMessages(<div>{error.toString()}</div>)
-                } finally {
-                    updateLoadingState(false);
-                }
-                // // attempt to compile the sensor code snippet
-                // // const signalGenerator = await compileSensor(websocket);
-                // const signalGenerator = await compileSensor();
-                //
-                // // create the regex selector for determining the input neurons for the sensor,
-                // // required by the back-end
-                // const selector = signalGenerator.neuronIds.map(id => `^${id}$`).join("|")
-                //
-                // // hand the simulator the sensor information, and the send the server the message
-                // // to start the simulation, create and subscribe to the sensor observables
-                // // (that will send signals to the network)
-                // await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
-                // const subscription = signalGenerator
-                //     .observable
-                //     .subscribe(output => websocket.next(JSON.stringify(output)));
-                // setSignalSubscription(subscription);
-                //
-                // updateLoadingState(false);
+        // when the simulation is not running, the set it up and start it
+        if (!running) {
+            updateLoadingState(true, "Attempting to start neural network")
+            try {
+                const observable = await networkManager.start(sensorDescription, timeFactor);
+                console.log("started network")
+                setNetworkObservable(observable);
+                setRunning(true);
+            } catch (error) {
+                onSetErrorMessages(<div>{error.toString()}</div>)
+            } finally {
+                updateLoadingState(false);
             }
-            // when the simulation is running, then stop it
-            else {
-                updateLoadingState(true, "Stopping simulation");
-                networkManager.stop().then(() => {
-                    updateLoadingState(false);
-                    setNetworkObservable(undefined);
-                    setRunning(false);
-                })
-                // await onStopSimulation(websocket);
-                // signalSubscription.unsubscribe();
-                // updateLoadingState(false);
+        }
+        // when the simulation is running, then stop it
+        else {
+            updateLoadingState(true, "Stopping simulation");
+            try {
+                await networkManager.stop();
+                updateLoadingState(false);
+                setRunning(false);
+                setUsedUp(true);
+            } catch (error) {
+                onSetErrorMessages(<div>{error.toString()}</div>);
             }
-        // });
+        }
     }
 
     /**
@@ -533,7 +502,6 @@ function RunDeployManager(props: Props): JSX.Element {
                         }
                     >
                         <IconButton
-                            // disabled={loading}
                             iconProps={networkId.isNone() ?
                                 {iconName: "build"} :
                                 {iconName: "delete"}
@@ -562,8 +530,13 @@ function RunDeployManager(props: Props): JSX.Element {
                                 styles={{root: {padding: 0, fontSize: 0}}}
                             />
                             <Card.Section horizontal>
-                                <TooltipHost content="Run network on server.">
+                                <TooltipHost content={
+                                    usedUp ?
+                                        "Please redeploy the network." :
+                                        running ? "Stop network." : "Run network on server."
+                                }>
                                     <IconButton
+                                        disabled={usedUp}
                                         iconProps={running ? {iconName: "stop"} : {iconName: "play"}}
                                         style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                                         onClick={handleStartStop}
@@ -571,6 +544,7 @@ function RunDeployManager(props: Props): JSX.Element {
                                 </TooltipHost>
                                 <TooltipHost content="Pause processing of events.">
                                     <IconButton
+                                        disabled={usedUp || !running}
                                         iconProps={{iconName: "pause"}}
                                         style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                                         // onClick={handleEditSensorDescription}

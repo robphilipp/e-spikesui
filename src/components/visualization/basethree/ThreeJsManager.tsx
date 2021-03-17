@@ -40,10 +40,8 @@ export interface OwnProps {
     getCamera: (offsetWidth: number, offsetHeight: number, position?: Coordinate) => PerspectiveCamera;
     // function that returns the renderer for the scene
     getRenderer: (canvas: HTMLCanvasElement) => Renderer;
-    // function that returns the scene object to which all the scene elements have been added
-    // getScene: () => Scene;
+    // function that returns an array of scene objects to which all the scene elements have been added
     getScenes: () => Array<SceneInfo>
-    // getScenes: () => Vector<SceneInfo>
     // the background color
     backgroundColor: Color;
     // canvas width and height
@@ -147,14 +145,6 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         if (numScenes > 1) {
             visibleScenes[numScenes-1].scene.background = null;
         }
-        // scenesContext.scenes
-        //     .filter(info => info.visible)
-        //     .head()
-        //     .ifSome(info => info.scene.background = props.backgroundColor);
-        // scenesContext.scenes
-        //     .filter(info => info.visible)
-        //     .tail()
-        //     .ifSome(infos => infos.forEach(info => info.scene.background = null));
     }
 
     // setup scene, camera, and renderer, and store references. importantly, this use-effects method
@@ -214,11 +204,9 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
     // set animation frame timer value and rerender the scene
     useAnimationFrame(timer => {
         if(animate) {
-            // updateTimer(timer);
             timerRef.current = timer;
             if(rendererRef.current && cameraRef.current) {
                 scenesContext.scenes
-                    // .filter(info => info.visible)
                     .forEach(info => {
                         if (info.visible) {
                             rendererRef.current.render(info.scene, cameraRef.current);
@@ -235,18 +223,15 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         () => {
             if (rendererRef.current && cameraRef.current) {
                 const renderer = rendererRef.current;
-                // const camera = cameraRef.current;
                 updateBackground();
 
                 // when there are no scenes, don't clear the background
-                // if(!scenesContext.scenes.isEmpty()) {
                 if(scenesContext.scenes.length > 0) {
                     (renderer as WebGLRenderer).clear();
                 }
 
                 // render each of the scenes
                 scenesContext.scenes
-                    // .filter(info => info.visible)
                     .forEach(info => {
                         if (info.visible) {
                             renderer.render(info.scene, cameraRef.current);

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
-import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
+import {RouteComponentProps, withRouter} from "react-router-dom";
 import {IconButton, ITheme, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
 import {
     ApplicationAction,
@@ -18,12 +18,11 @@ import {Option, Vector} from "prelude-ts";
 import {WebSocketSubject} from "rxjs/internal-compatibility";
 import {Observable, Subject, Subscription} from "rxjs";
 import {
-    BUILD_MESSAGE,
     CreateNetworkObservableAction,
     NetworkBuiltAction,
     NetworkDeletedAction,
     PauseSimulationAction,
-    Sensor, START_MESSAGE,
+    Sensor,
     StartSimulationAction,
     StopSimulationAction,
     SubscribeWebsocketAction,
@@ -31,28 +30,21 @@ import {
     WebsocketCreatedAction
 } from "../redux/actions/networkManagement";
 import {
-    CONNECTION,
     deleteNetwork,
     DeleteNetworkAction,
-    NETWORK,
     networkBuildEventsActionCreator,
     NetworkEvent,
     NetworkEventAction,
-    NetworkEventsAction,
-    NEURON
+    NetworkEventsAction
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
 import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
-// import {newSensorThread, SensorThread, SignalGenerator} from "../threads/SensorThread";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
-import {spawn, Worker} from "threads";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
-    // networkRouterPath: string;
-    // sensorRouterPath: string;
 }
 
 interface StateProps {
@@ -69,8 +61,6 @@ interface StateProps {
     // holds the sensor description
     sensorDescription: string;
 
-    // // holds the network ID (once it has been built on the server)
-    // networkId: Option<string>;
     // whether or not the network is built
     neuronIds: Vector<string>;
     // holds an error message
@@ -85,25 +75,12 @@ interface StateProps {
     subscription: Subscription;
     // subscription to the observable for pausing the message processing
     pauseSubscription: Subscription;
-    // // whether or not the simulation is running
-    // running: boolean;
     // whether or not the front-end is paused, while continuing to buffer back-end events
     paused: boolean;
-
-    // networkDescriptionPath?: string;
-    // sensorDescriptionPath?: string;
-    // modified: boolean;
 }
 
 interface DispatchProps {
     updateLoadingState: (isLoading: boolean, message?: string) => void;
-    // onChange: (project: SimulationProject) => void;
-    //
-    // onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
-    // onLoadNetwork: (path: string) => Promise<NetworkDescriptionLoadedAction>;
-    // onSetError: (messages: JSX.Element) => MessageSetAction;
-    // onSetSuccess: (messages: JSX.Element) => MessageSetAction;
-    // loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onBuildNetwork: (networkDescription: string) => Promise<NetworkBuiltAction>;
     onDeleteNetwork: (networkId: string) => Promise<NetworkDeletedAction>;
     onClearNetworkState: () => DeleteNetworkAction;
@@ -173,30 +150,14 @@ function RunDeployManager(props: Props): JSX.Element {
         onClearErrorMessages
     } = props;
 
-    // const [loading, setLoading] = useState<boolean>(false);
-
-    // const history = useHistory();
-
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
     const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
     const [running, setRunning] = useState(false);
     const [usedUp, setUsedUp] = useState(false);
 
-    // const subscriptionsRef = useRef<Set<Subscription>>(new Set());
-
-    // subscription to the web-socket subject to which to send (sensor) signals
-    // const [signalSubscription, setSignalSubscription] = useState<Subscription>();
-
-    // const [sensors, setSensors] = useState<Vector<Sensor>>(Vector.empty());
-
-    // sensor thread
-    // const sensorThreadRef = useRef<SensorThread>();
-
-    // const [networkManager, setNetworkManager] = useState<NetworkManagerThread>();
     const networkManagerThreadRef = useRef<NetworkManagerThread>();
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
-    // const [networkBuilt, setNetworkBuilt] = useState(false);
 
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
@@ -606,7 +567,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
     simulationName: state.simulationProject.name,
     timeFactor: state.simulationProject.timeFactor,
     simulationDuration: state.simulationProject.simulationDuration,
-    // networkId: state.networkManagement.networkId,
 
     networkDescriptionPath: state.simulationProject.networkDescriptionPath,
     networkDescription: state.networkDescription.description,
@@ -621,11 +581,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     pauseSubject: state.networkManagement.pauseSubject,
     subscription: state.networkManagement.subscription,
     pauseSubscription: state.networkManagement.pauseSubscription,
-    // running: state.networkManagement.running,
     paused: state.networkManagement.paused
-
-    // networkDescriptionPath: state.simulationProject.networkDescriptionPath,
-    // modified: state.simulationProject.modified,
 });
 
 /**
@@ -660,12 +616,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
 
     onNetworkEvent: (action: NetworkEventAction) => dispatch(action),
     onNetworkBuildEvents: (action: NetworkEventsAction) => dispatch(action)
-    // onChange: (project: SimulationProject) => dispatch(updateSimulationProject(project)),
-    // onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
-    // onLoadNetwork: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
-    //
-    // onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
-    // onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),
 });
 
 const connectedRunDeployManager = connect(mapStateToProps, mapDispatchToProps)(RunDeployManager);

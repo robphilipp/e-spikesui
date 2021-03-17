@@ -1,5 +1,5 @@
 import {ThreeContext} from "../basethree/ThreeJsManager";
-import {BufferAttribute, BufferGeometry, Color, LineBasicMaterial, LineSegments} from "three";
+import {BufferAttribute, BufferGeometry, Clock, Color, LineBasicMaterial, LineSegments} from "three";
 import {threeRender, useThree} from "../basethree/useThree";
 import {NeuronInfo} from "./Neurons";
 import {useEffect, useRef} from "react";
@@ -272,7 +272,9 @@ function Connections(props: OwnProps): null {
         // its original value
         if (spiking) {
             setTimeout(
-                () => requestAnimationFrame(() => animateSpike(originalColors, connectionColors, false)),
+                () => requestAnimationFrame(
+                    () => animateSpike(originalColors, connectionColors, false)
+                ),
                 spikeDuration
             );
         }

@@ -25,9 +25,6 @@ let repo: NetworkManagementRepo;
 let networkId: string | undefined;
 let websocket: WebSocket | undefined;
 let networkEventObservable: Observable<NetworkEvent> | undefined;
-// let buildEventsObservable:  Observable<NetworkEvent> | undefined;
-// // let sensorThread: SensorThread | undefined;
-// let signalGeneratorSubscription: Subscription<SensorOutput>;
 
 let rxjsSubject: RxjsSubject<SensorOutput>;
 let sensorName: string;
@@ -44,13 +41,6 @@ function emptyResult(): CompiledResult {
     return {sensorName: '', neuronIds: []}
 }
 
-// interface SignalGeneratorForWorker {
-//     sensorName: string;
-//     neuronIds: Array<string>;
-//     timeFactor: number;
-//     observable: Observable<SensorOutput>;
-// }
-//
 async function configure(serverSettings: ServerSettings): Promise<void> {
     repo = networkManagementRepo(serverSettings);
     return;
@@ -96,10 +86,6 @@ function buildNetwork(): void {
     websocket.onopen = () => websocket.send(BUILD_MESSAGE.command);
     websocket.onmessage = (event: MessageEvent) => subject.next(JSON.parse(event.data) as NetworkEvent)
 
-    // // set the observable that only sends back build events
-    // buildEventsObservable = networkEventObservable.pipe(
-    //     filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
-    // );
     return;
 }
 
@@ -165,24 +151,6 @@ function startNetwork(sensorDescription: string, timeFactor: number): void {
     }
 
     const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
-    // rxjsSubject = new RxjsSubject<SensorOutput>();
-    // const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(rxjsSubject);
-
-    // signalGeneratorSubscription = rxjsObservable?.subscribe(output => {
-    //     rxjsSubject.next(output);
-    // })
-
-    // const observable = new Observable<SensorOutput>(observer => {
-    //     fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
-    // });
-    // const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
-    // subject = new Subject<SensorOutput>();
-    // const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(subject);
-    //
-    // sendSignals();
-    // const observable = new Observable<SensorOutput>(observer => {
-    //     fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
-    // });
 
     // create the regex selector for determining the input neurons for the sensor,
     // required by the back-end
@@ -193,51 +161,10 @@ function startNetwork(sensorDescription: string, timeFactor: number): void {
     // (that will send signals to the network)
     websocket.send(JSON.stringify({name: sensorName, selector: selector}))
 
-    // await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
-    // signalGeneratorSubscription = observable
-    //     .subscribe(output => websocket.send(JSON.stringify(output)));
-
-    signalGeneratorSubscription = rxjsObservable.subscribe(output => {
-        // rxjsSubject.next(output);
-        websocket.send(JSON.stringify(output));
-    })
+    signalGeneratorSubscription = rxjsObservable.subscribe(output => websocket.send(JSON.stringify(output)));
 
     return;
 }
-// async function startNetwork(sensorDescription: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
-//     if (networkId === undefined) {
-//         throw new Error("Cannot start network because network ID is undefined");
-//     }
-//     if (websocket === undefined || networkEventObservable === undefined) {
-//         throw new Error("Cannot start network because the websocket or network-events observable are undefined")
-//     }
-//
-//     // const worker: SimulationType = await spawn(new Worker('./sensorSignals'));
-//
-//     const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
-//     subject = new Subject<SensorOutput>();
-//     const fnsObs: Observable<SensorOutput> = Observable.from<SensorOutput>(subject);
-//
-//     sendSignals();
-//     const observable = new Observable<SensorOutput>(observer => {
-//         fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
-//     });
-//
-//     // create the regex selector for determining the input neurons for the sensor,
-//     // required by the back-end
-//     const selector = neuronIds.map(id => `^${id}$`).join("|")
-//
-//     // hand the simulator the sensor information, and the send the server the message
-//     // to start the simulation, create and subscribe to the sensor observables
-//     // (that will send signals to the network)
-//     websocket.send(JSON.stringify({name: sensorName, selector: selector}))
-//
-//     // await onStartSimulation(websocket, {name: signalGenerator.sensorName, selector: selector});
-//     signalGeneratorSubscription = observable
-//         .subscribe(output => websocket.send(JSON.stringify(output)));
-//
-//     return networkEventObservable;
-// }
 
 function stopNetwork(): void {
     websocket.send(STOP_MESSAGE.command);
@@ -263,7 +190,6 @@ function networkObservable(): Observable<NetworkEvent> {
 }
 
 function buildObservable(): Observable<NetworkEvent> {
-    // return buildEventsObservable;
     return networkEventObservable.pipe(
         filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
     )
@@ -278,7 +204,6 @@ export interface NetworkManager extends WorkerModule<string> {
     deployNetwork: (networkDescription: string) => Promise<string>;
     buildNetwork: () => void;
     startNetwork: (sensorDescription: string, timeFactor: number) => void;
-    // startNetwork: (sensorDescription: string, timeFactor: number) => Promise<Observable<NetworkEvent>>;
     stopNetwork: () => void;
     deleteNetwork: () => Promise<string>;
 

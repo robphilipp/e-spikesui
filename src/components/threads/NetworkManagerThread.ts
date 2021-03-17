@@ -1,11 +1,10 @@
 import {Observable as FnsObservable} from 'observable-fns';
-import {Observable, Subject, Subscription} from "rxjs";
+import {Observable, Subject} from "rxjs";
 import {NetworkEvent} from "../redux/actions/networkEvent";
 import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
 import {remoteRepositories} from "../../app";
-import {bufferTime} from "rxjs/operators";
 
 type NetworkManagerWorker = ((() => ObservablePromise<StripAsync<NetworkEvent>>) & PrivateThreadProps & ModuleProxy<ModuleMethods>) ;
 

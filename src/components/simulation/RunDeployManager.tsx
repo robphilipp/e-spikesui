@@ -175,7 +175,7 @@ function RunDeployManager(props: Props): JSX.Element {
 
     // const [loading, setLoading] = useState<boolean>(false);
 
-    const history = useHistory();
+    // const history = useHistory();
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
@@ -186,7 +186,7 @@ function RunDeployManager(props: Props): JSX.Element {
     // const subscriptionsRef = useRef<Set<Subscription>>(new Set());
 
     // subscription to the web-socket subject to which to send (sensor) signals
-    const [signalSubscription, setSignalSubscription] = useState<Subscription>();
+    // const [signalSubscription, setSignalSubscription] = useState<Subscription>();
 
     // const [sensors, setSensors] = useState<Vector<Sensor>>(Vector.empty());
 
@@ -282,13 +282,8 @@ function RunDeployManager(props: Props): JSX.Element {
         // case it hasn't, attempt to create the network manager thread, and then call
         // this function once it has been built
         if (networkManagerThreadRef.current === undefined) {
-            try {
-                networkManagerThreadRef.current = await newNetworkManagerThread()
-                await handleBuildNetwork();
-            } catch(error) {
-                onSetErrorMessages(<div>Cannot delete network {id}; {error.toString()}</div>)
-                return;
-            }
+            onSetErrorMessages(<div>Cannot delete network {id} because tge network manager thread is undefined.</div>)
+            return;
         }
         const networkManager = networkManagerThreadRef.current;
 
@@ -326,7 +321,6 @@ function RunDeployManager(props: Props): JSX.Element {
         // convert the network build events into a action holding those events and dispatch
         // if there are any events
         const actions = networkBuildEventsActionCreator(events);
-        console.log(actions)
         if (actions.events.length > 0) {
             // as the network build events are dispatched, the reducer updates the neurons and
             // connections. to build connections, the reducer must reconcile the pre- and post-
@@ -515,7 +509,7 @@ function RunDeployManager(props: Props): JSX.Element {
         if (usedUp) {
             return <TooltipHost content="Redeploy network (delete and deploy)">
                 <IconButton
-                    iconProps={{iconName: "build"}}
+                    iconProps={{iconName: "reset"}}
                     style={{color: itheme.palette.themePrimary, fontWeight: 400}}
                     onClick={handleBuildDeleteNetwork}
                 />
@@ -537,7 +531,6 @@ function RunDeployManager(props: Props): JSX.Element {
                 onClick={handleStart}
             />
         </TooltipHost>
-
     }
 
     return <>

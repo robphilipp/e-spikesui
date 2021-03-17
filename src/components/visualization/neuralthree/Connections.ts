@@ -236,7 +236,7 @@ function Connections(props: OwnProps): null {
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the connections' spiking
     useEffect(
-        () => renderRef.current = () => threeRender(contextRef.current as ThreeContext, noop),
+        () => renderRef.current = () => threeRender(contextRef.current, noop),
         [contextRef.current]
     );
 

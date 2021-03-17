@@ -98,12 +98,21 @@ export function threeRender(context: ThreeContext, callback: () => void): void {
         if (renderer && camera && canvas) {
             (renderer as WebGLRenderer).clear();
             scenesContext.scenes
-                .filter(info => info.visible)
+                // .filter(info => info.visible)
                 .forEach(info => {
-                    callback();
-                    renderer.render(info.scene, camera);
-                    (renderer as WebGLRenderer).clearDepth();
+                    if(info.visible) {
+                        callback();
+                        renderer.render(info.scene, camera);
+                        (renderer as WebGLRenderer).clearDepth();
+                    }
                 });
+            // scenesContext.scenes
+            //     .filter(info => info.visible)
+            //     .forEach(info => {
+            //         callback();
+            //         renderer.render(info.scene, camera);
+            //         (renderer as WebGLRenderer).clearDepth();
+            //     });
         }
     });
 }

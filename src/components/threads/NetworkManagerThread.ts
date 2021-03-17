@@ -5,6 +5,7 @@ import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
 import {remoteRepositories} from "../../app";
+import {bufferTime} from "rxjs/operators";
 
 type NetworkManagerWorker = ((() => ObservablePromise<StripAsync<NetworkEvent>>) & PrivateThreadProps & ModuleProxy<ModuleMethods>) ;
 
@@ -47,6 +48,7 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
         // observable
         await worker.buildNetwork();
         const buildEvents: FnsObservable<NetworkEvent> = worker.buildObservable();
+
 
         // todo hold on to the subscription so that it can be cancelled
         // convert the fns-observable into an rxjs observable

@@ -25,7 +25,7 @@ let repo: NetworkManagementRepo;
 let networkId: string | undefined;
 let websocket: WebSocket | undefined;
 let networkEventObservable: Observable<NetworkEvent> | undefined;
-let buildEventsObservable:  Observable<NetworkEvent> | undefined;
+// let buildEventsObservable:  Observable<NetworkEvent> | undefined;
 // // let sensorThread: SensorThread | undefined;
 // let signalGeneratorSubscription: Subscription<SensorOutput>;
 
@@ -96,10 +96,10 @@ function buildNetwork(): void {
     websocket.onopen = () => websocket.send(BUILD_MESSAGE.command);
     websocket.onmessage = (event: MessageEvent) => subject.next(JSON.parse(event.data) as NetworkEvent)
 
-    // set the observable that only sends back build events
-    buildEventsObservable = networkEventObservable.pipe(
-        filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
-    );
+    // // set the observable that only sends back build events
+    // buildEventsObservable = networkEventObservable.pipe(
+    //     filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
+    // );
     return;
 }
 
@@ -263,7 +263,10 @@ function networkObservable(): Observable<NetworkEvent> {
 }
 
 function buildObservable(): Observable<NetworkEvent> {
-    return buildEventsObservable;
+    // return buildEventsObservable;
+    return networkEventObservable.pipe(
+        filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
+    )
 }
 
 function deployedNetworkId(): string | undefined {

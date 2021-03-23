@@ -43,6 +43,13 @@ import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
 
+const headerOffset = 200;
+
+interface Dimension {
+    height: number;
+    width: number;
+}
+
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
 }
@@ -159,13 +166,23 @@ function RunDeployManager(props: Props): JSX.Element {
     const networkManagerThreadRef = useRef<NetworkManagerThread>();
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
 
+    const editorRef = useRef<HTMLDivElement>();
+    const [dimension, setDimension] = useState<Dimension>({height: window.innerHeight - headerOffset, width: window.innerWidth - 50});
+    const heightFractionRef = useRef(1.0);
+
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
         () => {
             // set up the network manager thread for managing the network and the sensor
             newNetworkManagerThread().then(managerThread => networkManagerThreadRef.current = managerThread);
 
+            // listen to resize events so that the editor width and height can be updated
+            window.addEventListener('resize', handleWindowResize);
+
             return () => {
+                // stop listening to resize events
+                window.removeEventListener('resize', handleWindowResize);
+
                 networkManagerThreadRef.current?.stop()
                     .then(() => networkManagerThreadRef.current?.remove()
                         .then(() => networkManagerThreadRef.current?.terminate())
@@ -185,6 +202,31 @@ function RunDeployManager(props: Props): JSX.Element {
         },
         [networkBuilt]
     )
+
+    /**
+     * calculates the editors dimensions based on the `<div>`'s width and height
+     * @return The dimension of the editor
+     */
+    function editorDimensions(): Dimension {
+        return {
+            width: editorRef.current.offsetWidth - 50,
+            height: editorRef.current.offsetHeight - headerOffset
+        };
+    }
+
+    /**
+     * updates the editor's width and height when the container's dimensions change
+     */
+    function handleWindowResize(): void {
+        if (editorRef.current) {
+            const nextDimension = editorDimensions()
+            const minDiff = 2;
+            if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
+                Math.abs(nextDimension.width - dimension.width) > minDiff) {
+                setDimension(nextDimension);
+            }
+        }
+    }
 
     async function handleBuildNetwork(): Promise<void> {
         // in most cases, the network thread should have been created already. but in
@@ -445,6 +487,12 @@ function RunDeployManager(props: Props): JSX.Element {
         </Stack>
     }
 
+    /**
+     * Returns the button for building/deploying the network to the server when the network has not yet
+     * been built. Or, returns the button for deleting the network when the network has already been
+     * deployed.
+     * @return The network management button
+     */
     function networkManagementButton(): JSX.Element {
         if (networkId.isNone()) {
             return <TooltipHost content="Deploy network to server and build.">
@@ -466,6 +514,23 @@ function RunDeployManager(props: Props): JSX.Element {
 
     }
 
+    /**
+     * Returns the network simulation button, depending on the network state.
+     * <ol>
+     *     <li>
+     *         When the network has been built, but is not yet running, then returns a button
+     *         to start the network.
+     *     </li>
+     *     <li>
+     *         When the network is running, returns a button to stop the network.
+     *     </li>
+     *     <li>
+     *         When the network has been stopped (i.e. after it had been running), then the
+     *         network is "used up", and this function returns a button to redeploy the
+     *         same network.
+     *     </li>
+     * @return A button for managing the network simulation
+     */
     function networkSimulationButton(): JSX.Element {
         if (usedUp) {
             return <TooltipHost content="Redeploy network (delete and deploy)">
@@ -494,7 +559,10 @@ function RunDeployManager(props: Props): JSX.Element {
         </TooltipHost>
     }
 
-    return <>
+    return <div
+        ref={editorRef}
+        style={{height: window.innerHeight * 0.9, width: '100%'}}
+    >
         <Stack>
             <Stack horizontal>
                 <Stack.Item>
@@ -540,16 +608,19 @@ function RunDeployManager(props: Props): JSX.Element {
                             key="net-1"
                             // itheme={itheme}
                             networkObservable={networkObservable}
-                            sceneHeight={500}
-                            sceneWidth={800}
+                            sceneHeight={dimension.height - 200}
+                            sceneWidth={dimension.width}
+                            // sceneHeight={500}
+                            // sceneWidth={800}
                             // onClose={hideSimulationLayer}
+                            {...props}
                         /> :
                         <div/>
                     }
                 </Stack.Item>
             </Stack>
         </Stack>
-    </>;
+    </div>;
 }
 
 
@@ -594,27 +665,47 @@ const mapStateToProps = (state: AppState): StateProps => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
     updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
 
-    onBuildNetwork: (networkDescription: string) => dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),
-    onDeleteNetwork: (networkId: string) => dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),
+    onBuildNetwork: (networkDescription: string) =>
+        dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),
+
+    onDeleteNetwork: (networkId: string) =>
+        dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),
+
     onClearNetworkState: () => dispatch(deleteNetwork()),
 
-    createWebSocketSubject: (networkId: string) => dispatch(remoteActionCreators.networkManagement.webSocketSubject(networkId)),
-    createNetworkObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => dispatch(remoteActionCreators.networkManagement.networkEventsObservable(websocket, bufferInterval)),
+    createWebSocketSubject: (networkId: string) =>
+        dispatch(remoteActionCreators.networkManagement.webSocketSubject(networkId)),
+
+    createNetworkObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) =>
+        dispatch(remoteActionCreators.networkManagement.networkEventsObservable(websocket, bufferInterval)),
+
     subscribeWebsocket: (observable: Observable<Array<NetworkEvent>>,
                          timeWindow: number,
                          eventProcessor: (events: Array<NetworkEvent>) => void,
                          pauseSubject: Subject<boolean>,
-                         paused: boolean) => dispatch(remoteActionCreators.networkManagement.subscribe(observable, timeWindow, eventProcessor, pauseSubject, paused)),
-    onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => dispatch(remoteActionCreators.networkManagement.unsubscribe(subscription, pauseSubscription)),
+                         paused: boolean) =>
+        dispatch(remoteActionCreators.networkManagement.subscribe(
+            observable, timeWindow, eventProcessor, pauseSubject, paused
+        )),
 
-    onStartSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) => dispatch(remoteActionCreators.networkManagement.startSimulation(websocket, sensor)),
-    onStopSimulation: (websocket: WebSocketSubject<string>) => dispatch(remoteActionCreators.networkManagement.stopSimulation(websocket)),
-    onSimulationPause: (pause: boolean, pauseSubject: Subject<boolean>) => dispatch(remoteActionCreators.networkManagement.pauseSimulation(pause, pauseSubject)),
+    onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) =>
+        dispatch(remoteActionCreators.networkManagement.unsubscribe(subscription, pauseSubscription)),
+
+    onStartSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) =>
+        dispatch(remoteActionCreators.networkManagement.startSimulation(websocket, sensor)),
+
+    onStopSimulation: (websocket: WebSocketSubject<string>) =>
+        dispatch(remoteActionCreators.networkManagement.stopSimulation(websocket)),
+
+    onSimulationPause: (pause: boolean, pauseSubject: Subject<boolean>) =>
+        dispatch(remoteActionCreators.networkManagement.pauseSimulation(pause, pauseSubject)),
 
     onSetErrorMessages: (message: JSX.Element) => dispatch(setErrorMessage(message)),
+
     onClearErrorMessages: () => dispatch(clearMessage()),
 
     onNetworkEvent: (action: NetworkEventAction) => dispatch(action),
+
     onNetworkBuildEvents: (action: NetworkEventsAction) => dispatch(action)
 });
 

@@ -65,7 +65,6 @@ export interface StateProps {
     gridVisible: boolean;
     camera: Option<PerspectiveCamera>;
     renderer: Option<Renderer>;
-    // scenes: Option<Vector<SceneInfo>>;
     scenes: Option<Array<SceneInfo>>;
 }
 
@@ -74,7 +73,6 @@ export interface DispatchProps {
     onGridVisibilityChange: (id: string, visible: boolean) => NetworkVisualizationGridChangeAction;
     onCameraUpdate: (id: string, camera: PerspectiveCamera) => NetworkVisualizationCameraUpdateAction;
     onRendererUpdate: (id: string, renderer: Renderer) => NetworkVisualizationRendererUpdateAction;
-    // onScenesUpdate: (id: string, scenes: Vector<SceneInfo>) => NetworkVisualizationScenesUpdateAction;
     onScenesUpdate: (id: string, scenes: Array<SceneInfo>) => NetworkVisualizationScenesUpdateAction;
 }
 
@@ -235,16 +233,6 @@ function Network(props: Props): JSX.Element {
             })
     }
 
-    // function getAxesCamera(offsetWidth: number, offsetHeight: number): PerspectiveCamera {
-    //     return camera
-    //         .map(cam => {
-    //             const camera = new PerspectiveCamera(45, offsetHeight / offsetHeight, 0.1, 100);
-    //             camera.up = cam.up;
-    //             return camera;
-    //         })
-    //         .getOrUndefined()
-    // }
-
     /**
      * Resets the camera position to the original, and has the camera look at the origin
      */
@@ -298,26 +286,6 @@ function Network(props: Props): JSX.Element {
             return scenes;
         });
     }
-    // function getScenes(): Vector<SceneInfo> {
-    //     return scenes.getOrCall(() => {
-    //         const light = new AmbientLight(0xffffff, 2);
-    //         const gridScene = new Scene();
-    //         gridScene.add(light);
-    //         const axesScene = new Scene();
-    //         axesScene.add(light);
-    //         const networkScene = new Scene();
-    //         networkScene.add(light);
-    //
-    //         const scenes = Vector.of(
-    //             {name: GRID_SCENE_ID, scene: gridScene, visible: gridVisible},
-    //             {name: AXES_SCENE_ID, scene: axesScene, visible: axesVisible},
-    //             {name: NETWORK_SCENE_ID, scene: networkScene, visible: true}
-    //         );
-    //         onScenesUpdate(visualizationId, scenes);
-    //         return scenes;
-    //     });
-    // }
-
 
     const stackTokens: IStackTokens = {childrenGap: 20};
     return (
@@ -467,7 +435,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<unknown, unknown, Applicatio
     onGridVisibilityChange: (id: string, visible: boolean) => dispatch(gridVisibilityChanged(id, visible)),
     onCameraUpdate: (id: string, camera: PerspectiveCamera) => dispatch(cameraUpdated(id, camera)),
     onRendererUpdate: (id: string, renderer: Renderer) => dispatch(rendererUpdated(id, renderer)),
-    // onScenesUpdate: (id: string, scenes: Vector<SceneInfo>) => dispatch(scenesUpdated(id, scenes)),
     onScenesUpdate: (id: string, scenes: Array<SceneInfo>) => dispatch(scenesUpdated(id, scenes)),
 });
 

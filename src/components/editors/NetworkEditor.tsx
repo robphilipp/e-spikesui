@@ -31,7 +31,6 @@ import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
-import SensorSimulation from "../sensors/SensorSimulation";
 import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
 
 export const NEW_NETWORK_PATH = '**new**';

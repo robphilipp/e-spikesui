@@ -10,6 +10,12 @@ import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
+import {useEffect, useRef, useState} from "react";
+
+interface Dimension {
+    width: number;
+    height: number;
+}
 
 export interface OwnProps {
     sceneHeight: number;
@@ -51,10 +57,70 @@ function NetworkVisualization(props: Props): JSX.Element {
 
     const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation);
 
+    // const networkRef = useRef<HTMLDivElement>();
+    // // const dimensionRef = useRef<Dimension>({width: 100, height: 100});
+    // const [dimension, setDimension] = useState<Dimension>({width: 100, height: 100})
+    //
+    // useEffect(
+    //     () => {
+    //         setDimension({
+    //             width: networkRef.current.offsetWidth,
+    //             height: networkRef.current.offsetHeight
+    //         });
+    //         console.log('useEffect', dimension);
+    //
+    //         // listen to resize events so that the editor width and height can be updated
+    //         window.addEventListener('resize', handleWindowResize);
+    //
+    //         return () => {
+    //             // stop listening to resize events
+    //             window.removeEventListener('resize', handleWindowResize);
+    //         }
+    //     },
+    //     []
+    // )
+
+    // /**
+    //  * calculates the editors dimensions based on the `<div>`'s width and height
+    //  * @return The dimension of the editor
+    //  */
+    // function editorDimensions(): { width: number, height: number } {
+    //     const dimensions = {
+    //         width: networkRef.current.offsetWidth,
+    //         height: networkRef.current.offsetHeight
+    //     };
+    //     console.log('editorDimensions', dimensions);
+    //     return dimensions;
+    //     // return {
+    //     //     width: editorRef.current.offsetWidth - 25,
+    //     //     height: editorRef.current.clientHeight * 0.7
+    //     // };
+    // }
+    //
+    // /**
+    //  * updates the editor's width and height when the container's dimensions change
+    //  */
+    // function handleWindowResize(): void {
+    //     if (networkRef.current) {
+    //         const {width: nextWidth, height: nextHeight} = editorDimensions()
+    //         const {width: previousWidth, height: previousHeight} = dimension;
+    //         const minDiff = 2;
+    //         if (Math.abs(nextHeight - previousHeight) > minDiff ||
+    //             Math.abs(nextWidth - previousWidth) > minDiff) {
+    //             // setDimension(nextDimension);
+    //             setDimension({width: nextWidth, height: nextHeight});
+    //             console.log('handleWindowResize', dimension);
+    //         }
+    //     }
+    // }
+    //
+    // console.log('main', dimension)
     return (
-        <div>
+        // <div ref={networkRef}>
             <Network
                 visualizationId="live-visualization"
+                // sceneWidth={dimension.width}
+                // sceneHeight={dimension.height}
                 sceneHeight={sceneHeight}
                 sceneWidth={sceneWidth}
                 excitationColor={excitationColor}
@@ -63,7 +129,7 @@ function NetworkVisualization(props: Props): JSX.Element {
                 colors={colors}
                 networkObservable={networkObservable}
             />
-        </div>
+        // </div>
     )
 }
 

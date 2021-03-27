@@ -42,6 +42,8 @@ import {remoteActionCreators} from "../../app";
 import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
+import moment from "moment";
+import useSimulationTimer from "./useSimulationTimer";
 
 const headerOffset = 200;
 
@@ -159,7 +161,7 @@ function RunDeployManager(props: Props): JSX.Element {
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
-    const [networkObservable, setNetworkObservable] = useState<Observable<NetworkEvent>>(new Observable());
+    const [networkSubject, setSubjectObservable] = useState<Subject<NetworkEvent>>(new Subject());
     const [running, setRunning] = useState(false);
     const [usedUp, setUsedUp] = useState(false);
 
@@ -168,7 +170,9 @@ function RunDeployManager(props: Props): JSX.Element {
 
     const editorRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({height: window.innerHeight - headerOffset, width: window.innerWidth - 50});
-    const heightFractionRef = useRef(1.0);
+
+    // simulation time
+    const {simulationTime, startTimer, cancelTimer} = useSimulationTimer(handleStop)
 
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
@@ -176,7 +180,7 @@ function RunDeployManager(props: Props): JSX.Element {
             // set up the network manager thread for managing the network and the sensor
             newNetworkManagerThread().then(managerThread => networkManagerThreadRef.current = managerThread);
 
-            // listen to resize events so that the editor width and height can be updated
+            // listen to resize events so that the visualization size can be updated
             window.addEventListener('resize', handleWindowResize);
 
             return () => {
@@ -192,6 +196,8 @@ function RunDeployManager(props: Props): JSX.Element {
         []
     )
 
+    // unsubscribe from the build subscription when the network is built, and
+    // reset the loading state and the network used-up state
     useEffect(
         () => {
             if (networkBuilt) {
@@ -228,6 +234,10 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Attempts to build the network on the server.
+     * @return An empty promise
+     */
     async function handleBuildNetwork(): Promise<void> {
         // in most cases, the network thread should have been created already. but in
         // case it hasn't, attempt to create the network manager thread, and then call
@@ -274,6 +284,10 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Attempts to delete the network from the server
+     * @return An empty promise
+     */
     async function handleDeleteNetwork(): Promise<void> {
         const id = networkId.getOrUndefined();
         if (id === undefined) {
@@ -310,7 +324,11 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
-    async function handleBuildDeleteNetwork(): Promise<void> {
+    /**
+     * Attempts to delete, and then build the network on the server.
+     * @return An empty promise
+     */
+    async function handleRebuildNetwork(): Promise<void> {
         await handleDeleteNetwork();
         await handleBuildNetwork();
         return;
@@ -338,6 +356,12 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Attempts to start the network simulation by sending signals to the network. A start() call is
+     * issued to the network manager thread, which returns an observable with the network spiking
+     * signals.
+     * @return An empty promise.
+     */
     async function handleStart(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
             onSetErrorMessages(<div>Cannot start the network because the network manager thread is undefined</div>)
@@ -348,9 +372,11 @@ function RunDeployManager(props: Props): JSX.Element {
         updateLoadingState(true, "Attempting to start neural network")
         try {
             const observable = await networkManager.start(sensorDescription, timeFactor);
-            console.log("started network")
-            setNetworkObservable(observable);
+            setSubjectObservable(observable);
             setRunning(true);
+
+            // start the simulation timer
+            startTimer(simulationDuration, timeFactor);
         } catch (error) {
             onSetErrorMessages(<div>{error.toString()}</div>)
         } finally {
@@ -358,6 +384,10 @@ function RunDeployManager(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Attempts to the stop the network simulation.
+     * @return An empty promise
+     */
     async function handleStop(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
             onSetErrorMessages(<div>Cannot stop the network because the network manager thread is undefined</div>)
@@ -371,6 +401,9 @@ function RunDeployManager(props: Props): JSX.Element {
             updateLoadingState(false);
             setRunning(false);
             setUsedUp(true);
+
+            // stop the simulation timer
+            cancelTimer();
         } catch (error) {
             onSetErrorMessages(<div>{error.toString()}</div>);
         }
@@ -457,7 +490,7 @@ function RunDeployManager(props: Props): JSX.Element {
                                 fontWeight: 800
                             }}
                         >
-                            {simulationDuration} s
+                            {simulationTime !== undefined ? `${Math.floor(simulationTime)} s /` : ''} {simulationDuration} s
                         </Text>
                     </Stack.Item>
                 </Stack>
@@ -537,7 +570,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 <IconButton
                     iconProps={{iconName: "reset"}}
                     style={{color: itheme.palette.themePrimary, fontWeight: 400}}
-                    onClick={handleBuildDeleteNetwork}
+                    onClick={handleRebuildNetwork}
                 />
             </TooltipHost>
         }
@@ -606,12 +639,9 @@ function RunDeployManager(props: Props): JSX.Element {
                     {networkId.isSome() && networkBuilt ?
                         <NetworkVisualization
                             key="net-1"
-                            // itheme={itheme}
-                            networkObservable={networkObservable}
+                            networkObservable={networkSubject}
                             sceneHeight={dimension.height - 200}
                             sceneWidth={dimension.width}
-                            // sceneHeight={500}
-                            // sceneWidth={800}
                             // onClose={hideSimulationLayer}
                             {...props}
                         /> :

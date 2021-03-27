@@ -1,6 +1,6 @@
 import {Observable as FnsObservable} from 'observable-fns';
 import {Observable, Subject} from "rxjs";
-import {NetworkEvent} from "../redux/actions/networkEvent";
+import {NetworkEvent, SPIKE} from "../redux/actions/networkEvent";
 import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
@@ -11,7 +11,7 @@ type NetworkManagerWorker = ((() => ObservablePromise<StripAsync<NetworkEvent>>)
 export interface NetworkManagerThread {
     deploy: (networkDescription: string) => Promise<string>;
     build: (networkId: string) => Promise<Observable<NetworkEvent>>;
-    start: (sensorDescription: string, timeFactor: number) => Promise<Observable<NetworkEvent>>;
+    start: (sensorDescription: string, timeFactor: number) => Promise<Subject<NetworkEvent>>;
     stop: () => Promise<void>;
     remove: () => Promise<string>;
     terminate: () => Promise<void>;
@@ -63,9 +63,9 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
      * @param timeFactor The simulation time factor
      * @return A promise to an observable of network events
      */
-    async function start(sensorDescription: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
+    async function start(sensorDescription: string, timeFactor: number): Promise<Subject<NetworkEvent>> {
         await worker.startNetwork(sensorDescription, timeFactor);
-        const networkEvents: FnsObservable<NetworkEvent> = worker.networkObservable();
+        const networkEvents: FnsObservable<NetworkEvent> = worker.networkObservable(SPIKE);
 
         // todo hold on to the subscription so that it can be cancelled
         // convert the fns-observable to an rxjs observable

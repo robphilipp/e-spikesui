@@ -185,9 +185,12 @@ async function deleteNetwork(): Promise<string> {
 }
 
 // todo change function to accept an array of values to filter on
-function networkObservable(): Observable<NetworkEvent> {
-    return networkEventObservable.pipe(filter(event => event.type === SPIKE));
+function networkObservable(eventType: typeof SPIKE | typeof CONNECTION_WEIGHT): Observable<NetworkEvent> {
+    return networkEventObservable.pipe(filter(event => event.type === eventType));
 }
+// function networkObservable(): Observable<NetworkEvent> {
+//     return networkEventObservable.pipe(filter(event => event.type === SPIKE));
+// }
 
 function buildObservable(): Observable<NetworkEvent> {
     return networkEventObservable.pipe(
@@ -208,7 +211,7 @@ export interface NetworkManager extends WorkerModule<string> {
     deleteNetwork: () => Promise<string>;
 
     deployedNetworkId: () => string | undefined;
-    networkObservable: () => Observable<NetworkEvent>;
+    networkObservable: (eventType: typeof SPIKE | typeof CONNECTION_WEIGHT) => Observable<NetworkEvent>;
     buildObservable: () => Observable<NetworkEvent>;
 }
 

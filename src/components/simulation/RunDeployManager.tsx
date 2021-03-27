@@ -9,7 +9,7 @@ import {
     MessageClearedAction,
     MessageSetAction,
     setErrorMessage,
-    setLoading
+    // setLoading
 } from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -19,7 +19,7 @@ import {WebSocketSubject} from "rxjs/internal-compatibility";
 import {Observable, Subject, Subscription} from "rxjs";
 import {
     CreateNetworkObservableAction,
-    NetworkBuiltAction,
+    // NetworkBuiltAction,
     NetworkDeletedAction,
     // PauseSimulationAction,
     // Sensor,
@@ -34,7 +34,7 @@ import {
     DeleteNetworkAction,
     networkBuildEventsActionCreator,
     NetworkEvent,
-    NetworkEventAction,
+    // NetworkEventAction,
     NetworkEventsAction
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
@@ -43,6 +43,7 @@ import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
 import useSimulationTimer from "./useSimulationTimer";
+import {useLoading} from "../common/Loading";
 
 const headerOffset = 200;
 
@@ -88,7 +89,7 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    updateLoadingState: (isLoading: boolean, message?: string) => void;
+    // updateLoadingState: (isLoading: boolean, message?: string) => void;
     // onBuildNetwork: (networkDescription: string) => Promise<NetworkBuiltAction>;
     onDeleteNetwork: (networkId: string) => Promise<NetworkDeletedAction>;
     onClearNetworkState: () => DeleteNetworkAction;
@@ -117,7 +118,7 @@ type Props = OwnProps & StateProps & DispatchProps;
 
 function RunDeployManager(props: Props): JSX.Element {
     const {
-        updateLoadingState,
+        // updateLoadingState,
         itheme,
         simulationName,
         timeFactor,
@@ -157,6 +158,8 @@ function RunDeployManager(props: Props): JSX.Element {
         onSetErrorMessages,
         onClearErrorMessages
     } = props;
+
+    const {updateLoadingState} = useLoading();
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
@@ -202,7 +205,7 @@ function RunDeployManager(props: Props): JSX.Element {
             if (networkBuilt) {
                 updateLoadingState(false);
                 setUsedUp(false);
-                buildSubscriptionRef.current.unsubscribe();
+                buildSubscriptionRef.current?.unsubscribe();
             }
         },
         [networkBuilt]
@@ -420,12 +423,12 @@ function RunDeployManager(props: Props): JSX.Element {
         return <>{errors.map((error, key) => (<div key={key}>{error}</div>))}</>
     }
 
-    function networkDeleteFailed(error: string): JSX.Element {
-        return <>
-            <div>Failed to delete network from server.</div>
-            <div>{error}</div>
-        </>
-    }
+    // function networkDeleteFailed(error: string): JSX.Element {
+    //     return <>
+    //         <div>Failed to delete network from server.</div>
+    //         <div>{error}</div>
+    //     </>
+    // }
 
     function networkInfo(networkId: string): JSX.Element {
         return <Stack horizontal>
@@ -693,7 +696,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
+    // updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
 
     // onBuildNetwork: (networkDescription: string) =>
     //     dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),

@@ -13,6 +13,7 @@ import {NEW_NETWORK_PATH} from "../editors/NetworkEditor";
 import {NEW_SENSOR_PATH} from "../editors/SensorsEditor";
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
 import {remote} from "electron";
+import {useLoading} from "../common/Loading";
 
 const durationRegex = /^[0-9]+[ ]*s*$/
 const MIN_TIME_FACTOR = 1;
@@ -61,6 +62,7 @@ function ProjectConfig(props: Props): JSX.Element {
     } = props;
 
     const history = useHistory();
+    const {updateLoadingState} = useLoading();
 
     /**
      * Handles changes to the simulation name
@@ -162,6 +164,7 @@ function ProjectConfig(props: Props): JSX.Element {
      * Handles loading the sensor description from file
      */
     function handleLoadSensor(): void {
+        updateLoadingState(true, "Loading sensor file")
         remote.dialog
             .showOpenDialog(
                 remote.getCurrentWindow(),
@@ -171,7 +174,10 @@ function ProjectConfig(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                if (response.filePaths.length === 0) return;
+                if (response.filePaths.length === 0) {
+                    updateLoadingState(false);
+                    return;
+                }
                 onLoadSensor(response.filePaths[0])
                     .then(action => onChange({
                         simulationName,
@@ -184,7 +190,8 @@ function ProjectConfig(props: Props): JSX.Element {
                         <div><b>Unable to load sensor-description file</b></div>
                         <div>Path: {response.filePaths[0]}</div>
                         <div>Response: {reason}</div>
-                    </>));
+                    </>))
+                    .finally(() => updateLoadingState(false));
             })
     }
 
@@ -193,6 +200,7 @@ function ProjectConfig(props: Props): JSX.Element {
      * dialog.
      */
     function handleLoadNetwork(): void {
+        updateLoadingState(true, "Loading network description file");
         remote.dialog
             .showOpenDialog(
                 remote.getCurrentWindow(),
@@ -202,7 +210,10 @@ function ProjectConfig(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                if (response.filePaths.length === 0) return;
+                if (response.filePaths.length === 0) {
+                    updateLoadingState(false)
+                    return;
+                }
                 onLoadNetwork(response.filePaths[0])
                     .then(action => onChange({
                         simulationName,
@@ -215,7 +226,8 @@ function ProjectConfig(props: Props): JSX.Element {
                         <div><b>Unable to load network-description file</b></div>
                         <div>Path: {response.filePaths[0]}</div>
                         <div>Response: {reason}</div>
-                    </>));
+                    </>))
+                    .finally(() => updateLoadingState(false));
             })
     }
     /**

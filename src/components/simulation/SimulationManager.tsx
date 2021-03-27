@@ -6,7 +6,13 @@ import {connect} from "react-redux";
 import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {ThunkDispatch} from "redux-thunk";
 import {KeyboardShortcut, keyboardShortcutFor} from "../editors/keyboardShortcuts";
-import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage} from "../redux/actions/actions";
+import {
+    ApplicationAction,
+    MessageSetAction,
+    setErrorMessage,
+    setLoading,
+    setSuccessMessage
+} from "../redux/actions/actions";
 import {
     loadSimulationProject,
     newSimulationProject,
@@ -27,8 +33,8 @@ const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
 
 enum TabName {
-    PROJECT = 'simulation-project',
-    EXECUTE = 'simulation-execution'
+    PROJECT_CONFIG = 'simulation-project',
+    DEPLOY_EXECUTE = 'simulation-execution'
 }
 
 interface OwnProps extends RouteComponentProps<never> {
@@ -49,6 +55,8 @@ interface StateProps {
 }
 
 interface DispatchProps {
+    updateLoadingState: (isLoading: boolean, message?: string) => void;
+
     loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     loadSensorDescription: (path: string) => Promise<SensorsLoadedAction>;
 
@@ -71,7 +79,6 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function SimulationManager(props: Props): JSX.Element {
     const {
-        // theme = DefaultTheme.DARK,
         itheme,
         networkRouterPath,
         sensorRouterPath,
@@ -82,6 +89,7 @@ function SimulationManager(props: Props): JSX.Element {
         networkDescriptionPath,
         sensorDescriptionPath,
         modified,
+        updateLoadingState,
         loadNetworkDescription,
         loadSensorDescription,
         onCreate,
@@ -100,12 +108,13 @@ function SimulationManager(props: Props): JSX.Element {
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     // the selected tab (i.e. configuration or execution)
-    const [selectedTab, setSelectedTab] = useState<string>(TabName.PROJECT);
+    const [selectedTab, setSelectedTab] = useState<string>(TabName.PROJECT_CONFIG);
 
     // when the simulation project path has changed, potentially load the project, and
     // load the associated network description and sensor code snippet
     useEffect(
         () => {
+            updateLoadingState(true, "Loading simulation project")
             const filePath = decodeURIComponent(simulationProjectPath);
             if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH && !modified) {
                 onLoad(filePath)
@@ -116,6 +125,7 @@ function SimulationManager(props: Props): JSX.Element {
                         ]).catch(reason => onSetError(<div>{reason.message}</div>))
                     })
                     .catch(reason => onSetError(<div>{reason.message}</div>))
+                    .finally(() => updateLoadingState(false))
             }
         },
         [simulationProjectPath]
@@ -134,7 +144,7 @@ function SimulationManager(props: Props): JSX.Element {
      * Handles creating a new project with default settings.
      */
     function handleNewProject(): void {
-        setSelectedTab(TabName.PROJECT);
+        setSelectedTab(TabName.PROJECT_CONFIG);
         onCreate();
         history.push(`${baseRouterPath}/${encodeURIComponent(NEW_PROJECT_PATH)}`);
     }
@@ -153,7 +163,7 @@ function SimulationManager(props: Props): JSX.Element {
                     properties: ['openFile']
                 })
             .then(response => {
-                setSelectedTab(TabName.PROJECT);
+                setSelectedTab(TabName.PROJECT_CONFIG);
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
             })
             .catch(reason => onSetError(<>
@@ -358,7 +368,7 @@ function SimulationManager(props: Props): JSX.Element {
                         >
                             <PivotItem
                                 headerText="Project Config"
-                                itemKey={TabName.PROJECT}
+                                itemKey={TabName.PROJECT_CONFIG}
                             >
                                 <ProjectConfig
                                     itheme={itheme}
@@ -368,7 +378,7 @@ function SimulationManager(props: Props): JSX.Element {
                             </PivotItem>
                             <PivotItem
                                 headerText="Deploy and Run"
-                                itemKey={TabName.EXECUTE}
+                                itemKey={TabName.DEPLOY_EXECUTE}
                             >
                                 <RunDeployManager
                                     itheme={itheme}
@@ -410,6 +420,8 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
+    updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
+
     loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
     loadSensorDescription: (path: string) => dispatch(loadSensorsFrom(path)),
 

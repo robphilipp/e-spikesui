@@ -21,7 +21,8 @@ export interface ScenesContext {
     addToScene: <E extends Object3D>(sceneId: string, entity: E) => [string, E];
     visibility: (sceneId: string, visible: boolean) => void;
     isVisible: (sceneId: string) => boolean;
-    scenes: Vector<SceneInfo>;
+    scenes: Array<SceneInfo>;
+    // scenes: Vector<SceneInfo>;
 }
 
 // the default, initial settings for the scene context
@@ -33,7 +34,8 @@ export const emptySceneContext: ScenesContext = {
     visibility: noop,
     // (sceneId: string) => boolean,
     isVisible: () => false,
-    scenes: Vector.empty()
+    // scenes: Vector.empty()
+    scenes: []
 };
 
 /**
@@ -53,7 +55,8 @@ export const initialSceneContext = createContext<ScenesContext>(emptySceneContex
  * @return {ScenesContext} The scene context holding the scenes and an accessor function.
  */
 export function useScenes(
-    scenesSupplier: () => Vector<SceneInfo> = () => Vector.empty(),
+    scenesSupplier: () => Array<SceneInfo> = () => [],
+    // scenesSupplier: () => Vector<SceneInfo> = () => Vector.empty(),
     destroy?: (scenes: ScenesContext) => void
 ): ScenesContext {
 
@@ -66,7 +69,9 @@ export function useScenes(
      * an empty option
      */
     function sceneFor(sceneId: string): Option<SceneInfo> {
-        return context.scenes.find(info => info.name === sceneId);
+        // const sceneInfo = context.scenes.find(info => info.name === sceneId);
+        return Option.ofNullable(context.scenes.find(info => info.name === sceneId));
+        // return context.scenes.find(info => info.name === sceneId);
     }
 
     /**
@@ -114,7 +119,8 @@ export function useScenes(
             // clean-up function
             return (): void => {
                 destroy?.(context);
-                context.scenes = Vector.empty();
+                // context.scenes = Vector.empty();
+                context.scenes = [];
             };
         },
         []

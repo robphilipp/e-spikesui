@@ -5,7 +5,6 @@ import Canvas, {CanvasStyle} from './Canvas';
 import {Coordinate} from "./Coordinate";
 import {Color, PerspectiveCamera, Renderer, WebGLRenderer} from "three";
 import {emptySceneContext, SceneInfo, ScenesContext, useScenes} from "./useScenes";
-import {Vector} from "prelude-ts";
 import useAnimationFrame from "./useAnimationFrame";
 
 /**
@@ -41,9 +40,8 @@ export interface OwnProps {
     getCamera: (offsetWidth: number, offsetHeight: number, position?: Coordinate) => PerspectiveCamera;
     // function that returns the renderer for the scene
     getRenderer: (canvas: HTMLCanvasElement) => Renderer;
-    // function that returns the scene object to which all the scene elements have been added
-    // getScene: () => Scene;
-    getScenes: () => Vector<SceneInfo>
+    // function that returns an array of scene objects to which all the scene elements have been added
+    getScenes: () => Array<SceneInfo>
     // the background color
     backgroundColor: Color;
     // canvas width and height
@@ -139,14 +137,14 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
      * transparently, on top of the first visible scene.
      */
     function updateBackground(): void {
-        scenesContext.scenes
-            .filter(info => info.visible)
-            .head()
-            .ifSome(info => info.scene.background = props.backgroundColor);
-        scenesContext.scenes
-            .filter(info => info.visible)
-            .tail()
-            .ifSome(infos => infos.forEach(info => info.scene.background = null));
+        const visibleScenes = scenesContext.scenes.filter(info => info.visible);
+        const numScenes = visibleScenes.length;
+        if (numScenes > 0) {
+            visibleScenes[0].scene.background = props.backgroundColor;
+        }
+        if (numScenes > 1) {
+            visibleScenes[numScenes-1].scene.background = null;
+        }
     }
 
     // setup scene, camera, and renderer, and store references. importantly, this use-effects method
@@ -206,16 +204,14 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
     // set animation frame timer value and rerender the scene
     useAnimationFrame(timer => {
         if(animate) {
-            // updateTimer(timer);
             timerRef.current = timer;
             if(rendererRef.current && cameraRef.current) {
-                const renderer = rendererRef.current;
-                const camera = cameraRef.current;
                 scenesContext.scenes
-                    .filter(info => info.visible)
                     .forEach(info => {
-                        renderer.render(info.scene, camera);
-                        (renderer as WebGLRenderer).clearDepth();
+                        if (info.visible) {
+                            rendererRef.current.render(info.scene, cameraRef.current);
+                            (rendererRef.current as WebGLRenderer).clearDepth();
+                        }
                     })
             }
         }
@@ -227,20 +223,20 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         () => {
             if (rendererRef.current && cameraRef.current) {
                 const renderer = rendererRef.current;
-                // const camera = cameraRef.current;
                 updateBackground();
 
                 // when there are no scenes, don't clear the background
-                if(!scenesContext.scenes.isEmpty()) {
+                if(scenesContext.scenes.length > 0) {
                     (renderer as WebGLRenderer).clear();
                 }
 
                 // render each of the scenes
                 scenesContext.scenes
-                    .filter(info => info.visible)
                     .forEach(info => {
-                        renderer.render(info.scene, cameraRef.current);
-                        (renderer as WebGLRenderer).clearDepth();
+                        if (info.visible) {
+                            renderer.render(info.scene, cameraRef.current);
+                            (renderer as WebGLRenderer).clearDepth();
+                        }
                     })
             }
         }

@@ -65,7 +65,8 @@ export interface NetworkVisualizationRendererUpdateAction {
 export interface NetworkVisualizationScenesUpdateAction {
     type: typeof SCENES_UPDATED;
     id: string;
-    scenes: Option<Vector<SceneInfo>>;
+    scenes: Option<Array<SceneInfo>>;
+    // scenes: Option<Vector<SceneInfo>>;
 }
 
 export type NetworkVisualizationAction = NetworkVisualizationAxesChangeAction |
@@ -144,7 +145,8 @@ export function rendererUpdated(id: string, renderer: Renderer): NetworkVisualiz
  * @param scenes The list of scene information
  * @return The action that the scenes have been changed.
  */
-export function scenesUpdated(id: string, scenes: Vector<SceneInfo>): NetworkVisualizationScenesUpdateAction {
+// export function scenesUpdated(id: string, scenes: Vector<SceneInfo>): NetworkVisualizationScenesUpdateAction {
+export function scenesUpdated(id: string, scenes: Array<SceneInfo>): NetworkVisualizationScenesUpdateAction {
     return ({
         type: SCENES_UPDATED,
         id: id,

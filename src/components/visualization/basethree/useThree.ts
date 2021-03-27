@@ -21,7 +21,6 @@ export function useThree<E extends Object3D | Array<Object3D>>(
     destroy?: (context: ThreeContext, entity: E) => void
 ): { getEntity: () => E, context: ThreeContext } {
 
-    // const entityRef = useRef<E>(new Object3D() as E);
     const entityRef = useRef<E>();
     const sceneIdRef = useRef<string>('default');
     const context = useContext<ThreeContext>(initialThreeContext);
@@ -98,11 +97,13 @@ export function threeRender(context: ThreeContext, callback: () => void): void {
         if (renderer && camera && canvas) {
             (renderer as WebGLRenderer).clear();
             scenesContext.scenes
-                .filter(info => info.visible)
+                // .filter(info => info.visible)
                 .forEach(info => {
-                    callback();
-                    renderer.render(info.scene, camera);
-                    (renderer as WebGLRenderer).clearDepth();
+                    if(info.visible) {
+                        callback();
+                        renderer.render(info.scene, camera);
+                        (renderer as WebGLRenderer).clearDepth();
+                    }
                 });
         }
     });

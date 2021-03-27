@@ -34,7 +34,8 @@ interface NetVisualizationState {
     gridVisible: boolean;
     camera: Option<PerspectiveCamera>;
     renderer: Option<Renderer>;
-    scenes: Option<Vector<SceneInfo>>;
+    scenes: Option<Array<SceneInfo>>;
+    // scenes: Option<Vector<SceneInfo>>;
 }
 
 export const initialNetVisState: NetVisualizationState = {

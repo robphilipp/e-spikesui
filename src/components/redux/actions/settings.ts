@@ -10,9 +10,8 @@ import {KafkaSettings} from "../../settings/kafkaSettings";
 import ServerSettings from "../../settings/serverSettings";
 import {NetworkDescriptionSettings} from "../../settings/networkDescriptionSettings";
 import {SensorDescriptionSettings} from "../../settings/sensorDescriptionSettings";
-import {remoteActionCreators} from "../../../app";
-import {generateRemoteActionCreators} from "./rootActions";
-import {networkManagementActionCreators} from "./networkManagement";
+import {remoteRepositories} from "../../../app";
+import {networkManagementRepo} from "../../repos/networkManagementRepo";
 
 export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";
@@ -119,7 +118,8 @@ export function changeTheme(name: string): ChangeThemeAction {
  * @return The change action
  */
 export function changeServerSettings(settings: ServerSettings): ServerSettingsChangeAction {
-    remoteActionCreators.networkManagement = networkManagementActionCreators(settings);
+    // remoteActionCreators.networkManagement = networkManagementActionCreators(settings);
+    remoteRepositories.networkManagement = networkManagementRepo(settings);
     return {
         type: SERVER_SETTINGS_CHANGED,
         serverSettings: settings

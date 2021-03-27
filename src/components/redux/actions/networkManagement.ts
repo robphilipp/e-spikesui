@@ -1,15 +1,15 @@
 import {ThunkAction, ThunkDispatch} from "redux-thunk";
 import {Either} from "prelude-ts";
-import axios, {AxiosError, AxiosResponse} from "axios";
+import {AxiosError} from "axios";
 import {WebSocketSubject} from "rxjs/internal-compatibility";
-import {webSocket} from "rxjs/webSocket";
 import {merge, Observable, Subject, Subscription} from "rxjs";
 import {
     bufferTime,
     bufferToggle,
     distinctUntilChanged,
     filter,
-    flatMap, map, mergeMap,
+    map,
+    mergeMap,
     multicast,
     refCount,
     share,
@@ -19,14 +19,19 @@ import {TimeRange, timeRangeFrom} from "../../timeseries/TimeRange";
 import {List, Map} from "immutable";
 import {TimeEvent, TimeSeries} from "../../timeseries/TimeSeries";
 import {NetworkEvent} from "./networkEvent";
-import ServerSettings from "../../settings/serverSettings";
 import {noop} from "../../../commons";
+import {remoteRepositories} from "../../../app";
 
 /**
  * Actions for managing the network. For example, actions for updating the
  * network description, building/deleting the network, starting/stopping
  * the network, managing the websocket connections, and managing rxjs subscriptions.
  */
+
+export interface Sensor {
+    name: string,
+    selector: string;
+}
 
 /*
  |
@@ -213,17 +218,18 @@ export interface NetworkManagementActionCreators {
                 pauseSubject: Subject<boolean>,
                 paused: boolean) => SubscribeWebsocketThunkAction;
     unsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => UnsubscribeWebsocketThunkAction;
-    startSimulation: (websocket: WebSocketSubject<string>) => StartSimulationThunkAction;
+    startSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) => StartSimulationThunkAction;
     stopSimulation: (websocket: WebSocketSubject<string>) => StopSimulationThunkAction;
     pauseSimulation: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction;
 }
 
 /**
  * Wraps around the action creators, forming a closure on the network settings
- * @param {ServerSettings} serverSettings The server host and port against which to make calls
- * @return {{networkDescriptionUpdate: (networkDescription: string) => NetworkDescriptionChangedAction; stopSimulation: (websocket: WebSocketSubject<string>) => ThunkAction<Promise<StopSimulationAction>, any, any, StopSimulationAction>; webSocketSubject: (networkId: string) => CreateWebsocketAction; buildNetwork: (networkDescription: string) => ThunkAction<Promise<NetworkBuiltAction>, any, any, NetworkBuiltAction>; subscribe: (observable: Observable<NetworkEvent>, timeWindow: number, messageProcessor: (messages: NetworkEvent) => void, pauseSubject: Subject<boolean>, paused: boolean) => ThunkAction<Promise<SubscribeWebsocketAction>, any, any, SubscribeWebsocketAction>; unsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => ThunkAction<Promise<UnsubscribeWebsocketAction>, any, any, UnsubscribeWebsocketAction>; networkEventsObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction; pauseSimulation: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction; loadNetworkDescription: (networkDescriptionFile: File) => ThunkAction<Promise<NetworkDescriptionLoadedAction>, any, any, NetworkDescriptionLoadedAction>; startSimulation: (websocket: WebSocketSubject<string>) => ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>; deleteNetwork: (networkId: string) => ThunkAction<Promise<NetworkDeletedAction>, any, any, NetworkDeletedAction>}}
+ * @return The action creators for managing the network on the server and the events emitted by
+ * the network on the server.
  */
-export function networkManagementActionCreators(serverSettings: ServerSettings): NetworkManagementActionCreators {
+// export function networkManagementActionCreators(serverSettings: ServerSettings): NetworkManagementActionCreators {
+export function networkManagementActionCreators(): NetworkManagementActionCreators {
     /* **--< WARNING >--**
      | changing this to a thunk action breaks the editing...each character sends the cursor to the
      | bottom of the text field. Further experimentation reveals that even when this plain action
@@ -310,19 +316,22 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      */
     function buildNetwork(networkDescription: string): NetworkBuildThunkAction {
         return (dispatch: ThunkDispatch<unknown, unknown, NetworkBuiltAction>): Promise<NetworkBuiltAction> => {
-            return axios
-                .post(
-                    `http://${serverSettings.host}:${serverSettings.port}/network-management/network`,
-                    {
-                        networkDescription: networkDescription,
-                        kafkaSettings: {
-                            bootstrapServers: [
-                                {host: 'localhost', port: 9092}
-                            ]
-                        }
-                    }
-                )
-                .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
+            return remoteRepositories.networkManagement
+                .buildNetwork(networkDescription)
+            // return axios
+            //     .post(
+            //         `http://${serverSettings.host}:${serverSettings.port}/network-management/network`,
+            //         {
+            //             networkDescription: networkDescription,
+            //             kafkaSettings: {
+            //                 bootstrapServers: [
+            //                     {host: 'localhost', port: 9092}
+            //                 ]
+            //             }
+            //         }
+            //     )
+            //     .then(response => dispatch(successAction(NETWORK_BUILT, response.data.id)))
+                .then(networkId => dispatch(successAction(NETWORK_BUILT, networkId)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to deploy and build network on server."];
                     if (reason.response) {
@@ -351,8 +360,9 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      */
     function deleteNetwork(networkId: string): NetworkDeletedThunkAction {
         return (dispatch: ThunkDispatch<unknown, unknown, NetworkDeletedAction>): Promise<NetworkDeletedAction> => {
-            return axios
-                .delete(`http://${serverSettings.host}:${serverSettings.port}/network-management/network/${networkId}`)
+            // return axios
+            //     .delete(`http://${serverSettings.host}:${serverSettings.port}/network-management/network/${networkId}`)
+            return remoteRepositories.networkManagement.deleteNetwork(networkId)
                 .then(() => dispatch(successAction(NETWORK_DELETED, networkId)))
                 .catch((reason: AxiosError) => {
                     const messages = ["Unable to delete network from server."];
@@ -390,14 +400,13 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      */
     function webSocketSubject(networkId: string): WebsocketCreatedAction {
         // create the rxjs subject that connects to the web-socket
-        const webSocketSubject: WebSocketSubject<string> = webSocket({
-            url: `ws://${serverSettings.host}:${serverSettings.port}/web-socket/${networkId}`,
-            deserializer: e => e.data
-        });
-
+        // const webSocketSubject: WebSocketSubject<string> = webSocket({
+        //     url: `ws://${serverSettings.host}:${serverSettings.port}/web-socket/${networkId}`,
+        //     deserializer: e => e.data
+        // });
         return {
             type: WEBSOCKET_SUBJECT_CREATED,
-            webSocketSubject: webSocketSubject
+            webSocketSubject: remoteRepositories.networkManagement.webSocketSubjectFor(networkId)
         }
     }
 
@@ -588,11 +597,12 @@ export function networkManagementActionCreators(serverSettings: ServerSettings):
      * @param {WebSocketSubject<string>} websocket The websocket subject for sending messages to the server
      * @return {ThunkAction<Promise<StartSimulationAction>, any, any, StartSimulationAction>} The thunk action
      */
-    function startSimulation(websocket: WebSocketSubject<string>): StartSimulationThunkAction {
+    function startSimulation(websocket: WebSocketSubject<string>, sensor: Sensor): StartSimulationThunkAction {
 
         return (dispatch: ThunkDispatch<any, any, StartSimulationAction>): Promise<StartSimulationAction> => {
             return Promise.resolve().then(() => {
-                websocket.next(START_MESSAGE.command);
+                // websocket.next(START_MESSAGE.command);
+                websocket.next(JSON.stringify(sensor));
 
                 return dispatch({
                     type: SIMULATION_STARTED

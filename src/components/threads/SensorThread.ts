@@ -1,25 +1,34 @@
-import { Observable as FnsObservable } from 'observable-fns';
-import { SensorOutput } from '../sensors/compiler';
-import { Observable } from 'rxjs'
-import { ObservablePromise } from 'threads/dist/observable-promise';
+import {Observable as FnsObservable} from 'observable-fns';
+import {SensorOutput} from '../sensors/compiler';
+import {Observable} from 'rxjs'
+import {ObservablePromise} from 'threads/dist/observable-promise';
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from 'threads/dist/types/master';
-import { spawn, Thread, Worker } from 'threads';
+import {spawn, Thread, Worker} from 'threads';
 
-type SimulationType = ((...args: never) =>
-    ObservablePromise<StripAsync<SensorOutput>>) &
+type SimulationType = ((...args: never) => ObservablePromise<StripAsync<SensorOutput>>) &
     PrivateThreadProps & ModuleProxy<ModuleMethods>;
 
 export interface SensorThread {
     compileSimulator: (codeSnippet: string, timeFactor: number) => Promise<SignalGenerator>;
-    compileSender: (codeSnippet: string, timeFactor: number, websocket: string) => Promise<SignalGenerator>;
+    compileSender: (codeSnippet: string, timeFactor: number) => Promise<SignalGenerator>;
+    // compileSender: (codeSnippet: string, timeFactor: number, websocket: string) => Promise<SignalGenerator>;
+    compileSenderForWorker: (codeSnippet: string, timeFactor: number) => Promise<SignalGeneratorForWorker>;
     stop: () => Promise<void>;
     terminate: () => Promise<void>;
 }
 
 export interface SignalGenerator {
+    sensorName: string;
     neuronIds: Array<string>;
     timeFactor: number;
     observable: Observable<SensorOutput>;
+}
+
+export interface SignalGeneratorForWorker {
+    sensorName: string;
+    neuronIds: Array<string>;
+    timeFactor: number;
+    observable: FnsObservable<SensorOutput>;
 }
 
 /**
@@ -40,13 +49,14 @@ export async function newSensorThread(): Promise<SensorThread> {
      * @return A promise for a signal generator (a set of input neuron IDs and an observable)
      */
     async function compileSimulator(codeSnippet: string, timeFactor: number): Promise<SignalGenerator> {
-        const ids = await worker.compile(codeSnippet, timeFactor);
+        const {sensorName, neuronIds} = await worker.compile(codeSnippet, timeFactor);
         const fnsObs: FnsObservable<SensorOutput> = worker.observable();
         const observable = new Observable<SensorOutput>(observer => {
             worker.simulate().then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
         });
         return {
-            neuronIds: ids,
+            sensorName,
+            neuronIds,
             timeFactor: timeFactor,
             observable: observable,
         };
@@ -57,20 +67,39 @@ export async function newSensorThread(): Promise<SensorThread> {
      * to send sensor signals down the websocket. Has a closure on the worker.
      * @param codeSnippet The sensor code snippet
      * @param timeFactor The simulation time-factor
-     * @param websocket The web socket address for sending sensor signals
+     // * @param websocket The web socket address for sending sensor signals
      * @return A promise for a signal generator (a set of input neuron IDs and an observable)
      */
-    async function compileSender(codeSnippet: string, timeFactor: number, websocket: string): Promise<SignalGenerator> {
-        const ids = await worker.compile(codeSnippet, timeFactor);
+    // async function compileSender(codeSnippet: string, timeFactor: number, websocket: string): Promise<SignalGenerator> {
+    async function compileSender(codeSnippet: string, timeFactor: number): Promise<SignalGenerator> {
+        const {sensorName, neuronIds} = await worker.compile(codeSnippet, timeFactor);
         const fnsObs: FnsObservable<SensorOutput> = worker.observable();
         const observable = new Observable<SensorOutput>(observer => {
-            worker.sendSignals(websocket)
-                .then(() => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput)));
+            worker.sendSignals().then(
+                () => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
+            );
         });
         return {
-            neuronIds: ids,
+            sensorName,
+            neuronIds,
             timeFactor: timeFactor,
             observable: observable,
+        };
+    }
+
+    async function compileSenderForWorker(codeSnippet: string, timeFactor: number): Promise<SignalGeneratorForWorker> {
+        const {sensorName, neuronIds} = await worker.compile(codeSnippet, timeFactor);
+        const fnsObs: FnsObservable<SensorOutput> = worker.observable();
+        // const observable = new Observable<SensorOutput>(observer => {
+        //     worker.sendSignals().then(
+        //         () => fnsObs.subscribe(sensorOutput => observer.next(sensorOutput))
+        //     );
+        // });
+        return {
+            sensorName,
+            neuronIds,
+            timeFactor: timeFactor,
+            observable: fnsObs,
         };
     }
 
@@ -92,6 +121,7 @@ export async function newSensorThread(): Promise<SensorThread> {
     return {
         compileSimulator,
         compileSender,
+        compileSenderForWorker,
         stop,
         terminate,
     }

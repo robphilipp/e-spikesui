@@ -51,6 +51,7 @@ import {
 import {SimulationProject} from "./repos/simulationProjectRepo";
 import tinycolor from 'tinycolor2';
 import LoadingModal from "./common/LoadingModal";
+import Loading from './common/Loading';
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -528,7 +529,7 @@ function Main(props: Props): JSX.Element {
 
     return (
         <>
-            <LoadingModal itheme={itheme} isLoading={loading} message={loadingMessage}/>
+            <Loading itheme={itheme}>
             <Stack>
                 <StackItem>
                     <CommandBar
@@ -592,6 +593,7 @@ function Main(props: Props): JSX.Element {
                     </Switch>
                 </StackItem>
             </Stack>
+            </Loading>
         </>
     )
 }

@@ -168,7 +168,7 @@ function RunDeployManager(props: Props): JSX.Element {
     const networkManagerThreadRef = useRef<NetworkManagerThread>();
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
 
-    const editorRef = useRef<HTMLDivElement>();
+    const visualizationRef = useRef<HTMLDivElement>();
     const [dimension, setDimension] = useState<Dimension>({height: window.innerHeight - headerOffset, width: window.innerWidth - 50});
 
     // simulation time
@@ -215,8 +215,8 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     function editorDimensions(): Dimension {
         return {
-            width: editorRef.current.offsetWidth - 50,
-            height: editorRef.current.offsetHeight - headerOffset
+            width: visualizationRef.current.offsetWidth - 50,
+            height: visualizationRef.current.offsetHeight - headerOffset
         };
     }
 
@@ -224,7 +224,7 @@ function RunDeployManager(props: Props): JSX.Element {
      * updates the editor's width and height when the container's dimensions change
      */
     function handleWindowResize(): void {
-        if (editorRef.current) {
+        if (visualizationRef.current) {
             const nextDimension = editorDimensions()
             const minDiff = 2;
             if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
@@ -593,7 +593,7 @@ function RunDeployManager(props: Props): JSX.Element {
     }
 
     return <div
-        ref={editorRef}
+        ref={visualizationRef}
         style={{height: window.innerHeight * 0.9, width: '100%'}}
     >
         <Stack>

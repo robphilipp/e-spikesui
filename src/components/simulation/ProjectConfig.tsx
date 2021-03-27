@@ -62,7 +62,7 @@ function ProjectConfig(props: Props): JSX.Element {
     } = props;
 
     const history = useHistory();
-    const {updateLoadingState} = useLoading();
+    const updateLoadingState = useLoading();
 
     /**
      * Handles changes to the simulation name

@@ -168,7 +168,7 @@ function startNetwork(sensorDescription: string, timeFactor: number): void {
 
 function stopNetwork(): void {
     websocket.send(STOP_MESSAGE.command);
-    signalGeneratorSubscription.unsubscribe();
+    signalGeneratorSubscription?.unsubscribe();
 
     // clean up
     websocket.close()

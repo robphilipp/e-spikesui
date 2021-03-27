@@ -123,28 +123,6 @@ export function clearMessage(): MessageClearedAction {
     };
 }
 
-/**
- * Sets or clears the loading flag.
- * @param isLoading (optional, `default = true`) `true` if loading; `false` otherwise
- * @param message (optional) The optional message to display on the loading modal
- * @return the loading action
- */
-export function setLoading(isLoading = true, message?: string): LoadingAction {
-    return {
-        type: SET_LOADING_STATE,
-        loading: isLoading,
-        message: message
-    }
-}
-
-/**
- * Clears the loading state
- * @return the loading action
- */
-export function clearLoading(): LoadingAction {
-    return setLoading(false);
-}
-
 /*
  |
  | Redux action creators for thunk responses

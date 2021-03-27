@@ -10,7 +10,6 @@ import {
     ApplicationAction,
     MessageSetAction,
     setErrorMessage,
-    setLoading,
     setSuccessMessage
 } from "../redux/actions/actions";
 import {
@@ -28,6 +27,7 @@ import RunDeployManager from "./RunDeployManager";
 import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
 import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
 import {useLoading} from "../common/Loading";
+import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -53,11 +53,10 @@ interface StateProps {
     networkDescriptionPath?: string;
     sensorDescriptionPath?: string;
     modified: boolean;
+    networkBuilt: boolean;
 }
 
 interface DispatchProps {
-    // updateLoadingState: (isLoading: boolean, message?: string) => void;
-
     loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     loadSensorDescription: (path: string) => Promise<SensorsLoadedAction>;
 
@@ -65,6 +64,8 @@ interface DispatchProps {
     onLoad: (path: string) => Promise<ProjectLoadedAction>;
     onSave: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
     onSaveAs: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
+
+    onClearNetworkState: () => DeleteNetworkAction;
 
     onSetError: (messages: JSX.Element) => MessageSetAction;
     onSetSuccess: (messages: JSX.Element) => MessageSetAction;
@@ -90,11 +91,11 @@ function SimulationManager(props: Props): JSX.Element {
         networkDescriptionPath,
         sensorDescriptionPath,
         modified,
-        // updateLoadingState,
         loadNetworkDescription,
         loadSensorDescription,
         onCreate,
         onLoad,
+        onClearNetworkState,
         onSave,
         onSetError,
     } = props;
@@ -106,7 +107,7 @@ function SimulationManager(props: Props): JSX.Element {
     const history = useHistory();
     const {path} = useRouteMatch();
 
-    const {updateLoadingState} = useLoading();
+    const updateLoadingState = useLoading();
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
@@ -158,6 +159,8 @@ function SimulationManager(props: Props): JSX.Element {
      */
     function handleLoadProject(): void {
         updateLoadingState(true, "Loading simulation project")
+        // todo if the network still exists (i.e. has been built) we need to prompt
+        //      the user to delete the network before proceeding
         remote.dialog
             .showOpenDialog(
                 remote.getCurrentWindow(),
@@ -169,6 +172,7 @@ function SimulationManager(props: Props): JSX.Element {
             .then(response => {
                 setSelectedTab(TabName.PROJECT_CONFIG);
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
+                onClearNetworkState();
             })
             .catch(reason => onSetError(<>
                 <div><b>Unable to load simulation project file</b></div>
@@ -415,6 +419,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
     networkDescriptionPath: state.simulationProject.networkDescriptionPath,
     sensorDescriptionPath: state.simulationProject.sensorDescriptionPath,
     modified: state.simulationProject.modified,
+    networkBuilt: state.networkEvent.networkBuilt,
 });
 
 /**
@@ -425,8 +430,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    // updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
-
     loadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
     loadSensorDescription: (path: string) => dispatch(loadSensorsFrom(path)),
 
@@ -434,6 +437,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onLoad: (path: string) => dispatch(loadSimulationProject(path)),
     onSave: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
     onSaveAs: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
+
+    onClearNetworkState: () => dispatch(deleteNetwork()),
 
     onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
     onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),

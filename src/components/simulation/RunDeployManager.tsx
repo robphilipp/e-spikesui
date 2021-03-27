@@ -9,7 +9,6 @@ import {
     MessageClearedAction,
     MessageSetAction,
     setErrorMessage,
-    // setLoading
 } from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -19,13 +18,7 @@ import {WebSocketSubject} from "rxjs/internal-compatibility";
 import {Observable, Subject, Subscription} from "rxjs";
 import {
     CreateNetworkObservableAction,
-    // NetworkBuiltAction,
     NetworkDeletedAction,
-    // PauseSimulationAction,
-    // Sensor,
-    // StartSimulationAction,
-    // StopSimulationAction,
-    // SubscribeWebsocketAction,
     UnsubscribeWebsocketAction,
     WebsocketCreatedAction
 } from "../redux/actions/networkManagement";
@@ -34,7 +27,6 @@ import {
     DeleteNetworkAction,
     networkBuildEventsActionCreator,
     NetworkEvent,
-    // NetworkEventAction,
     NetworkEventsAction
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
@@ -72,7 +64,7 @@ interface StateProps {
 
     // whether or not the network is built
     neuronIds: Vector<string>;
-    // holds an error message
+    // the network build status
     networkBuilt: boolean;
     // neuron ids for the built network
     errorMessages: Option<FeedbackMessage>;
@@ -89,28 +81,16 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    // updateLoadingState: (isLoading: boolean, message?: string) => void;
-    // onBuildNetwork: (networkDescription: string) => Promise<NetworkBuiltAction>;
     onDeleteNetwork: (networkId: string) => Promise<NetworkDeletedAction>;
     onClearNetworkState: () => DeleteNetworkAction;
 
     createWebSocketSubject: (networkId: string) => WebsocketCreatedAction;
     createNetworkObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction;
-    // subscribeWebsocket: (observable: Observable<Array<NetworkEvent>>,
-    //                      timeWindow: number,
-    //                      eventProcessor: (events: Array<NetworkEvent>) => void,
-    //                      pauseSubject: Subject<boolean>,
-    //                      paused: boolean) => Promise<SubscribeWebsocketAction>;
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => Promise<UnsubscribeWebsocketAction>;
-
-    // onStartSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) => Promise<StartSimulationAction>;
-    // onStopSimulation: (websocket: WebSocketSubject<string>) => Promise<StopSimulationAction>;
-    // onSimulationPause: (pause: boolean, pauseSubject: Subject<boolean>) => PauseSimulationAction;
 
     onSetErrorMessages: (messages: JSX.Element) => MessageSetAction;
     onClearErrorMessages: () => MessageClearedAction;
 
-    // onNetworkEvent: (action: NetworkEventAction) => NetworkEventAction;
     onNetworkBuildEvents: (action: NetworkEventsAction) => NetworkEventsAction;
 }
 
@@ -118,48 +98,30 @@ type Props = OwnProps & StateProps & DispatchProps;
 
 function RunDeployManager(props: Props): JSX.Element {
     const {
-        // updateLoadingState,
         itheme,
         simulationName,
         timeFactor,
         simulationDuration,
 
-        // networkDescriptionPath,
         networkDescription,
-        // sensorDescriptionPath,
         sensorDescription,
 
-        // networkId,
-        // neuronIds,
-
         networkBuilt,
-        // errorMessages,
-        // webSocketSubject,
-        // pauseSubject,
         subscription,
         pauseSubscription,
-        // running,
-        // paused,
 
-        // onBuildNetwork,
         onDeleteNetwork,
         onClearNetworkState,
 
-        // createWebSocketSubject,
-        // createNetworkObservable,
-        // subscribeWebsocket,
         onUnsubscribe,
 
         onNetworkBuildEvents,
-        // onNetworkEvent,
-        // onStartSimulation,
-        // onStopSimulation,
 
         onSetErrorMessages,
         onClearErrorMessages
     } = props;
 
-    const {updateLoadingState} = useLoading();
+    const updateLoadingState = useLoading();
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
@@ -696,11 +658,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    // updateLoadingState: (isLoading: boolean, message?: string) => dispatch(setLoading(isLoading, message)),
-
-    // onBuildNetwork: (networkDescription: string) =>
-    //     dispatch(remoteActionCreators.networkManagement.buildNetwork(networkDescription)),
-
     onDeleteNetwork: (networkId: string) =>
         dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),
 
@@ -712,32 +669,12 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     createNetworkObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) =>
         dispatch(remoteActionCreators.networkManagement.networkEventsObservable(websocket, bufferInterval)),
 
-    // subscribeWebsocket: (observable: Observable<Array<NetworkEvent>>,
-    //                      timeWindow: number,
-    //                      eventProcessor: (events: Array<NetworkEvent>) => void,
-    //                      pauseSubject: Subject<boolean>,
-    //                      paused: boolean) =>
-    //     dispatch(remoteActionCreators.networkManagement.subscribe(
-    //         observable, timeWindow, eventProcessor, pauseSubject, paused
-    //     )),
-
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) =>
         dispatch(remoteActionCreators.networkManagement.unsubscribe(subscription, pauseSubscription)),
-
-    // onStartSimulation: (websocket: WebSocketSubject<string>, sensor: Sensor) =>
-    //     dispatch(remoteActionCreators.networkManagement.startSimulation(websocket, sensor)),
-
-    // onStopSimulation: (websocket: WebSocketSubject<string>) =>
-    //     dispatch(remoteActionCreators.networkManagement.stopSimulation(websocket)),
-
-    // onSimulationPause: (pause: boolean, pauseSubject: Subject<boolean>) =>
-    //     dispatch(remoteActionCreators.networkManagement.pauseSimulation(pause, pauseSubject)),
 
     onSetErrorMessages: (message: JSX.Element) => dispatch(setErrorMessage(message)),
 
     onClearErrorMessages: () => dispatch(clearMessage()),
-
-    // onNetworkEvent: (action: NetworkEventAction) => dispatch(action),
 
     onNetworkBuildEvents: (action: NetworkEventsAction) => dispatch(action)
 });

@@ -76,6 +76,10 @@ export default function LoadingModal(props: Props): JSX.Element {
     </LoadingContext.Provider>
 }
 
-export function useLoading(): LoadingProps {
-    return useContext<LoadingProps>(LoadingContext)
+export function useLoading(): (isLoading: boolean, message?: string) => void {
+    const {updateLoadingState} = useContext<LoadingProps>(LoadingContext)
+    if (updateLoadingState === undefined) {
+        throw new Error("useLoading hook can only be used when the component is a child of <Loading></Loading>")
+    }
+    return updateLoadingState;
 }

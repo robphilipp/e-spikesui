@@ -78,6 +78,8 @@ interface StateProps {
     pauseSubscription: Subscription;
     // whether or not the front-end is paused, while continuing to buffer back-end events
     paused: boolean;
+    // // whether or not the network is running
+    // running: boolean;
 }
 
 interface DispatchProps {
@@ -118,10 +120,12 @@ function RunDeployManager(props: Props): JSX.Element {
         onNetworkBuildEvents,
 
         onSetErrorMessages,
-        onClearErrorMessages
+        onClearErrorMessages,
+
+        // running,
     } = props;
 
-    const updateLoadingState = useLoading();
+    const {updateLoadingState} = useLoading();
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
@@ -336,8 +340,8 @@ function RunDeployManager(props: Props): JSX.Element {
 
         updateLoadingState(true, "Attempting to start neural network")
         try {
-            const observable = await networkManager.start(sensorDescription, timeFactor);
-            setSubjectObservable(observable);
+            const networkEventSubject = await networkManager.start(sensorDescription, timeFactor);
+            setSubjectObservable(networkEventSubject);
             setRunning(true);
 
             // start the simulation timer
@@ -647,7 +651,8 @@ const mapStateToProps = (state: AppState): StateProps => ({
     pauseSubject: state.networkManagement.pauseSubject,
     subscription: state.networkManagement.subscription,
     pauseSubscription: state.networkManagement.pauseSubscription,
-    paused: state.networkManagement.paused
+    paused: state.networkManagement.paused,
+    // running: state.networkManagement.running,
 });
 
 /**

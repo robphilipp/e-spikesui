@@ -1,11 +1,10 @@
 import * as React from 'react';
 import tinycolor from "tinycolor2";
 import {ITheme, Spinner, SpinnerSize} from "@fluentui/react";
+import {useLoading} from "./Loading";
 
 interface Props {
     itheme: ITheme;
-    isLoading: boolean;
-    message?: string;
 }
 
 /**
@@ -16,11 +15,9 @@ interface Props {
  * @constructor
  */
 export default function LoadingModal(props: Props): JSX.Element {
-    const {
-        itheme,
-        isLoading,
-        message = '',
-    } = props;
+    const {itheme} = props;
+
+    const {isLoading, message} = useLoading()
 
     return <>
         {isLoading ?

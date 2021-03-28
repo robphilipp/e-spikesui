@@ -529,7 +529,8 @@ function Main(props: Props): JSX.Element {
 
     return (
         <>
-            <Loading itheme={itheme}>
+            <Loading>
+                <LoadingModal itheme={itheme}/>
             <Stack>
                 <StackItem>
                     <CommandBar

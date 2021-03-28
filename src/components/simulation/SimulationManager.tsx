@@ -107,7 +107,7 @@ function SimulationManager(props: Props): JSX.Element {
     const history = useHistory();
     const {path} = useRouteMatch();
 
-    const updateLoadingState = useLoading();
+    const {updateLoadingState} = useLoading();
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 

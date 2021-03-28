@@ -26,7 +26,7 @@ import ProjectConfig from "./ProjectConfig";
 import RunDeployManager from "./RunDeployManager";
 import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
 import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
-import {useLoading} from "../common/Loading";
+import {useLoading} from "../common/useLoading";
 import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
 
 export const NEW_PROJECT_PATH = '**new**';

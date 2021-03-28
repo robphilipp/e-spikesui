@@ -35,7 +35,7 @@ import {Card} from '@uifabric/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
 import useSimulationTimer from "./useSimulationTimer";
-import {useLoading} from "../common/Loading";
+import {useLoading} from "../common/useLoading";
 
 const headerOffset = 200;
 

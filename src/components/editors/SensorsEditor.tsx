@@ -42,11 +42,6 @@ interface Dimension {
     width: number;
 }
 
-// interface OwnProps extends RouteComponentProps<never> {
-//     itheme: ITheme;
-//     theme?: string;
-// }
-
 interface StateProps {
     codeSnippet: string;
     timeFactor: number;
@@ -62,7 +57,7 @@ interface DispatchProps {
     onSave: (path: string, description: string) => Promise<SensorsSavedAction>;
 }
 
-type Props = StateProps & DispatchProps //& OwnProps;
+type Props = StateProps & DispatchProps
 
 /**
  * The sensor editor allows the user to write a sensor code-snippet and run a test simulation
@@ -72,8 +67,6 @@ type Props = StateProps & DispatchProps //& OwnProps;
  */
 function SensorsEditor(props: Props): JSX.Element {
     const {
-        // theme = DefaultTheme.DARK,
-        // itheme,
         codeSnippet,
         timeFactor,
         templatePath,
@@ -85,7 +78,7 @@ function SensorsEditor(props: Props): JSX.Element {
         sensorDescriptionPath,
     } = props;
 
-    const {itheme, themeName: theme} = useTheme()
+    const {itheme, themeName: themeName} = useTheme()
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // sensor as before the refresh. to do this we use the path parameter holding the file path
@@ -426,7 +419,7 @@ function SensorsEditor(props: Props): JSX.Element {
                             width={dimension.width}
                             height={dimension.height}
                             language="javascript"
-                            theme={theme}
+                            theme={themeName}
                             customThemes={customThemes}
                             value={codeSnippet}
                             options={editorOptions}

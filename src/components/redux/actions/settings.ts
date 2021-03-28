@@ -13,7 +13,6 @@ import {SensorDescriptionSettings} from "../../settings/sensorDescriptionSetting
 import {remoteRepositories} from "../../../app";
 import {networkManagementRepo} from "../../repos/networkManagementRepo";
 
-export const CHANGE_THEME = "change-theme";
 export const SETTINGS_PANEL_VISIBLE = "settings-panel-visible";
 export const SERVER_SETTINGS_CHANGED = "server-settings-changed";
 export const KAFKA_SETTINGS_CHANGED = "kafka-settings-changed";
@@ -32,14 +31,6 @@ export const SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED = "sensor-description-temp
 export interface SettingsPanelVisibleAction {
     type: typeof SETTINGS_PANEL_VISIBLE;
     visible: boolean;
-}
-
-/**
- * The action for changing the themes name
- */
-export interface ChangeThemeAction {
-    type: typeof CHANGE_THEME;
-    theme: string;
 }
 
 export interface ServerSettingsChangeAction {
@@ -62,8 +53,7 @@ export interface SensorDescriptionTemplatePathChangeAction {
     sensorDescriptionSettings: SensorDescriptionSettings;
 }
 
-export type SettingsAction = ChangeThemeAction
-    | SettingsPanelVisibleAction
+export type SettingsAction = SettingsPanelVisibleAction
     | ServerSettingsChangeAction
     | KafkaSettingsChangeAction
     | NetworkDescriptionTemplatePathChangeAction
@@ -99,18 +89,6 @@ export function hideSettingsPanel(): SettingsPanelVisibleAction {
         visible: false
     }
 }
-
-// /**
-//  * Action to change the UI theme
-//  * @param name The name of the new theme
-//  * @return The action
-//  */
-// export function changeTheme(name: string): ChangeThemeAction {
-//     return {
-//         type: CHANGE_THEME,
-//         theme: name
-//     }
-// }
 
 /**
  * Action to change the settings for connecting to the spikes server

@@ -1,16 +1,6 @@
 import * as React from 'react'
 import {useEffect} from 'react'
-import {
-    CommandBar,
-    ContextualMenuItemType,
-    ICommandBarItemProps,
-    ITheme,
-    Label,
-    MessageBar,
-    Modal, Spinner, SpinnerSize,
-    Stack,
-    StackItem
-} from '@fluentui/react'
+import {CommandBar, ContextualMenuItemType, ICommandBarItemProps, MessageBar, Stack, StackItem} from '@fluentui/react'
 import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
@@ -21,7 +11,6 @@ import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
 import NetworkEditor from "./editors/NetworkEditor";
-import {editorThemeFrom} from "./editors/themes"
 import {registerSpikesLanguage} from "./language/spikes-language";
 import {
     loadNetworkDescriptionFrom,
@@ -49,10 +38,9 @@ import {
     saveSimulationProject
 } from "./redux/actions/simulationProject";
 import {SimulationProject} from "./repos/simulationProjectRepo";
-import tinycolor from 'tinycolor2';
 import LoadingModal from "./common/LoadingModal";
 import LoadingProvider from './common/useLoading';
-import ThemeProvider, {useTheme} from "./common/useTheme";
+import {useTheme} from "./common/useTheme";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -72,12 +60,6 @@ interface StateProps {
 
     // determines if the application settings panel is visible
     settingsPanelVisible: boolean;
-    // the current theme
-    // itheme: ITheme;
-    // // the name of the current theme
-    // name: string;
-    // // the current map of the theme names and their associated color palettes
-    // palettes: HashMap<string, Palette>;
     // network-description, path, template path, and modification state
     networkDescriptionTemplatePath: string;
     networkDescription: string;
@@ -99,7 +81,6 @@ interface DispatchProps {
 
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
-    // onChangeTheme: (theme: string) => void;
 
     onLoadNetworkDescriptionTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
@@ -118,15 +99,10 @@ type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
     const {
-        // itheme,
-        // name,
-
         settingsPanelVisible,
         onShowSettingsPanel,
         onHideSettingsPanel,
 
-        loading,
-        loadingMessage,
         message,
         onSetErrorMessage,
         onClearMessage,
@@ -158,7 +134,6 @@ function Main(props: Props): JSX.Element {
 
     // react-router
     const history = useHistory();
-    // const location = useLocation();
     const networkEditorRouteMatch = useRouteMatch(AppPath.NETWORK_EDITOR);
 
     const {itheme} = useTheme()
@@ -567,31 +542,17 @@ function Main(props: Props): JSX.Element {
                                 <SimulationManager
                                     networkRouterPath={AppPath.NETWORK_EDITOR}
                                     sensorRouterPath={AppPath.SENSOR_EDITOR}
-                                    // theme={editorThemeFrom(name)}
-                                    // itheme={props.itheme}
                                     {...renderProps}
                                 />
                             }
                         />
                         <Route
                             path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
-                            render={(renderProps) =>
-                                <NetworkEditor
-                                    // theme={editorThemeFrom(name)}
-                                    // itheme={props.itheme}
-                                    {...renderProps}
-                                />
-                            }
+                            render={(renderProps) => <NetworkEditor {...renderProps}/>}
                         />
                         <Route
                             path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
-                            render={(renderProps) =>
-                                <SensorsEditor
-                                    // theme={editorThemeFrom(name)}
-                                    // itheme={props.itheme}
-                                    {...renderProps}
-                                />
-                            }
+                            render={(renderProps) => <SensorsEditor {...renderProps}/>}
                         />
                     </Switch>
                 </StackItem>
@@ -618,9 +579,6 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     loadingMessage: state.application.loadingMessage,
     message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
-    // itheme: state.settings.itheme,
-    // name: state.settings.name,
-    // palettes: state.settings.palettes,
 
     networkDescriptionTemplatePath: state.settings.networkDescription.templatePath,
     networkDescription: state.networkDescription.description,
@@ -649,7 +607,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
 
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
-    // onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
 
     onLoadNetworkDescriptionTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
     onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),

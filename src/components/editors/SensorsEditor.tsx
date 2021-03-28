@@ -1,22 +1,12 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
-import {defaultCustomThemes, DefaultTheme} from './themes';
-import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
+import {defaultCustomThemes} from './themes';
+import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
-import {
-    IconButton,
-    ITheme,
-    Layer,
-    LayerHost,
-    MessageBar,
-    MessageBarType,
-    Separator,
-    Stack,
-    TooltipHost
-} from '@fluentui/react';
+import {IconButton, Layer, LayerHost, MessageBar, MessageBarType, Separator, Stack, TooltipHost} from '@fluentui/react';
 import {
     loadSensorsFrom,
     loadSensorsFromTemplate,
@@ -31,6 +21,7 @@ import MonacoEditor from "./MonacoEditor";
 import SensorSimulation from "../sensors/SensorSimulation";
 import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
+import {useTheme} from "../common/useTheme";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -51,11 +42,6 @@ interface Dimension {
     width: number;
 }
 
-interface OwnProps extends RouteComponentProps<never> {
-    itheme: ITheme;
-    theme?: string;
-}
-
 interface StateProps {
     codeSnippet: string;
     timeFactor: number;
@@ -71,7 +57,7 @@ interface DispatchProps {
     onSave: (path: string, description: string) => Promise<SensorsSavedAction>;
 }
 
-type Props = StateProps & DispatchProps & OwnProps;
+type Props = StateProps & DispatchProps
 
 /**
  * The sensor editor allows the user to write a sensor code-snippet and run a test simulation
@@ -81,8 +67,6 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function SensorsEditor(props: Props): JSX.Element {
     const {
-        theme = DefaultTheme.DARK,
-        itheme,
         codeSnippet,
         timeFactor,
         templatePath,
@@ -93,6 +77,8 @@ function SensorsEditor(props: Props): JSX.Element {
         modified,
         sensorDescriptionPath,
     } = props;
+
+    const {itheme, themeName: themeName} = useTheme()
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // sensor as before the refresh. to do this we use the path parameter holding the file path
@@ -410,7 +396,7 @@ function SensorsEditor(props: Props): JSX.Element {
                     marginLeft: 30,
                     marginBottom: 8,
                     height: 15,
-                    color: props.itheme.palette.themeSecondary
+                    color: itheme.palette.themeSecondary
                 }}
             >
                 {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
@@ -433,7 +419,7 @@ function SensorsEditor(props: Props): JSX.Element {
                             width={dimension.width}
                             height={dimension.height}
                             language="javascript"
-                            theme={theme}
+                            theme={themeName}
                             customThemes={customThemes}
                             value={codeSnippet}
                             options={editorOptions}

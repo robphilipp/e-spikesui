@@ -9,6 +9,7 @@ import {generateRemoteActionCreators} from './components/redux/actions/rootActio
 import {HashRouter as Router} from "react-router-dom";
 import {loadOrInitializeSetting} from "./components/settings/appSettings";
 import {createRemoteRepositories} from "./components/repos/remoteRepositories";
+import ThemeProvider from "./components/common/useTheme";
 
 // set up and register all the icons for the application. the fabric-ui icons are
 // copyrighted by microsoft and so we can't use them for non-microsoft-office
@@ -29,9 +30,11 @@ export const remoteRepositories = createRemoteRepositories(applicationSettings.s
 ReactDOM.render(
     <Provider store={store}>
         <Router>
-            <Main
-                colorPalettes={defaultPalettes}
-            />
+            <ThemeProvider>
+                <Main
+                    colorPalettes={defaultPalettes}
+                />
+            </ThemeProvider>
         </Router>
     </Provider>,
     document.getElementById('root')

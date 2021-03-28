@@ -1,11 +1,12 @@
 import * as React from 'react';
 import tinycolor from "tinycolor2";
 import {ITheme, Spinner, SpinnerSize} from "@fluentui/react";
-import {useLoading} from "./Loading";
+import {useLoading} from "./useLoading";
+import {useTheme} from "./useTheme";
 
-interface Props {
-    itheme: ITheme;
-}
+// interface Props {
+//     itheme: ITheme;
+// }
 
 /**
  * Displays a modal with a spinner and message that covers and blocks the
@@ -14,9 +15,11 @@ interface Props {
  * any messages to display
  * @constructor
  */
-export default function LoadingModal(props: Props): JSX.Element {
-    const {itheme} = props;
+// export default function LoadingModal(props: Props): JSX.Element {
+export default function LoadingModal(): JSX.Element {
+    // const {itheme} = props;
 
+    const {itheme} = useTheme()
     const {isLoading, message} = useLoading()
 
     return <>

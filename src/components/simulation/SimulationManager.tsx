@@ -1,4 +1,4 @@
-import {IconButton, ITheme, Pivot, PivotItem, Separator, Stack, StackItem, TooltipHost} from "@fluentui/react";
+import {IconButton, Pivot, PivotItem, Separator, Stack, StackItem, TooltipHost} from "@fluentui/react";
 import {remote} from "electron";
 import * as React from "react";
 import {useEffect, useState} from "react";
@@ -6,12 +6,7 @@ import {connect} from "react-redux";
 import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {ThunkDispatch} from "redux-thunk";
 import {KeyboardShortcut, keyboardShortcutFor} from "../editors/keyboardShortcuts";
-import {
-    ApplicationAction,
-    MessageSetAction,
-    setErrorMessage,
-    setSuccessMessage
-} from "../redux/actions/actions";
+import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage} from "../redux/actions/actions";
 import {
     loadSimulationProject,
     newSimulationProject,
@@ -26,8 +21,9 @@ import ProjectConfig from "./ProjectConfig";
 import RunDeployManager from "./RunDeployManager";
 import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
 import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
-import {useLoading} from "../common/Loading";
+import {useLoading} from "../common/useLoading";
 import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
+import {useTheme} from "../common/useTheme";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -41,8 +37,8 @@ enum TabName {
 interface OwnProps extends RouteComponentProps<never> {
     networkRouterPath: string;
     sensorRouterPath: string;
-    itheme: ITheme;
-    theme?: string;
+    // itheme: ITheme;
+    // theme?: string;
 }
 
 interface StateProps {
@@ -81,7 +77,7 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function SimulationManager(props: Props): JSX.Element {
     const {
-        itheme,
+        // itheme,
         networkRouterPath,
         sensorRouterPath,
         projectPath,
@@ -107,6 +103,7 @@ function SimulationManager(props: Props): JSX.Element {
     const history = useHistory();
     const {path} = useRouteMatch();
 
+    const {itheme} = useTheme()
     const {updateLoadingState} = useLoading();
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
@@ -351,7 +348,7 @@ function SimulationManager(props: Props): JSX.Element {
                     marginLeft: 30,
                     marginBottom: 8,
                     height: 15,
-                    color: props.itheme.palette.themeSecondary
+                    color: itheme.palette.themeSecondary
                 }}
             >
                 {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}

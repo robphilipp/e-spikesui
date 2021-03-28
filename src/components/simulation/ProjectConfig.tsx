@@ -13,7 +13,7 @@ import {NEW_NETWORK_PATH} from "../editors/NetworkEditor";
 import {NEW_SENSOR_PATH} from "../editors/SensorsEditor";
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
 import {remote} from "electron";
-import {useLoading} from "../common/Loading";
+import {useLoading} from "../common/useLoading";
 
 const durationRegex = /^[0-9]+[ ]*s*$/
 const MIN_TIME_FACTOR = 1;

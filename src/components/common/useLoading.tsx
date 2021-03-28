@@ -21,7 +21,7 @@ interface Props {
  * @param props The properties holding the children
  * @constructor
  */
-export default function Loading(props: Props): JSX.Element {
+export default function LoadingProvider(props: Props): JSX.Element {
     const [isLoading, setLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>();
 
@@ -42,9 +42,10 @@ export default function Loading(props: Props): JSX.Element {
  * and the function used by children to update the loading state
  */
 export function useLoading(): UseLoadingValues {
-    const {isLoading, message, updateLoadingState} = useContext<UseLoadingValues>(LoadingContext)
+    const context = useContext<UseLoadingValues>(LoadingContext)
+    const {updateLoadingState} = context
     if (updateLoadingState === undefined) {
         throw new Error("useLoading hook can only be used when the component is a child of <Loading></Loading>")
     }
-    return {isLoading, message, updateLoadingState};
+    return context;
 }

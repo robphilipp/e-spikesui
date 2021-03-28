@@ -1,10 +1,8 @@
-import {ITheme} from "@uifabric/styling";
-import {HashMap} from "prelude-ts";
-import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../../theming";
 import {
-    CHANGE_THEME,
     KAFKA_SETTINGS_CHANGED,
-    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED, SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED, SERVER_SETTINGS_CHANGED,
+    NETWORK_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+    SENSOR_DESCRIPTION_TEMPLATE_PATH_CHANGED,
+    SERVER_SETTINGS_CHANGED,
     SettingsAction
 } from "../actions/settings";
 import {KafkaSettings} from "../../settings/kafkaSettings";
@@ -17,9 +15,6 @@ import {SensorDescriptionSettings} from "../../settings/sensorDescriptionSetting
  * The state holding the application settings
  */
 export interface SettingsState {
-    itheme: ITheme;
-    name: string;
-    palettes: HashMap<string, Palette>;
     server: ServerSettings;
     kafka: KafkaSettings;
     networkDescription: NetworkDescriptionSettings;
@@ -33,9 +28,6 @@ export interface SettingsState {
 function initialSettings(): SettingsState {
     const settings = loadOrInitializeSetting();
     return {
-        name: settings.themeName,
-        itheme: createDefaultTheme(settings.themeName).theme,
-        palettes: defaultPalettes,
         server: settings.server,
         kafka: settings.kafka,
         networkDescription: settings.networkDescription,
@@ -52,14 +44,6 @@ function initialSettings(): SettingsState {
  */
 export function settingsReducer(state = initialSettings(), action: SettingsAction): SettingsState {
     switch (action.type) {
-        case CHANGE_THEME:
-            console.log(`settings -- theme; action type: ${action.type}; theme: ${action.theme}`);
-            return {
-                ...state,
-                name: action.theme,
-                itheme: createTheme(action.theme, state.palettes).theme,
-            };
-
         case KAFKA_SETTINGS_CHANGED:
             return {
                 ...state,

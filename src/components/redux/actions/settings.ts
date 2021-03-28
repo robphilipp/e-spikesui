@@ -100,17 +100,17 @@ export function hideSettingsPanel(): SettingsPanelVisibleAction {
     }
 }
 
-/**
- * Action to change the UI theme
- * @param name The name of the new theme
- * @return The action
- */
-export function changeTheme(name: string): ChangeThemeAction {
-    return {
-        type: CHANGE_THEME,
-        theme: name
-    }
-}
+// /**
+//  * Action to change the UI theme
+//  * @param name The name of the new theme
+//  * @return The action
+//  */
+// export function changeTheme(name: string): ChangeThemeAction {
+//     return {
+//         type: CHANGE_THEME,
+//         theme: name
+//     }
+// }
 
 /**
  * Action to change the settings for connecting to the spikes server

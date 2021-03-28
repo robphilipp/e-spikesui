@@ -11,6 +11,7 @@ import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useEffect, useRef, useState} from "react";
+import {useTheme} from "../common/useTheme";
 
 interface Dimension {
     width: number;
@@ -27,7 +28,7 @@ export interface OwnProps {
 }
 
 export interface StateProps {
-    itheme: ITheme;
+    // itheme: ITheme;
 
     networkId: Option<string>;
     neurons: HashMap<string, NeuronInfo>;
@@ -46,8 +47,10 @@ type Props = StateProps & OwnProps;
  * @constructor
  */
 function NetworkVisualization(props: Props): JSX.Element {
+    const {itheme} = useTheme()
+
     const {
-        itheme,
+        // itheme,
         sceneWidth, sceneHeight,
         excitationColor = new Color(itheme.palette.green),     // green
         inhibitionColor = new Color(itheme.palette.red),     // red
@@ -147,7 +150,7 @@ function NetworkVisualization(props: Props): JSX.Element {
  */
 const mapStateToProps = (state: AppState): StateProps => ({
     networkId: state.networkManagement.networkId,
-    itheme: state.settings.itheme,
+    // itheme: state.settings.itheme,
     neurons: state.networkEvent.neurons,
     connections: state.networkEvent.connections,
 });

@@ -34,6 +34,7 @@ import {
 import {NetworkEvent} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
 import {initialNetVisState} from "../../redux/reducers/networkVisualization";
+import {useTheme} from "../../common/useTheme";
 
 export interface ColorRange {
     excitatory: { min: Color, max: Color };
@@ -55,7 +56,7 @@ export interface OwnProps {
 }
 
 export interface StateProps {
-    itheme: ITheme;
+    // itheme: ITheme;
 
     networkId: Option<string>;
     neurons: HashMap<string, NeuronInfo>;
@@ -109,9 +110,11 @@ function colorRange(itheme: ITheme, excitationColor: Color, inhibitionColor: Col
  * @constructor
  */
 function Network(props: Props): JSX.Element {
+    const {itheme} = useTheme()
+
     const {
         visualizationId,
-        itheme,
+        // itheme,
         sceneWidth,
         sceneHeight,
         axesOffset = origin(),
@@ -395,7 +398,7 @@ function Network(props: Props): JSX.Element {
  * @return The updated the state-properties, which in our case is the network neurons and connections
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    itheme: state.settings.itheme,
+    // itheme: state.settings.itheme,
 
     networkId: state.networkManagement.networkId,
     neurons: state.networkEvent.neurons,

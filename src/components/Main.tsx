@@ -15,7 +15,7 @@ import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
-import {changeTheme, hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
+import {hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
 import {ApplicationAction, clearMessage, FeedbackMessage, setErrorMessage} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
@@ -52,7 +52,7 @@ import {SimulationProject} from "./repos/simulationProjectRepo";
 import tinycolor from 'tinycolor2';
 import LoadingModal from "./common/LoadingModal";
 import LoadingProvider from './common/useLoading';
-import ThemeProvider from "./common/useTheme";
+import ThemeProvider, {useTheme} from "./common/useTheme";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -73,11 +73,11 @@ interface StateProps {
     // determines if the application settings panel is visible
     settingsPanelVisible: boolean;
     // the current theme
-    itheme: ITheme;
-    // the name of the current theme
-    name: string;
-    // the current map of the theme names and their associated color palettes
-    palettes: HashMap<string, Palette>;
+    // itheme: ITheme;
+    // // the name of the current theme
+    // name: string;
+    // // the current map of the theme names and their associated color palettes
+    // palettes: HashMap<string, Palette>;
     // network-description, path, template path, and modification state
     networkDescriptionTemplatePath: string;
     networkDescription: string;
@@ -99,7 +99,7 @@ interface DispatchProps {
 
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
-    onChangeTheme: (theme: string) => void;
+    // onChangeTheme: (theme: string) => void;
 
     onLoadNetworkDescriptionTemplate: (path: string) => Promise<NetworkDescriptionLoadedAction>;
     onLoadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
@@ -118,8 +118,8 @@ type Props = StateProps & DispatchProps & OwnProps;
 
 function Main(props: Props): JSX.Element {
     const {
-        itheme,
-        name,
+        // itheme,
+        // name,
 
         settingsPanelVisible,
         onShowSettingsPanel,
@@ -160,6 +160,8 @@ function Main(props: Props): JSX.Element {
     const history = useHistory();
     // const location = useLocation();
     const networkEditorRouteMatch = useRouteMatch(AppPath.NETWORK_EDITOR);
+
+    const {itheme} = useTheme()
 
     // register spikes language with the monaco editor when the component mounts
     useEffect(() => {
@@ -529,74 +531,72 @@ function Main(props: Props): JSX.Element {
     }
 
     return (
-        <ThemeProvider>
-            <LoadingProvider>
-                <LoadingModal/>
-                <Stack>
-                    <StackItem>
-                        <CommandBar
-                            items={menuItems()}
-                            farItems={farMenuItems(handleSettingsPanelVisibility)}
+        <LoadingProvider>
+            <LoadingModal/>
+            <Stack>
+                <StackItem>
+                    <CommandBar
+                        items={menuItems()}
+                        farItems={farMenuItems(handleSettingsPanelVisibility)}
+                    />
+                </StackItem>
+                <StackItem>
+                    {message.map(feedback => (
+                        <MessageBar
+                            key="feedback-messages"
+                            messageBarType={feedback.messageType}
+                            isMultiline={false}
+                            truncated={true}
+                            theme={itheme}
+                            onDismiss={onClearMessage}
+                            dismissButtonAriaLabel="Close"
+                            overflowButtonAriaLabel="See more"
+                        >
+                            {feedback.messageContent}
+                        </MessageBar>
+                    )).getOrElse((<div/>))}
+                </StackItem>
+                <StackItem grow>
+                    <SettingsPanel/>
+                </StackItem>
+                <StackItem>
+                    <Switch>
+                        <Route
+                            path={`${AppPath.SIMULATION}/:simulationProjectPath`}
+                            render={(renderProps) =>
+                                <SimulationManager
+                                    networkRouterPath={AppPath.NETWORK_EDITOR}
+                                    sensorRouterPath={AppPath.SENSOR_EDITOR}
+                                    // theme={editorThemeFrom(name)}
+                                    // itheme={props.itheme}
+                                    {...renderProps}
+                                />
+                            }
                         />
-                    </StackItem>
-                    <StackItem>
-                        {message.map(feedback => (
-                            <MessageBar
-                                key="feedback-messages"
-                                messageBarType={feedback.messageType}
-                                isMultiline={false}
-                                truncated={true}
-                                theme={props.itheme}
-                                onDismiss={onClearMessage}
-                                dismissButtonAriaLabel="Close"
-                                overflowButtonAriaLabel="See more"
-                            >
-                                {feedback.messageContent}
-                            </MessageBar>
-                        )).getOrElse((<div/>))}
-                    </StackItem>
-                    <StackItem grow>
-                        <SettingsPanel/>
-                    </StackItem>
-                    <StackItem>
-                        <Switch>
-                            <Route
-                                path={`${AppPath.SIMULATION}/:simulationProjectPath`}
-                                render={(renderProps) =>
-                                    <SimulationManager
-                                        networkRouterPath={AppPath.NETWORK_EDITOR}
-                                        sensorRouterPath={AppPath.SENSOR_EDITOR}
-                                        theme={editorThemeFrom(name)}
-                                        itheme={props.itheme}
-                                        {...renderProps}
-                                    />
-                                }
-                            />
-                            <Route
-                                path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
-                                render={(renderProps) =>
-                                    <NetworkEditor
-                                        theme={editorThemeFrom(name)}
-                                        itheme={props.itheme}
-                                        {...renderProps}
-                                    />
-                                }
-                            />
-                            <Route
-                                path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
-                                render={(renderProps) =>
-                                    <SensorsEditor
-                                        theme={editorThemeFrom(name)}
-                                        itheme={props.itheme}
-                                        {...renderProps}
-                                    />
-                                }
-                            />
-                        </Switch>
-                    </StackItem>
-                </Stack>
-            </LoadingProvider>
-        </ThemeProvider>
+                        <Route
+                            path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
+                            render={(renderProps) =>
+                                <NetworkEditor
+                                    // theme={editorThemeFrom(name)}
+                                    // itheme={props.itheme}
+                                    {...renderProps}
+                                />
+                            }
+                        />
+                        <Route
+                            path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
+                            render={(renderProps) =>
+                                <SensorsEditor
+                                    // theme={editorThemeFrom(name)}
+                                    // itheme={props.itheme}
+                                    {...renderProps}
+                                />
+                            }
+                        />
+                    </Switch>
+                </StackItem>
+            </Stack>
+        </LoadingProvider>
     )
 }
 
@@ -618,9 +618,9 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
     loadingMessage: state.application.loadingMessage,
     message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
-    itheme: state.settings.itheme,
-    name: state.settings.name,
-    palettes: state.settings.palettes,
+    // itheme: state.settings.itheme,
+    // name: state.settings.name,
+    // palettes: state.settings.palettes,
 
     networkDescriptionTemplatePath: state.settings.networkDescription.templatePath,
     networkDescription: state.networkDescription.description,
@@ -649,7 +649,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
 
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
-    onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+    // onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
 
     onLoadNetworkDescriptionTemplate: (path: string) => dispatch(loadNetworkDescriptionFromTemplate(path)),
     onLoadNetworkDescription: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),

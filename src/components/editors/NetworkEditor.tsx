@@ -1,9 +1,9 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "./MonacoEditor";
-import {defaultCustomThemes, DefaultTheme} from './themes';
+import {defaultCustomThemes} from './themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
-import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
+import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -18,8 +18,8 @@ import {
 import {connect} from "react-redux";
 import {
     IconButton,
-    ITheme,
-    Layer, LayerHost,
+    Layer,
+    LayerHost,
     MessageBar,
     MessageBarType,
     Separator,
@@ -32,6 +32,7 @@ import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
+import {useTheme} from "../common/useTheme";
 
 export const NEW_NETWORK_PATH = '**new**';
 
@@ -46,10 +47,10 @@ interface Dimension {
     width: number;
 }
 
-interface OwnProps extends RouteComponentProps<never> {
-    itheme: ITheme;
-    theme?: string;
-}
+// interface OwnProps extends RouteComponentProps<never> {
+//     itheme: ITheme;
+//     theme?: string;
+// }
 
 interface StateProps {
     networkDescription: string;
@@ -65,7 +66,7 @@ interface DispatchProps {
     loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
 }
 
-type Props = StateProps & DispatchProps & OwnProps;
+type Props = StateProps & DispatchProps //& OwnProps;
 
 /**
  * Wrapper for the monaco editor that manages resizing and theme updates
@@ -75,8 +76,8 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function NetworkEditor(props: Props): JSX.Element {
     const {
-        itheme,
-        theme = DefaultTheme.DARK,
+        // itheme,
+        // theme = DefaultTheme.DARK,
         networkDescription,
         templatePath,
         onChanged,
@@ -86,6 +87,8 @@ function NetworkEditor(props: Props): JSX.Element {
         modified,
         networkDescriptionPath,
     } = props;
+
+    const {itheme, themeName: theme} = useTheme()
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path
@@ -416,7 +419,7 @@ function NetworkEditor(props: Props): JSX.Element {
                     marginLeft: 30,
                     marginBottom: 8,
                     height: 15,
-                    color: props.itheme.palette.themeSecondary
+                    color: itheme.palette.themeSecondary
                 }}
             >
                 {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?

@@ -3,6 +3,7 @@ import {ITheme} from "@fluentui/react";
 import {createContext, useContext, useState} from "react";
 import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../theming";
 import {HashMap} from "prelude-ts";
+import {readSettings} from "../repos/appSettingsRepo";
 
 interface UseThemeValues {
     themeName: string;
@@ -12,7 +13,7 @@ interface UseThemeValues {
     addPalette: (name: string, palette: Palette) => void;
 }
 
-const DEFAULT_THEME_NAME = 'dark'
+const DEFAULT_THEME_NAME = readSettings().map(settings => settings.themeName).getOrElse('dark')
 function noop() {
     /* empty */
 }

@@ -5,7 +5,6 @@ import {
     DefaultButton,
     Dropdown,
     IDropdownOption,
-    ITheme,
     Label,
     MessageBar,
     MessageBarType,
@@ -20,14 +19,14 @@ import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
-import {Palette} from "../../theming";
-import {HashMap, Option} from 'prelude-ts';
+import {Option} from 'prelude-ts';
 import {
     changeKafkaSettings,
     changeServerSettings,
-    changeTheme,
     hideSettingsPanel,
-    showSettingsPanel, updateNetworkDescriptionTemplatePath, updateSensorDescriptionTemplatePath
+    showSettingsPanel,
+    updateNetworkDescriptionTemplatePath,
+    updateSensorDescriptionTemplatePath
 } from "../redux/actions/settings";
 import {KafkaSettings} from "./kafkaSettings";
 import KafkaSettingsEditor from "./KafkaSettingsEditor";
@@ -39,6 +38,7 @@ import TemplateSettingsEditor from "./TemplateSettingsEditor";
 import TemplateSettings from "./templateSettings";
 import {saveSettingsAsync} from "../repos/appSettingsRepo";
 import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
+import {useTheme} from "../common/useTheme";
 
 const themes: IDropdownOption[] = [
     {key: "default", text: "Default Theme"},
@@ -54,11 +54,11 @@ interface OwnProps {
 
 interface StateProps {
     settingsPanelVisible: boolean;
-    // current theme
-    itheme: ITheme;
-    // current theme name
-    name: string;
-    palettes: HashMap<string, Palette>;
+    // // current theme
+    // itheme: ITheme;
+    // // current theme name
+    // name: string;
+    // palettes: HashMap<string, Palette>;
     serverSettings: ServerSettings;
     kafkaSettings: KafkaSettings;
     templateSettings: TemplateSettings;
@@ -69,7 +69,7 @@ interface StateProps {
 interface DispatchProps {
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
-    onChangeTheme: (theme: string) => void;
+    // onChangeTheme: (theme: string) => void;
     onChangeServerSettings: (settings: ServerSettings) => void;
     onChangeKafkaSettings: (settings: KafkaSettings) => void;
     // onChangeNetworkDescriptionSettings: (settings: NetworkDescriptionSettings) => void;
@@ -87,8 +87,8 @@ type Props = StateProps & DispatchProps & OwnProps
  */
 function SettingsPanel(props: Props): JSX.Element {
     const {
-        itheme,
-        name,
+        // itheme,
+        // name,
         settingsPanelVisible,
         // palettes,
         serverSettings,
@@ -98,12 +98,14 @@ function SettingsPanel(props: Props): JSX.Element {
         environmentSettings,
         // onShowSettingsPanel,
         onHideSettingsPanel,
-        onChangeTheme,
+        // onChangeTheme,
         onChangeServerSettings,
         // onChangeKafkaSettings,
         onChangeTemplateSettings
         // onChangeNetworkDescriptionSettings
     } = props;
+
+    const {themeName: name, itheme, changeTheme: onChangeTheme} = useTheme()
 
     // initially we start out with the current theme name to be an empty option. when
     // the user selects a theme, we update the current theme with the theme that
@@ -340,9 +342,9 @@ function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
     return {
         ...ownProps,
         settingsPanelVisible: state.application.settingsPanelVisible,
-        itheme: state.settings.itheme,
-        name: state.settings.name,
-        palettes: state.settings.palettes,
+        // itheme: state.settings.itheme,
+        // name: state.settings.name,
+        // palettes: state.settings.palettes,
         serverSettings: state.settings.server,
         kafkaSettings: state.settings.kafka,
         networkDescriptionSettings: state.settings.networkDescription,
@@ -365,7 +367,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, Applicati
     return {
         onShowSettingsPanel: () => dispatch(showSettingsPanel()),
         onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
-        onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
+        // onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
         onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings)),
         onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings)),
         onChangeTemplateSettings: (settings: TemplateSettings) => {

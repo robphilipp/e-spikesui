@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
-import {defaultCustomThemes} from './themes';
+import {defaultCustomThemes, editorThemeFrom} from './themes';
 import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -419,7 +419,7 @@ function SensorsEditor(props: Props): JSX.Element {
                             width={dimension.width}
                             height={dimension.height}
                             language="javascript"
-                            theme={themeName}
+                            theme={editorThemeFrom(themeName)}
                             customThemes={customThemes}
                             value={codeSnippet}
                             options={editorOptions}

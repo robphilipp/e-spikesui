@@ -137,7 +137,10 @@ function RunDeployManager(props: Props): JSX.Element {
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
 
     const visualizationRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({height: window.innerHeight - headerOffset, width: window.innerWidth - 50});
+    const [dimension, setDimension] = useState<Dimension>({
+        height: window.innerHeight - headerOffset,
+        width: window.innerWidth - 50
+    });
 
     // simulation time
     const {simulationTime, startTimer, cancelTimer} = useSimulationTimer(handleStop)
@@ -214,7 +217,7 @@ function RunDeployManager(props: Props): JSX.Element {
             try {
                 networkManagerThreadRef.current = await newNetworkManagerThread()
                 await handleBuildNetwork();
-            } catch(error) {
+            } catch (error) {
                 onSetErrorMessages(<div>Cannot build network; {error.toString()}</div>)
                 return;
             }
@@ -575,19 +578,25 @@ function RunDeployManager(props: Props): JSX.Element {
                 <Stack.Item>
                     {networkId.map(id => (
                         <Card key={1} tokens={{childrenMargin: 12, boxShadow: "none", maxWidth: 'unset'}}>
-                            <Separator
-                                vertical={false}
-                                color={itheme.palette.neutralSecondary}
-                                styles={{root: {padding: 0, fontSize: 14}}}
-                            >Simulation Information</Separator>
+                            <Card.Item>
+                                <Separator
+                                    vertical={false}
+                                    color={itheme.palette.neutralSecondary}
+                                    styles={{root: {padding: 0, fontSize: 14}}}
+                                >
+                                    Simulation Information
+                                </Separator>
+                            </Card.Item>
                             <Card.Section>
                                 {networkInfo(id)}
                             </Card.Section>
-                            <Separator
-                                vertical={false}
-                                color={itheme.palette.neutralSecondary}
-                                styles={{root: {padding: 0, fontSize: 0}}}
-                            />
+                            <Card.Item>
+                                <Separator
+                                    vertical={false}
+                                    color={itheme.palette.neutralSecondary}
+                                    styles={{root: {padding: 0, fontSize: 0}}}
+                                />
+                            </Card.Item>
                             <Card.Section horizontal>
                                 {networkSimulationButton()}
                                 <TooltipHost content="Pause processing of events.">

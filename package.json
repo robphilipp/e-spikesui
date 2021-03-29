@@ -82,6 +82,7 @@
     "@types/react-dom": "^17.0.0",
     "@types/react-redux": "^7.1.9",
     "@types/react-router-dom": "^5.1.5",
+    "@types/three": "^0.126.2",
     "@types/tinycolor2": "^1.4.2",
     "@typescript-eslint/eslint-plugin": "^4.10.0",
     "@typescript-eslint/parser": "^4.10.0",
@@ -130,7 +131,7 @@
     "sass-loader": "^10.1.0",
     "stream-charts": "file:../../../stream-charts/stream-charts-0.2.2-SNAPSHOT.tgz",
     "threads": "^1.6.3",
-    "three": "^0.124.0",
+    "three": "^0.126.1",
     "tinycolor2": "^1.4.2",
     "url-loader": "^4.1.1"
   }

@@ -184,9 +184,9 @@ function RunDeployManager(props: Props): JSX.Element {
      * calculates the editors dimensions based on the `<div>`'s width and height
      * @return The dimension of the editor
      */
-    function editorDimensions(): Dimension {
+    function networkVisualizationDimensions(): Dimension {
         return {
-            width: visualizationRef.current.offsetWidth - 50,
+            width: visualizationRef.current.offsetWidth,
             height: visualizationRef.current.offsetHeight - headerOffset
         };
     }
@@ -196,7 +196,7 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     function handleWindowResize(): void {
         if (visualizationRef.current) {
-            const nextDimension = editorDimensions()
+            const nextDimension = networkVisualizationDimensions()
             const minDiff = 2;
             if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
                 Math.abs(nextDimension.width - dimension.width) > minDiff) {
@@ -564,10 +564,7 @@ function RunDeployManager(props: Props): JSX.Element {
         </TooltipHost>
     }
 
-    return <div
-        ref={visualizationRef}
-        style={{height: window.innerHeight * 0.9, width: '100%'}}
-    >
+    return <div ref={visualizationRef} style={{height: window.innerHeight, width: '100%'}}>
         <Stack>
             <Stack horizontal>
                 <Stack.Item>
@@ -619,7 +616,7 @@ function RunDeployManager(props: Props): JSX.Element {
                             key="net-1"
                             networkObservable={networkSubject}
                             sceneHeight={dimension.height - 200}
-                            sceneWidth={dimension.width}
+                            sceneWidth={dimension.width - 50}
                             // onClose={hideSimulationLayer}
                             {...props}
                         /> :

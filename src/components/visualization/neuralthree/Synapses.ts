@@ -83,7 +83,6 @@ function connectionKeyFor(connection: ConnectionInfo): string {
 function meshParametersFor(baseColors: ColorRange, excitatory: boolean): MeshBasicMaterialParameters {
     return {
         transparent: true,
-        vertexColors: true,
         alphaTest: 0.5,
         color: excitatory ? baseColors.excitatory.max : baseColors.inhibitory.max,
     }

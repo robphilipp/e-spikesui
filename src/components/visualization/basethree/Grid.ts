@@ -2,11 +2,10 @@ import {useThree} from './useThree';
 import {
     BufferAttribute,
     BufferGeometry,
-    Color, FaceColors,
+    Color,
     Float32BufferAttribute,
     LineBasicMaterial,
     LineSegments,
-    VertexColors
 } from "three";
 import {useEffect, useState} from "react";
 import {ThreeContext} from "./ThreeJsManager";

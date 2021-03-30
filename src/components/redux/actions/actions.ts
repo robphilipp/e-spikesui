@@ -8,10 +8,6 @@ import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
 import {NetworkVisualizationAction} from "./networkVisualization";
 
-// import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
-// import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
-// import {NetworkVisualizationAction} from "./networkVisualization";
-
 export interface FeedbackMessage {
     messageType: MessageBarType;
     messageContent: JSX.Element;
@@ -24,9 +20,6 @@ export interface FeedbackMessage {
  */
 export const SET_MESSAGE = "set-messages";
 export const CLEAR_MESSAGE = "clear-messages";
-
-export const SET_LOADING_STATE = "set-loading-state";
-// export const CLEAR_LOADING = "clear-loading";
 
 /*
  |
@@ -48,29 +41,11 @@ export interface MessageSetAction {
     message: Option<FeedbackMessage>;
 }
 
-
-// export interface SetLoadingAction {
-//     type: typeof SET_LOADING;
-// }
-//
-// export interface ClearLoadingAction {
-//     type: typeof CLEAR_LOADING;
-// }
-//
-// export type LoadingAction = SetLoadingAction | ClearLoadingAction;
-export interface LoadingAction {
-    type: typeof SET_LOADING_STATE;
-    loading: boolean;
-    message?: string;
-}
-
 /**
  * Lists all the actions that are part of the application action
  */
 export type ApplicationAction = MessageSetAction
     | MessageClearedAction
-
-    | LoadingAction
 
     | SettingsAction
 

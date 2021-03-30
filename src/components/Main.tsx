@@ -53,8 +53,6 @@ interface OwnProps extends RouteComponentProps<never> {
 }
 
 interface StateProps {
-    loading: boolean;
-    loadingMessage?: string;
     // holds an error message
     message: Option<FeedbackMessage>;
 
@@ -575,8 +573,8 @@ function Main(props: Props): JSX.Element {
  * @return the state props for this component
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    loading: state.application.loading,
-    loadingMessage: state.application.loadingMessage,
+    // loading: state.application.loading,
+    // loadingMessage: state.application.loadingMessage,
     message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
 

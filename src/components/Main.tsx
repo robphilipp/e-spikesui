@@ -6,7 +6,7 @@ import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
-import {ApplicationAction, clearMessage, FeedbackMessage, setErrorMessage} from "./redux/actions/actions";
+import {ApplicationAction, FeedbackMessage} from "./redux/actions/actions";
 import {HashMap, Option} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
@@ -41,6 +41,8 @@ import {SimulationProject} from "./repos/simulationProjectRepo";
 import LoadingModal from "./common/LoadingModal";
 import LoadingProvider from './common/useLoading';
 import {useTheme} from "./common/useTheme";
+import {MessageProvider} from "./common/useMessage";
+import ApplicationMessage from "./common/ApplicationMessage";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -53,8 +55,8 @@ interface OwnProps extends RouteComponentProps<never> {
 }
 
 interface StateProps {
-    // holds an error message
-    message: Option<FeedbackMessage>;
+    // // holds an error message
+    // message: Option<FeedbackMessage>;
 
     // determines if the application settings panel is visible
     settingsPanelVisible: boolean;
@@ -74,8 +76,8 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    onSetErrorMessage: (message: JSX.Element) => void;
-    onClearMessage: () => void;
+    // onSetErrorMessage: (message: JSX.Element) => void;
+    // onClearMessage: () => void;
 
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
@@ -101,9 +103,9 @@ function Main(props: Props): JSX.Element {
         onShowSettingsPanel,
         onHideSettingsPanel,
 
-        message,
-        onSetErrorMessage,
-        onClearMessage,
+        // message,
+        // onSetErrorMessage,
+        // onClearMessage,
 
         networkDescriptionTemplatePath,
         networkDescription,
@@ -506,6 +508,7 @@ function Main(props: Props): JSX.Element {
     return (
         <LoadingProvider>
             <LoadingModal/>
+            <MessageProvider>
             <Stack>
                 <StackItem>
                     <CommandBar
@@ -514,20 +517,7 @@ function Main(props: Props): JSX.Element {
                     />
                 </StackItem>
                 <StackItem>
-                    {message.map(feedback => (
-                        <MessageBar
-                            key="feedback-messages"
-                            messageBarType={feedback.messageType}
-                            isMultiline={false}
-                            truncated={true}
-                            theme={itheme}
-                            onDismiss={onClearMessage}
-                            dismissButtonAriaLabel="Close"
-                            overflowButtonAriaLabel="See more"
-                        >
-                            {feedback.messageContent}
-                        </MessageBar>
-                    )).getOrElse((<div/>))}
+                    <ApplicationMessage/>
                 </StackItem>
                 <StackItem grow>
                     <SettingsPanel/>
@@ -555,6 +545,7 @@ function Main(props: Props): JSX.Element {
                     </Switch>
                 </StackItem>
             </Stack>
+            </MessageProvider>
         </LoadingProvider>
     )
 }
@@ -573,9 +564,7 @@ function Main(props: Props): JSX.Element {
  * @return the state props for this component
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    // loading: state.application.loading,
-    // loadingMessage: state.application.loadingMessage,
-    message: state.application.message,
+    // message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
 
     networkDescriptionTemplatePath: state.settings.networkDescription.templatePath,
@@ -600,8 +589,8 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onSetErrorMessage: (message: JSX.Element) => dispatch(setErrorMessage(message)),
-    onClearMessage: () => dispatch(clearMessage()),
+    // onSetErrorMessage: (message: JSX.Element) => dispatch(setErrorMessage(message)),
+    // onClearMessage: () => dispatch(clearMessage()),
 
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),

@@ -1,15 +1,8 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
 import {RouteComponentProps, withRouter} from "react-router-dom";
-import {IconButton, ITheme, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
-import {
-    ApplicationAction,
-    clearMessage,
-    FeedbackMessage,
-    MessageClearedAction,
-    MessageSetAction,
-    setErrorMessage,
-} from "../redux/actions/actions";
+import {IconButton, ITheme, MessageBarType, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
+import {ApplicationAction,} from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {connect} from "react-redux";
@@ -36,6 +29,7 @@ import NetworkVisualization from "./NetworkVisualization";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
 import useSimulationTimer from "./useSimulationTimer";
 import {useLoading} from "../common/useLoading";
+import {useMessage} from "../common/useMessage";
 
 const headerOffset = 200;
 
@@ -66,8 +60,8 @@ interface StateProps {
     neuronIds: Vector<string>;
     // the network build status
     networkBuilt: boolean;
-    // neuron ids for the built network
-    errorMessages: Option<FeedbackMessage>;
+    // // neuron ids for the built network
+    // errorMessages: Option<FeedbackMessage>;
     // the base websocket subscription subject
     webSocketSubject: Option<WebSocketSubject<string>>;
     // the subject for pausing the processing of the incoming messages
@@ -90,8 +84,8 @@ interface DispatchProps {
     createNetworkObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction;
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => Promise<UnsubscribeWebsocketAction>;
 
-    onSetErrorMessages: (messages: JSX.Element) => MessageSetAction;
-    onClearErrorMessages: () => MessageClearedAction;
+    // onSetErrorMessages: (messages: JSX.Element) => MessageSetAction;
+    // onClearErrorMessages: () => MessageClearedAction;
 
     onNetworkBuildEvents: (action: NetworkEventsAction) => NetworkEventsAction;
 }
@@ -119,13 +113,14 @@ function RunDeployManager(props: Props): JSX.Element {
 
         onNetworkBuildEvents,
 
-        onSetErrorMessages,
-        onClearErrorMessages,
+        // onSetErrorMessages,
+        // onClearErrorMessages,
 
         // running,
     } = props;
 
     const {updateLoadingState} = useLoading();
+    const {setMessage, clearMessage} = useMessage()
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
@@ -218,13 +213,13 @@ function RunDeployManager(props: Props): JSX.Element {
                 networkManagerThreadRef.current = await newNetworkManagerThread()
                 await handleBuildNetwork();
             } catch (error) {
-                onSetErrorMessages(<div>Cannot build network; {error.toString()}</div>)
+                setMessage(MessageBarType.error, <div>Cannot build network; {error.toString()}</div>)
                 return;
             }
         }
         const networkManager = networkManagerThreadRef.current;
 
-        onClearErrorMessages();
+        clearMessage();
         updateLoadingState(true, `Building network`);
 
         try {
@@ -251,7 +246,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 setNetworkId(Option.of(id));
             })
         } catch (error) {
-            onSetErrorMessages(error.toString());
+            setMessage(MessageBarType.error, error.toString());
             updateLoadingState(false);
         }
     }
@@ -263,7 +258,7 @@ function RunDeployManager(props: Props): JSX.Element {
     async function handleDeleteNetwork(): Promise<void> {
         const id = networkId.getOrUndefined();
         if (id === undefined) {
-            onSetErrorMessages(<div>Cannot delete network because the network ID is undefined</div>)
+            setMessage(MessageBarType.error, <div>Cannot delete network because the network ID is undefined</div>)
             return;
         }
 
@@ -271,7 +266,7 @@ function RunDeployManager(props: Props): JSX.Element {
         // case it hasn't, attempt to create the network manager thread, and then call
         // this function once it has been built
         if (networkManagerThreadRef.current === undefined) {
-            onSetErrorMessages(<div>Cannot delete network {id} because tge network manager thread is undefined.</div>)
+            setMessage(MessageBarType.error, <div>Cannot delete network {id} because tge network manager thread is undefined.</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -281,7 +276,7 @@ function RunDeployManager(props: Props): JSX.Element {
         try {
             const action = await onDeleteNetwork(id);
             action.result
-                .ifLeft(messages => onSetErrorMessages(asErrorMessage(messages)))
+                .ifLeft(messages => setMessage(MessageBarType.error, asErrorMessage(messages)))
                 .ifRight(() => {
                     // clear out the network ID and let the network manager
                     // thread know to remove the network
@@ -322,7 +317,7 @@ function RunDeployManager(props: Props): JSX.Element {
             try {
                 onNetworkBuildEvents(actions);
             } catch (error) {
-                onSetErrorMessages(<div>{error.message}</div>);
+                setMessage(MessageBarType.error, <div>{error.message}</div>);
                 updateLoadingState(false);
             }
         }
@@ -336,7 +331,7 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     async function handleStart(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
-            onSetErrorMessages(<div>Cannot start the network because the network manager thread is undefined</div>)
+            setMessage(MessageBarType.error, <div>Cannot start the network because the network manager thread is undefined</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -350,7 +345,7 @@ function RunDeployManager(props: Props): JSX.Element {
             // start the simulation timer
             startTimer(simulationDuration, timeFactor);
         } catch (error) {
-            onSetErrorMessages(<div>{error.toString()}</div>)
+            setMessage(MessageBarType.error, <div>{error.toString()}</div>)
         } finally {
             updateLoadingState(false);
         }
@@ -362,7 +357,7 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     async function handleStop(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
-            onSetErrorMessages(<div>Cannot stop the network because the network manager thread is undefined</div>)
+            setMessage(MessageBarType.error, <div>Cannot stop the network because the network manager thread is undefined</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -377,7 +372,7 @@ function RunDeployManager(props: Props): JSX.Element {
             // stop the simulation timer
             cancelTimer();
         } catch (error) {
-            onSetErrorMessages(<div>{error.toString()}</div>);
+            setMessage(MessageBarType.error, <div>{error.toString()}</div>);
         }
     }
 
@@ -651,7 +646,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
 
     neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
     networkBuilt: state.networkEvent.networkBuilt,
-    errorMessages: state.application.message,
+    // errorMessages: state.application.message,
 
     webSocketSubject: Option.ofNullable(state.networkManagement.websocketSubject),
     pauseSubject: state.networkManagement.pauseSubject,
@@ -683,9 +678,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) =>
         dispatch(remoteActionCreators.networkManagement.unsubscribe(subscription, pauseSubscription)),
 
-    onSetErrorMessages: (message: JSX.Element) => dispatch(setErrorMessage(message)),
-
-    onClearErrorMessages: () => dispatch(clearMessage()),
+    // onSetErrorMessages: (message: JSX.Element) => dispatch(setErrorMessage(message)),
+    //
+    // onClearErrorMessages: () => dispatch(clearMessage()),
 
     onNetworkBuildEvents: (action: NetworkEventsAction) => dispatch(action)
 });

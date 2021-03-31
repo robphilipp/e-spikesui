@@ -3,7 +3,6 @@ import {NetworkDescriptionAction} from "./networkDescription";
 import {SensorsAction} from "./sensors";
 import {SimulationProjectAction} from "./simulationProject";
 import {MessageBarType} from "@fluentui/react";
-import {Option} from "prelude-ts";
 import {NetworkBuiltAction, NetworkManagementAction} from "./networkManagement";
 import {NetworkEventAction, NetworkEventsAction} from "./networkEvent";
 import {NetworkVisualizationAction} from "./networkVisualization";
@@ -18,34 +17,34 @@ export interface FeedbackMessage {
  | Action names (for use by actions, redux action creators, and reducers)
  |
  */
-export const SET_MESSAGE = "set-messages";
-export const CLEAR_MESSAGE = "clear-messages";
+// export const SET_MESSAGE = "set-messages";
+// export const CLEAR_MESSAGE = "clear-messages";
 
 /*
  |
  | Action definitions (for use by the reducers)
  |
  */
-/**
- * The definition of an action that is dispatched when the error messages should be cleared
- */
-export interface MessageClearedAction {
-    type: typeof CLEAR_MESSAGE
-}
-
-/**
- * The definition of an action that is dispatched when the error messages should be set
- */
-export interface MessageSetAction {
-    type: typeof SET_MESSAGE;
-    message: Option<FeedbackMessage>;
-}
+// /**
+//  * The definition of an action that is dispatched when the error messages should be cleared
+//  */
+// export interface MessageClearedAction {
+//     type: typeof CLEAR_MESSAGE
+// }
+//
+// /**
+//  * The definition of an action that is dispatched when the error messages should be set
+//  */
+// export interface MessageSetAction {
+//     type: typeof SET_MESSAGE;
+//     message: Option<FeedbackMessage>;
+// }
 
 /**
  * Lists all the actions that are part of the application action
  */
-export type ApplicationAction = MessageSetAction
-    | MessageClearedAction
+export type ApplicationAction = //MessageSetAction
+    // | MessageClearedAction
 
     | SettingsAction
 
@@ -61,42 +60,42 @@ export type ApplicationAction = MessageSetAction
     | SimulationProjectAction
     ;
 
-/**
- * Sets the application-level error messages
- * @param message A react element containing an error message
- * @return An action to that the error message has been set
- */
-export function setErrorMessage(message: JSX.Element): MessageSetAction {
-    return setMessage(MessageBarType.error, message);
-}
+// /**
+//  * Sets the application-level error messages
+//  * @param message A react element containing an error message
+//  * @return An action to that the error message has been set
+//  */
+// export function setErrorMessage(message: JSX.Element): MessageSetAction {
+//     return setMessage(MessageBarType.error, message);
+// }
+//
+// export function setSuccessMessage(message: JSX.Element): MessageSetAction {
+//     return setMessage(MessageBarType.success, message);
+// }
+//
+// export function setInfoMessage(message: JSX.Element): MessageSetAction {
+//     return setMessage(MessageBarType.info, message);
+// }
+//
+// export function setMessage(messageType: MessageBarType, message: JSX.Element): MessageSetAction {
+//     return {
+//         type: SET_MESSAGE,
+//         message: Option.of({
+//             messageType: messageType,
+//             messageContent: message
+//         })
+//     };
+// }
 
-export function setSuccessMessage(message: JSX.Element): MessageSetAction {
-    return setMessage(MessageBarType.success, message);
-}
-
-export function setInfoMessage(message: JSX.Element): MessageSetAction {
-    return setMessage(MessageBarType.info, message);
-}
-
-export function setMessage(messageType: MessageBarType, message: JSX.Element): MessageSetAction {
-    return {
-        type: SET_MESSAGE,
-        message: Option.of({
-            messageType: messageType,
-            messageContent: message
-        })
-    };
-}
-
-/**
- * Clears the application-level error messages
- * @return An action that the error message has been cleared
- */
-export function clearMessage(): MessageClearedAction {
-    return {
-        type: CLEAR_MESSAGE
-    };
-}
+// /**
+//  * Clears the application-level error messages
+//  * @return An action that the error message has been cleared
+//  */
+// export function clearMessage(): MessageClearedAction {
+//     return {
+//         type: CLEAR_MESSAGE
+//     };
+// }
 
 /*
  |

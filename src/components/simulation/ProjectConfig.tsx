@@ -1,9 +1,9 @@
 import * as React from 'react';
 import {Card} from "@uifabric/react-cards";
-import {Icon, IconButton, ITheme, SpinButton, Text, TextField} from "@fluentui/react";
+import {Icon, IconButton, ITheme, MessageBarType, SpinButton, Text, TextField} from "@fluentui/react";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
-import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage} from "../redux/actions/actions";
+import {ApplicationAction} from "../redux/actions/actions";
 import {updateSimulationProject} from "../redux/actions/simulationProject";
 import {SimulationProject} from "../repos/simulationProjectRepo";
 import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
@@ -14,6 +14,7 @@ import {NEW_SENSOR_PATH} from "../editors/SensorsEditor";
 import {RouteComponentProps, useHistory, withRouter} from "react-router-dom";
 import {remote} from "electron";
 import {useLoading} from "../common/useLoading";
+import {useMessage} from "../common/useMessage";
 
 const durationRegex = /^[0-9]+[ ]*s*$/
 const MIN_TIME_FACTOR = 1;
@@ -39,8 +40,8 @@ interface DispatchProps {
 
     onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
     onLoadNetwork: (path: string) => Promise<NetworkDescriptionLoadedAction>;
-    onSetError: (messages: JSX.Element) => MessageSetAction;
-    onSetSuccess: (messages: JSX.Element) => MessageSetAction;
+    // onSetError: (messages: JSX.Element) => MessageSetAction;
+    // onSetSuccess: (messages: JSX.Element) => MessageSetAction;
 }
 
 type Props = OwnProps & StateProps & DispatchProps;
@@ -58,11 +59,12 @@ function ProjectConfig(props: Props): JSX.Element {
         onChange,
         onLoadSensor,
         onLoadNetwork,
-        onSetError,
+        // onSetError,
     } = props;
 
     const history = useHistory();
     const {updateLoadingState} = useLoading();
+    const {setMessage} = useMessage()
 
     /**
      * Handles changes to the simulation name
@@ -186,7 +188,7 @@ function ProjectConfig(props: Props): JSX.Element {
                         networkFilePath: networkDescriptionPath,
                         sensorFilePath: action.result.path,
                     }))
-                    .catch(reason => onSetError(<>
+                    .catch(reason => setMessage(MessageBarType.error, <>
                         <div><b>Unable to load sensor-description file</b></div>
                         <div>Path: {response.filePaths[0]}</div>
                         <div>Response: {reason}</div>
@@ -222,7 +224,7 @@ function ProjectConfig(props: Props): JSX.Element {
                         networkFilePath: action.result.path,
                         sensorFilePath: sensorDescriptionPath,
                     }))
-                    .catch(reason => onSetError(<>
+                    .catch(reason => setMessage(MessageBarType.error, <>
                         <div><b>Unable to load network-description file</b></div>
                         <div>Path: {response.filePaths[0]}</div>
                         <div>Response: {reason}</div>
@@ -443,8 +445,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
     onLoadNetwork: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
 
-    onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
-    onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),
+    // onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
+    // onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),
 });
 
 const connectedProjectConfig = connect(mapStateToProps, mapDispatchToProps)(ProjectConfig);

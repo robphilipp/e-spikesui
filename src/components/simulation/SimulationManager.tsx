@@ -1,4 +1,4 @@
-import {IconButton, Pivot, PivotItem, Separator, Stack, StackItem, TooltipHost} from "@fluentui/react";
+import {IconButton, MessageBarType, Pivot, PivotItem, Separator, Stack, StackItem, TooltipHost} from "@fluentui/react";
 import {remote} from "electron";
 import * as React from "react";
 import {useEffect, useState} from "react";
@@ -6,7 +6,7 @@ import {connect} from "react-redux";
 import {RouteComponentProps, useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {ThunkDispatch} from "redux-thunk";
 import {KeyboardShortcut, keyboardShortcutFor} from "../editors/keyboardShortcuts";
-import {ApplicationAction, MessageSetAction, setErrorMessage, setSuccessMessage} from "../redux/actions/actions";
+import {ApplicationAction} from "../redux/actions/actions";
 import {
     loadSimulationProject,
     newSimulationProject,
@@ -24,6 +24,7 @@ import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
 import {useLoading} from "../common/useLoading";
 import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
+import {useMessage} from "../common/useMessage";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -37,8 +38,6 @@ enum TabName {
 interface OwnProps extends RouteComponentProps<never> {
     networkRouterPath: string;
     sensorRouterPath: string;
-    // itheme: ITheme;
-    // theme?: string;
 }
 
 interface StateProps {
@@ -63,8 +62,8 @@ interface DispatchProps {
 
     onClearNetworkState: () => DeleteNetworkAction;
 
-    onSetError: (messages: JSX.Element) => MessageSetAction;
-    onSetSuccess: (messages: JSX.Element) => MessageSetAction;
+    // onSetError: (messages: JSX.Element) => MessageSetAction;
+    // onSetSuccess: (messages: JSX.Element) => MessageSetAction;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -93,7 +92,7 @@ function SimulationManager(props: Props): JSX.Element {
         onLoad,
         onClearNetworkState,
         onSave,
-        onSetError,
+        // onSetError,
     } = props;
 
     // when user refreshes when the router path is this simulation manager, then we want to load the same
@@ -105,6 +104,7 @@ function SimulationManager(props: Props): JSX.Element {
 
     const {itheme} = useTheme()
     const {updateLoadingState} = useLoading();
+    const {setMessage} = useMessage()
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
@@ -123,9 +123,9 @@ function SimulationManager(props: Props): JSX.Element {
                         Promise.all([
                             loadNetworkDescription(action.result.project.networkFilePath),
                             loadSensorDescription(action.result.project.sensorFilePath)
-                        ]).catch(reason => onSetError(<div>{reason.message}</div>))
+                        ]).catch(reason => setMessage(MessageBarType.error, <div>{reason.message}</div>))
                     })
-                    .catch(reason => onSetError(<div>{reason.message}</div>))
+                    .catch(reason => setMessage(MessageBarType.error, <div>{reason.message}</div>))
                     // .finally(() => updateLoadingState(false))
             }
         },
@@ -171,7 +171,7 @@ function SimulationManager(props: Props): JSX.Element {
                 history.push(`${baseRouterPath}/${encodeURIComponent(response.filePaths[0])}`);
                 onClearNetworkState();
             })
-            .catch(reason => onSetError(<>
+            .catch(reason => setMessage(MessageBarType.error, <>
                 <div><b>Unable to load simulation project file</b></div>
                 <div>Response: {reason}</div>
             </>))
@@ -195,7 +195,7 @@ function SimulationManager(props: Props): JSX.Element {
                 networkFilePath: networkDescriptionPath
             }
 
-            onSave(projectPath, project).catch(reason => onSetError(<div>{reason}</div>));
+            onSave(projectPath, project).catch(reason => setMessage(MessageBarType.error, <div>{reason}</div>));
         } else {
             handleSaveProjectAs();
         }
@@ -225,7 +225,7 @@ function SimulationManager(props: Props): JSX.Element {
                 ;
                 onSave(path, project)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
-                    .catch(reason => onSetError(<>
+                    .catch(reason => setMessage(MessageBarType.error, <>
                         <div><b>Unable to save project to file.</b></div>
                         <div>Path: {projectPath}</div>
                         <div>Response: {reason}</div>
@@ -436,9 +436,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onSaveAs: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
 
     onClearNetworkState: () => dispatch(deleteNetwork()),
-
-    onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
-    onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),
 });
 
 const connectedSimulationManager = connect(mapStateToProps, mapDispatchToProps)(SimulationManager);

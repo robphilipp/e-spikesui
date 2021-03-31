@@ -45,7 +45,7 @@ export function useLoading(): UseLoadingValues {
     const context = useContext<UseLoadingValues>(LoadingContext)
     const {updateLoadingState} = context
     if (updateLoadingState === undefined) {
-        throw new Error("useLoading hook can only be used when the component is a child of <Loading></Loading>")
+        throw new Error("useLoading hook can only be used when the component is a child of <LoadingProvider/>")
     }
     return context;
 }

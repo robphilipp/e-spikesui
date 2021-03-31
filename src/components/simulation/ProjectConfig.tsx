@@ -40,8 +40,6 @@ interface DispatchProps {
 
     onLoadSensor: (path: string) => Promise<SensorsLoadedAction>;
     onLoadNetwork: (path: string) => Promise<NetworkDescriptionLoadedAction>;
-    // onSetError: (messages: JSX.Element) => MessageSetAction;
-    // onSetSuccess: (messages: JSX.Element) => MessageSetAction;
 }
 
 type Props = OwnProps & StateProps & DispatchProps;
@@ -59,7 +57,6 @@ function ProjectConfig(props: Props): JSX.Element {
         onChange,
         onLoadSensor,
         onLoadNetwork,
-        // onSetError,
     } = props;
 
     const history = useHistory();
@@ -444,9 +441,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onChange: (project: SimulationProject) => dispatch(updateSimulationProject(project)),
     onLoadSensor: (path: string) => dispatch(loadSensorsFrom(path)),
     onLoadNetwork: (path: string) => dispatch(loadNetworkDescriptionFrom(path)),
-
-    // onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
-    // onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),
 });
 
 const connectedProjectConfig = connect(mapStateToProps, mapDispatchToProps)(ProjectConfig);

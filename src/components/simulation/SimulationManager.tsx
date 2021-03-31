@@ -38,8 +38,6 @@ enum TabName {
 interface OwnProps extends RouteComponentProps<never> {
     networkRouterPath: string;
     sensorRouterPath: string;
-    // itheme: ITheme;
-    // theme?: string;
 }
 
 interface StateProps {
@@ -106,7 +104,7 @@ function SimulationManager(props: Props): JSX.Element {
 
     const {itheme} = useTheme()
     const {updateLoadingState} = useLoading();
-    const {setMessage, clearMessage} = useMessage()
+    const {setMessage} = useMessage()
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
@@ -438,9 +436,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
     onSaveAs: (path: string, project: SimulationProject) => dispatch(saveSimulationProject(path, project)),
 
     onClearNetworkState: () => dispatch(deleteNetwork()),
-
-    // onSetError: (messages: JSX.Element) => dispatch(setErrorMessage(messages)),
-    // onSetSuccess: (messages: JSX.Element) => dispatch(setSuccessMessage(messages)),
 });
 
 const connectedSimulationManager = connect(mapStateToProps, mapDispatchToProps)(SimulationManager);

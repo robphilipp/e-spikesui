@@ -2,12 +2,10 @@ import {ApplicationAction} from "../actions/actions";
 import {SETTINGS_PANEL_VISIBLE} from "../actions/settings";
 
 interface ApplicationState {
-    // message: Option<FeedbackMessage>;
     settingsPanelVisible: boolean;
 }
 
 const initialState: ApplicationState = {
-    // message: Option.none<FeedbackMessage>(),
     settingsPanelVisible: false
 };
 
@@ -19,18 +17,6 @@ const initialState: ApplicationState = {
  */
 export function applicationReducer(state = initialState, action: ApplicationAction): ApplicationState {
     switch (action.type) {
-        // case CLEAR_MESSAGE:
-        //     return {
-        //         ...state,
-        //         message: Option.none<FeedbackMessage>()
-        //     };
-        //
-        // case SET_MESSAGE:
-        //     return {
-        //         ...state,
-        //         message: action.message
-        //     };
-
         case SETTINGS_PANEL_VISIBLE:
             return {
                 ...state,

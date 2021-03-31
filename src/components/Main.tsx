@@ -76,9 +76,6 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    // onSetErrorMessage: (message: JSX.Element) => void;
-    // onClearMessage: () => void;
-
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
 
@@ -102,10 +99,6 @@ function Main(props: Props): JSX.Element {
         settingsPanelVisible,
         onShowSettingsPanel,
         onHideSettingsPanel,
-
-        // message,
-        // onSetErrorMessage,
-        // onClearMessage,
 
         networkDescriptionTemplatePath,
         networkDescription,
@@ -135,8 +128,6 @@ function Main(props: Props): JSX.Element {
     // react-router
     const history = useHistory();
     const networkEditorRouteMatch = useRouteMatch(AppPath.NETWORK_EDITOR);
-
-    const {itheme} = useTheme()
 
     // register spikes language with the monaco editor when the component mounts
     useEffect(() => {
@@ -564,7 +555,6 @@ function Main(props: Props): JSX.Element {
  * @return the state props for this component
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    // message: state.application.message,
     settingsPanelVisible: state.application.settingsPanelVisible,
 
     networkDescriptionTemplatePath: state.settings.networkDescription.templatePath,
@@ -589,9 +579,6 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    // onSetErrorMessage: (message: JSX.Element) => dispatch(setErrorMessage(message)),
-    // onClearMessage: () => dispatch(clearMessage()),
-
     onShowSettingsPanel: () => dispatch(showSettingsPanel()),
     onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
 

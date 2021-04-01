@@ -35,6 +35,12 @@ export function MessageProvider(props: Props): JSX.Element {
     const [messageType, setMessageType] = useState<MessageBarType>()
     const [messageContent, setMessageContent] = useState<JSX.Element>()
 
+    /**
+     * Sets the message type and content
+     * @param messageType The message bar type (i.e. info, warning, error, etc)
+     * @param messageContent The content of the message bar
+     * @see MessageBarType
+     */
     function setMessage(messageType: MessageBarType, messageContent: JSX.Element | string): void {
         setMessageType(messageType)
         if (typeof messageContent == 'string') {
@@ -44,6 +50,9 @@ export function MessageProvider(props: Props): JSX.Element {
         }
     }
 
+    /**
+     * Updates the state of the message type and content to undefined
+     */
     function clearMessage(): void {
         setMessageType(undefined)
         setMessageContent(undefined)

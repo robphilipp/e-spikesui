@@ -60,8 +60,6 @@ interface StateProps {
     neuronIds: Vector<string>;
     // the network build status
     networkBuilt: boolean;
-    // // neuron ids for the built network
-    // errorMessages: Option<FeedbackMessage>;
     // the base websocket subscription subject
     webSocketSubject: Option<WebSocketSubject<string>>;
     // the subject for pausing the processing of the incoming messages
@@ -83,9 +81,6 @@ interface DispatchProps {
     createWebSocketSubject: (networkId: string) => WebsocketCreatedAction;
     createNetworkObservable: (websocket: WebSocketSubject<string>, bufferInterval: number) => CreateNetworkObservableAction;
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) => Promise<UnsubscribeWebsocketAction>;
-
-    // onSetErrorMessages: (messages: JSX.Element) => MessageSetAction;
-    // onClearErrorMessages: () => MessageClearedAction;
 
     onNetworkBuildEvents: (action: NetworkEventsAction) => NetworkEventsAction;
 }
@@ -112,9 +107,6 @@ function RunDeployManager(props: Props): JSX.Element {
         onUnsubscribe,
 
         onNetworkBuildEvents,
-
-        // onSetErrorMessages,
-        // onClearErrorMessages,
 
         // running,
     } = props;
@@ -646,7 +638,6 @@ const mapStateToProps = (state: AppState): StateProps => ({
 
     neuronIds: state.networkEvent.neurons.toVector().map(([, info]) => info.name),
     networkBuilt: state.networkEvent.networkBuilt,
-    // errorMessages: state.application.message,
 
     webSocketSubject: Option.ofNullable(state.networkManagement.websocketSubject),
     pauseSubject: state.networkManagement.pauseSubject,
@@ -677,10 +668,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, Applicati
 
     onUnsubscribe: (subscription: Subscription, pauseSubscription: Subscription) =>
         dispatch(remoteActionCreators.networkManagement.unsubscribe(subscription, pauseSubscription)),
-
-    // onSetErrorMessages: (message: JSX.Element) => dispatch(setErrorMessage(message)),
-    //
-    // onClearErrorMessages: () => dispatch(clearMessage()),
 
     onNetworkBuildEvents: (action: NetworkEventsAction) => dispatch(action)
 });

@@ -40,7 +40,6 @@ import {
 import {SimulationProject} from "./repos/simulationProjectRepo";
 import LoadingModal from "./common/LoadingModal";
 import LoadingProvider from './common/useLoading';
-import {useTheme} from "./common/useTheme";
 import {MessageProvider} from "./common/useMessage";
 import ApplicationMessage from "./common/ApplicationMessage";
 
@@ -55,9 +54,6 @@ interface OwnProps extends RouteComponentProps<never> {
 }
 
 interface StateProps {
-    // // holds an error message
-    // message: Option<FeedbackMessage>;
-
     // determines if the application settings panel is visible
     settingsPanelVisible: boolean;
     // network-description, path, template path, and modification state

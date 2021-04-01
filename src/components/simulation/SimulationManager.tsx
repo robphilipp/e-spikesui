@@ -61,9 +61,6 @@ interface DispatchProps {
     onSaveAs: (path: string, project: SimulationProject) => Promise<ProjectSavedAction>;
 
     onClearNetworkState: () => DeleteNetworkAction;
-
-    // onSetError: (messages: JSX.Element) => MessageSetAction;
-    // onSetSuccess: (messages: JSX.Element) => MessageSetAction;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -76,7 +73,6 @@ type Props = StateProps & DispatchProps & OwnProps;
  */
 function SimulationManager(props: Props): JSX.Element {
     const {
-        // itheme,
         networkRouterPath,
         sensorRouterPath,
         projectPath,
@@ -92,7 +88,6 @@ function SimulationManager(props: Props): JSX.Element {
         onLoad,
         onClearNetworkState,
         onSave,
-        // onSetError,
     } = props;
 
     // when user refreshes when the router path is this simulation manager, then we want to load the same

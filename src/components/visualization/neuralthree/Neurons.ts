@@ -140,7 +140,7 @@ function Neurons(props: OwnProps): null {
         networkObservable
     } = props;
 
-    const {scenes, sceneFor, addToScene} = useThreeContext();
+    const {scenes, addToScene} = useThreeContext();
 
     const neuronPositionsRef = useRef<Float32Array>(neuronPositionsFrom(neurons));
     const neuronColorsRef = useRef<Float32Array>(
@@ -200,7 +200,7 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Points>(sceneFor, (context: UseThreeValues): [scenedId: string, points: Points] => {
+    useThree<Points>((context: UseThreeValues): [scenedId: string, points: Points] => {
         contextRef.current = context;
         return addToScene(sceneId, pointsRef.current);
         // return context.scenesContext.addToScene(sceneId, pointsRef.current);

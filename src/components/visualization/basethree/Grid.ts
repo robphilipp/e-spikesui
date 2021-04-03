@@ -85,11 +85,11 @@ function Grid(props: GridProps): null {
         return colors;
     }
 
-    const {sceneFor, addToScene} = useThreeContext();
+    const {addToScene} = useThreeContext();
 
     // sets up the grid as a bunch of line segments and grabs the line segments that
     // were just created or exist already
-    const {getEntity} = useThree<LineSegments>(sceneFor, (context: UseThreeValues) => {
+    const {getEntity} = useThree<LineSegments>((context: UseThreeValues) => {
         // const {scenesContext} = context;
         const geometry = new BufferGeometry();
         geometry.setAttribute('position', vertices);

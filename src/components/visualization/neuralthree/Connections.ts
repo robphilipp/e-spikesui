@@ -230,7 +230,7 @@ function Connections(props: OwnProps): null {
     );
 
     // creates the connections between the pre- and post-synaptic neurons and adds them to the scene
-    useThree<LineSegments>(sceneFor, (context: UseThreeValues): [string, LineSegments] => {
+    useThree<LineSegments>((context: UseThreeValues): [string, LineSegments] => {
         contextRef.current = context;
         return addToScene(sceneId, lineSegmentsRef.current);
         // return context.scenesContext.addToScene(sceneId, lineSegmentsRef.current);

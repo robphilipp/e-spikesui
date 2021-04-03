@@ -138,11 +138,11 @@ function CoordinateAxes(props: OwnProps): null {
     );
 
 
-    const {sceneFor, addToScene} = useThreeContext();
+    const {addToScene} = useThreeContext();
 
     // sets up the coordinate axes as line segments, adds them to the scene, holds on
     // to the line segments
-    const {getEntity} = useThree<LineSegments>(sceneFor, (context: UseThreeValues) => {
+    const {getEntity} = useThree<LineSegments>((context: UseThreeValues) => {
         // const {scenesContext} = context;
 
         const geometry = new BufferGeometry()
@@ -159,7 +159,7 @@ function CoordinateAxes(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Array<Points>>(sceneFor, (context: UseThreeValues): [scenedId: string, points: Array<Points>] => {
+    useThree<Array<Points>>((context: UseThreeValues): [scenedId: string, points: Array<Points>] => {
         // contextRef.current = context;
         // return context.scenesContext.addToScene(sceneId, pointsRef.current);
         // const points = pointsRef.current.map(point => context.scenesContext.addToScene(sceneId, point)[1]);

@@ -105,7 +105,7 @@ function Synapses(props: OwnProps): null {
         spikeColor,
     } = props;
 
-    const {scenes, sceneFor, addToScene} = useThreeContext();
+    const {scenes, addToScene} = useThreeContext();
 
     const contextRef = useRef<UseThreeValues>();
     const renderRef = useRef<() => void>(noop);
@@ -179,7 +179,7 @@ function Synapses(props: OwnProps): null {
 
 
     // sets up the synapses, and adds them to the network scene
-    useThree<Array<Mesh>>(sceneFor, (context: UseThreeValues): [string, Array<Mesh>] => {
+    useThree<Array<Mesh>>((context: UseThreeValues): [string, Array<Mesh>] => {
         contextRef.current = context;
         const meshes = conesRef.current.map(cone => addToScene(sceneId, cone)[1]);
         // const meshes = conesRef.current.map(cone => context.scenesContext.addToScene(sceneId, cone)[1]);

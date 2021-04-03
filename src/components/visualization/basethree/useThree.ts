@@ -18,7 +18,6 @@ import {Option} from "prelude-ts";
  * 2. a supplier for the entity (i.e. a function that returns the entity)
  */
 export function useThree<E extends Object3D | Array<Object3D>>(
-    sceneFor: (sceneId: string) => Option<SceneInfo>,
     setup: (context: UseThreeValues) => [string, E] = () => ['default', new Object3D() as E],
     destroy?: (context: UseThreeValues, entity: E) => void,
 ): { getEntity: () => E, context: UseThreeValues } {
@@ -41,7 +40,7 @@ export function useThree<E extends Object3D | Array<Object3D>>(
             // clean-up function
             return (): void => {
                 destroy?.(context, entityRef.current);
-                sceneFor(sceneIdRef.current)
+                context.sceneFor(sceneIdRef.current)
                     .ifSome(info => {
                         if (entityRef.current instanceof Array) {
                             entityRef.current.forEach(entity => info.scene.remove(entity))

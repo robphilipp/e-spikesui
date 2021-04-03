@@ -1,4 +1,4 @@
-import {ThreeContext} from "../basethree/ThreeJsManager";
+import {UseThreeValues} from "../basethree/ThreeProvider";
 import {BufferAttribute, BufferGeometry, Clock, Color, LineBasicMaterial, LineSegments} from "three";
 import {threeRender, useThree} from "../basethree/useThree";
 import {NeuronInfo} from "./Neurons";
@@ -8,6 +8,7 @@ import {Observable} from "rxjs";
 import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
 import {noop} from "../../../commons";
+import {useScenes} from "../basethree/useScenes";
 
 export interface ConnectionInfo {
     preSynaptic: NeuronInfo;
@@ -188,11 +189,13 @@ function Connections(props: OwnProps): null {
         networkObservable
     } = props;
 
+    const scenesContext = useScenes()
+
     const connectionPositionsRef = useRef<Float32Array>(connectionPositionsFrom(connections));
     const connectionColorsRef = useRef<Float32Array>(connectionColorsFrom(connections, colorRange));
     const connectionsRef = useRef<Array<ConnectionInfo>>(connections);
     const lineSegmentsRef = useRef<LineSegments>();
-    const contextRef = useRef<ThreeContext>();
+    const contextRef = useRef<UseThreeValues>();
     const renderRef = useRef<() => void>(noop);
 
     const connectionGeometryRef = useRef(new BufferGeometry());
@@ -228,15 +231,16 @@ function Connections(props: OwnProps): null {
     );
 
     // creates the connections between the pre- and post-synaptic neurons and adds them to the scene
-    useThree<LineSegments>((context: ThreeContext): [string, LineSegments] => {
+    useThree<LineSegments>(scenesContext, (context: UseThreeValues): [string, LineSegments] => {
         contextRef.current = context;
-        return context.scenesContext.addToScene(sceneId, lineSegmentsRef.current);
+        return scenesContext.addToScene(sceneId, lineSegmentsRef.current);
+        // return context.scenesContext.addToScene(sceneId, lineSegmentsRef.current);
     });
 
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the connections' spiking
     useEffect(
-        () => renderRef.current = () => threeRender(contextRef.current, noop),
+        () => renderRef.current = () => threeRender(contextRef.current, scenesContext, noop),
         [contextRef.current]
     );
 

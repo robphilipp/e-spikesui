@@ -280,7 +280,6 @@ function RunDeployManager(props: Props): JSX.Element {
                 })
         } finally {
             updateLoadingState(false)
-            setSubjectObservable(undefined)
         }
     }
 

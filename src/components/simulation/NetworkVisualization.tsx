@@ -10,7 +10,6 @@ import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useTheme} from "../common/useTheme";
-import {emptySceneContext, SceneContext} from '../visualization/basethree/useScenes';
 
 export interface OwnProps {
     sceneHeight: number;
@@ -52,7 +51,6 @@ function NetworkVisualization(props: Props): JSX.Element {
     const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation);
 
     return (
-        // <SceneContext.Provider value={emptySceneContext}>
         <Network
             visualizationId="live-visualization"
             sceneHeight={sceneHeight}
@@ -63,7 +61,6 @@ function NetworkVisualization(props: Props): JSX.Element {
             colors={colors}
             networkObservable={networkObservable}
         />
-        // </SceneContext.Provider>
     )
 }
 

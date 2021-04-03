@@ -1,4 +1,4 @@
-import {ThreeContext} from "../basethree/ThreeJsManager";
+import {UseThreeValues} from "../basethree/ThreeProvider";
 import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
 import {threeRender, useThree} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
@@ -8,6 +8,7 @@ import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
 import {noop} from "../../../commons";
+import {useScenes} from "../basethree/useScenes";
 
 export interface NeuronInfo {
     name: string;
@@ -140,6 +141,8 @@ function Neurons(props: OwnProps): null {
         networkObservable
     } = props;
 
+    const scenesContext = useScenes()
+
     const neuronPositionsRef = useRef<Float32Array>(neuronPositionsFrom(neurons));
     const neuronColorsRef = useRef<Float32Array>(
         neuronColorsFrom(neurons, new Color(excitatoryNeuronColor), new Color(inhibitoryNeuronColor))
@@ -147,7 +150,7 @@ function Neurons(props: OwnProps): null {
     const colorRangeRef = useRef<ColorRange>(colorRange);
 
     const pointsRef = useRef<Points>();
-    const contextRef = useRef<ThreeContext>();
+    const contextRef = useRef<UseThreeValues>();
     const renderRef = useRef<() => void>(noop);
     const neuronGeometryRef = useRef(new BufferGeometry());
 
@@ -198,16 +201,17 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Points>((context: ThreeContext): [scenedId: string, points: Points] => {
+    useThree<Points>(scenesContext, (context: UseThreeValues): [scenedId: string, points: Points] => {
         contextRef.current = context;
-        return context.scenesContext.addToScene(sceneId, pointsRef.current);
+        return scenesContext.addToScene(sceneId, pointsRef.current);
+        // return context.scenesContext.addToScene(sceneId, pointsRef.current);
     });
 
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the neurons' spiking
     useEffect(
         () => {
-            renderRef.current = () => threeRender(contextRef.current, noop)
+            renderRef.current = () => threeRender(contextRef.current, scenesContext, noop)
         },
         [contextRef.current]
     );

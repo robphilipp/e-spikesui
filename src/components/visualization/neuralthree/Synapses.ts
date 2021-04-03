@@ -3,11 +3,12 @@ import {ConnectionInfo, outgoingConnectionsFor} from "./Connections";
 import {ColorRange} from "./Network";
 import {useEffect, useRef} from "react";
 import {threeRender, useThree} from "../basethree/useThree";
-import {ThreeContext} from "../basethree/ThreeJsManager";
+import {UseThreeValues} from "../basethree/ThreeProvider";
 import {noop} from "../../../commons";
 import {filter} from "rxjs/operators";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
+import {useScenes} from "../basethree/useScenes";
 
 export interface OwnProps {
     sceneId: string;
@@ -105,7 +106,9 @@ function Synapses(props: OwnProps): null {
         spikeColor,
     } = props;
 
-    const contextRef = useRef<ThreeContext>();
+    const scenesContext = useScenes()
+
+    const contextRef = useRef<UseThreeValues>();
     const renderRef = useRef<() => void>(noop);
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
     const materialRef = useRef<Array<MeshBasicMaterial>>(
@@ -157,7 +160,8 @@ function Synapses(props: OwnProps): null {
                     connectionsRef.current.set(key, conesRef.current.length);
                     const newCone = createCone(connection, geometryRef.current, materialRef.current[i]);
                     conesRef.current.push(newCone);
-                    contextRef.current.scenesContext.addToScene(sceneId, newCone);
+                    scenesContext.addToScene(sceneId, newCone);
+                    // contextRef.current.scenesContext.addToScene(sceneId, newCone);
                 }
             })
 
@@ -176,9 +180,10 @@ function Synapses(props: OwnProps): null {
 
 
     // sets up the synapses, and adds them to the network scene
-    useThree<Array<Mesh>>((context: ThreeContext): [string, Array<Mesh>] => {
+    useThree<Array<Mesh>>(scenesContext, (context: UseThreeValues): [string, Array<Mesh>] => {
         contextRef.current = context;
-        const meshes = conesRef.current.map(cone => context.scenesContext.addToScene(sceneId, cone)[1]);
+        const meshes = conesRef.current.map(cone => scenesContext.addToScene(sceneId, cone)[1]);
+        // const meshes = conesRef.current.map(cone => context.scenesContext.addToScene(sceneId, cone)[1]);
         return [sceneId, meshes];
     });
 
@@ -186,7 +191,7 @@ function Synapses(props: OwnProps): null {
     // the neurons' spiking
     useEffect(
         () => {
-            renderRef.current = () => threeRender(contextRef.current, noop)
+            renderRef.current = () => threeRender(contextRef.current, scenesContext, noop)
         },
         [contextRef.current]
     );

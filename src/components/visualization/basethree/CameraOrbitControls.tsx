@@ -2,8 +2,9 @@ import {threeRender, useThreeContext} from './useThree';
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import {Camera} from "three";
 import {forwardRef, MutableRefObject, useEffect, useState} from "react";
-import {ThreeContext} from "./ThreeJsManager";
+import {UseThreeValues} from "./ThreeProvider";
 import {Coordinate, coordinateFrom} from "./Coordinate";
+import {useScenes} from "./useScenes";
 
 /**
  * Properties defining the behavior of the orbit controls. Please see
@@ -52,8 +53,10 @@ const defaultProps = {
 function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControls>): null {
     const [controls, setControls] = useState<OrbitControls>();
 
+    const scenesContext = useScenes()
+
     // set up the controls using the react context hook
-    const context = useThreeContext((context: ThreeContext): void => {
+    const context = useThreeContext((context: UseThreeValues): void => {
         const {camera, canvas} = context;
         const {
             enableDamping = defaultProps.enableDamping,
@@ -101,7 +104,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
             if (controls) {
                 controls.addEventListener(
                     'change',
-                    () => threeRender(context,() => controls.update())
+                    () => threeRender(context, scenesContext, () => controls.update())
                 );
             }
 
@@ -110,7 +113,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
                 if(controls) {
                     controls.removeEventListener(
                         'change',
-                        () => threeRender(context,() => controls.update())
+                        () => threeRender(context, scenesContext,() => controls.update())
                     );
                 }
             }
@@ -121,5 +124,4 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
     return null;
 }
 
-//@ts-ignore
 export default forwardRef(CameraOrbitControls);

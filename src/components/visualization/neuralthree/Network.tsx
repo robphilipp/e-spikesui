@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
-import SceneManager from '../basethree/ThreeJsManager';
+import ThreeProvider from '../basethree/ThreeProvider';
 import Grid from '../basethree/Grid';
 import CameraOrbitControls from "../basethree/CameraOrbitControls";
 import CoordinateAxes from "../basethree/CoordinateAxes";
@@ -12,7 +12,7 @@ import {connect} from "react-redux";
 import {ApplicationAction} from "../../redux/actions/actions";
 import {ThunkDispatch} from "redux-thunk";
 import {AppState} from "../../redux/reducers/root";
-import {SceneInfo, useScenes} from "../basethree/useScenes";
+import {SceneInfo, ScenesProvider} from "../basethree/useScenes";
 import Neurons, {NeuronInfo} from "./Neurons";
 import Connections, {ConnectionInfo} from "./Connections";
 import Synapses from "./Synapses";
@@ -135,7 +135,7 @@ function Network(props: Props): JSX.Element {
         spikeDuration = 50
     } = props;
 
-    const scenesContext = useScenes(() => getScenes());
+    // const scenesContext = useScenes(() => getScenes());
 
     const [axesColor, setAxesColor] = useState<Color>(new Color(itheme.palette.themeDarker));
     const [spikeColor, setSpikeColor] = useState<Color>(new Color(itheme.palette.black));
@@ -150,14 +150,14 @@ function Network(props: Props): JSX.Element {
 
     const cameraPositionRef = useRef<Coordinate>(cameraCoordinates());
 
-    useEffect(
-        () => {
-            if (networkObservable === undefined) {
-                scenesContext.clearScenes()
-            }
-        },
-        [networkObservable]
-    )
+    // useEffect(
+    //     () => {
+    //         if (networkObservable === undefined) {
+    //             scenesContext.clearScenes()
+    //         }
+    //     },
+    //     [networkObservable]
+    // )
 
     // updates the axis color when the background color is changed
     useEffect(
@@ -200,7 +200,8 @@ function Network(props: Props): JSX.Element {
      * axes to be invisible.
      */
     function setAxesVisibility(visible: boolean): void {
-        scenesContext.visibility(AXES_SCENE_ID, visible);
+        // todo fix this
+        // scenesContext.visibility(AXES_SCENE_ID, visible);
         onAxisVisibilityChange(visualizationId, visible)
     }
 
@@ -211,7 +212,8 @@ function Network(props: Props): JSX.Element {
      * grid to be invisible.
      */
     function setGridVisibility(visible: boolean): void {
-        scenesContext.visibility(GRID_SCENE_ID, visible);
+        // todo fix this
+        // scenesContext.visibility(GRID_SCENE_ID, visible);
         onGridVisibilityChange(visualizationId, visible)
     }
 
@@ -322,11 +324,12 @@ function Network(props: Props): JSX.Element {
                 </Stack>
             </Stack.Item>
             <Stack.Item>
-                <SceneManager
+                <ScenesProvider scenesSupplier={getScenes}>
+                <ThreeProvider
                     canvasId="network-canvas"
                     getCamera={getCamera}
                     getRenderer={getRenderer}
-                    getScenes={getScenes}
+                    // getScenes={getScenes}
                     width={sceneWidth}
                     height={sceneHeight}
                     backgroundColor={new Color(itheme.palette.white)}
@@ -386,7 +389,8 @@ function Network(props: Props): JSX.Element {
                         spikeDuration={spikeDuration}
                         spikeColor={spikeColor}
                     />
-                </SceneManager>
+                </ThreeProvider>
+                </ScenesProvider>
             </Stack.Item>
         </Stack>
     );

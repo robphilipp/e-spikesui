@@ -4,15 +4,15 @@ import {createContext, useEffect, useRef, useState} from 'react';
 import Canvas, {CanvasStyle} from './Canvas';
 import {Coordinate} from "./Coordinate";
 import {Color, PerspectiveCamera, Renderer, WebGLRenderer} from "three";
-import {emptySceneContext, SceneInfo, ScenesContext, useScenes} from "./useScenes";
+import {SceneInfo, useScenes} from "./useScenes";
 import useAnimationFrame from "./useAnimationFrame";
 
 /**
  * Holds the three-js components needed to render the three-js view: scene, camera, canvas, and
  * an animation timer. The scene and camera are three-js objects.
  */
-export interface ThreeContext {
-    scenesContext: ScenesContext;
+export interface UseThreeValues {
+    // scenesContext: UseSceneValues;
     camera?: PerspectiveCamera;
     renderer?: Renderer;
     canvas: HTMLCanvasElement | null;
@@ -21,12 +21,12 @@ export interface ThreeContext {
 
 /**
  * Three react context holding the three-js context
- * @type {React.Context<ThreeContext>} The react context holding the three-js elements
+ * @type {React.Context<UseThreeValues>} The react context holding the three-js elements
  */
-export const initialThreeContext = createContext<ThreeContext>({
+export const ThreeContext = createContext<UseThreeValues>({
     canvas: null,
     timer: 0,
-    scenesContext: emptySceneContext
+    // scenesContext: emptySceneContext
 });
 
 /**
@@ -41,7 +41,7 @@ export interface OwnProps {
     // function that returns the renderer for the scene
     getRenderer: (canvas: HTMLCanvasElement) => Renderer;
     // function that returns an array of scene objects to which all the scene elements have been added
-    getScenes: () => Array<SceneInfo>
+    // getScenes: () => Array<SceneInfo>
     // the background color
     backgroundColor: Color;
     // canvas width and height
@@ -101,13 +101,13 @@ export interface OwnProps {
  * @return {Element} The rendered three-js scene
  * @constructor
  */
-function ThreeJsManager(props: OwnProps): JSX.Element {
+function ThreeProvider(props: OwnProps): JSX.Element {
     const {
         canvasId,
         children,
         getCamera,
         getRenderer,
-        getScenes,
+        // getScenes,
         canvasStyle,
         animate = false,
         width,
@@ -118,12 +118,13 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
     const timerRef = useRef<number>(0);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const scenesContext = useScenes(() => getScenes());
+    const scenesContext = useScenes();
+    // const scenesContext = useScenes(() => getScenes());
     const cameraRef = useRef<PerspectiveCamera>();
     const rendererRef = useRef<Renderer>();
 
-    const threeContext: ThreeContext = {
-        scenesContext: scenesContext,
+    const threeContext: UseThreeValues = {
+        // scenesContext: scenesContext,
         camera: cameraRef.current,
         renderer: rendererRef.current,
         canvas: canvasRef.current,
@@ -250,12 +251,12 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
                 style={canvasStyle}
             />
             {threeIsReady && (
-                <initialThreeContext.Provider value={threeContext}>
+                <ThreeContext.Provider value={threeContext}>
                     {children}
-                </initialThreeContext.Provider>
+                </ThreeContext.Provider>
             )}
         </>
     );
 }
 
-export default ThreeJsManager;
+export default ThreeProvider;

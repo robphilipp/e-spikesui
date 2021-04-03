@@ -6,10 +6,10 @@ import {
     SCENES_UPDATED,
 } from "../actions/networkVisualization";
 import {ApplicationAction} from "../actions/actions";
-import {SceneInfo} from "../../visualization/basethree/useScenes";
 import {PerspectiveCamera, Renderer} from "three";
 import {HashMap, Option, Vector} from "prelude-ts";
 import {NETWORK_DELETED, NETWORK_DESCRIPTION_CHANGED} from "../actions/networkManagement";
+import {SceneInfo} from "../../visualization/basethree/ThreeProvider";
 
 /*
  |

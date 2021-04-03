@@ -1,4 +1,4 @@
-import {useThree} from './useThree';
+import {useThree, useThreeContext} from './useThree';
 import {
     BufferAttribute,
     BufferGeometry,
@@ -9,7 +9,6 @@ import {
 } from "three";
 import {useEffect, useState} from "react";
 import {UseThreeValues} from "./ThreeProvider";
-import {useScenes} from "./useScenes";
 
 interface GridProps {
     sceneId: string;
@@ -86,11 +85,11 @@ function Grid(props: GridProps): null {
         return colors;
     }
 
-    const scenesContext = useScenes();
+    const {sceneFor, addToScene} = useThreeContext();
 
     // sets up the grid as a bunch of line segments and grabs the line segments that
     // were just created or exist already
-    const {getEntity} = useThree<LineSegments>(scenesContext, (context: UseThreeValues) => {
+    const {getEntity} = useThree<LineSegments>(sceneFor, (context: UseThreeValues) => {
         // const {scenesContext} = context;
         const geometry = new BufferGeometry();
         geometry.setAttribute('position', vertices);
@@ -103,7 +102,7 @@ function Grid(props: GridProps): null {
             transparent: true
         });
 
-        return scenesContext.addToScene(sceneId, new LineSegments(geometry, material));
+        return addToScene(sceneId, new LineSegments(geometry, material));
     });
 
     // called when the axes colors change and need to be updated

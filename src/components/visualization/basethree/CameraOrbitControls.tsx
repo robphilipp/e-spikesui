@@ -4,7 +4,6 @@ import {Camera} from "three";
 import {forwardRef, MutableRefObject, useEffect, useState} from "react";
 import {UseThreeValues} from "./ThreeProvider";
 import {Coordinate, coordinateFrom} from "./Coordinate";
-import {useScenes} from "./useScenes";
 
 /**
  * Properties defining the behavior of the orbit controls. Please see
@@ -53,7 +52,7 @@ const defaultProps = {
 function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControls>): null {
     const [controls, setControls] = useState<OrbitControls>();
 
-    const scenesContext = useScenes()
+    const {scenes} = useThreeContext()
 
     // set up the controls using the react context hook
     const context = useThreeContext((context: UseThreeValues): void => {
@@ -104,7 +103,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
             if (controls) {
                 controls.addEventListener(
                     'change',
-                    () => threeRender(context, scenesContext, () => controls.update())
+                    () => threeRender(context, scenes, () => controls.update())
                 );
             }
 
@@ -113,7 +112,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
                 if(controls) {
                     controls.removeEventListener(
                         'change',
-                        () => threeRender(context, scenesContext,() => controls.update())
+                        () => threeRender(context, scenes,() => controls.update())
                     );
                 }
             }

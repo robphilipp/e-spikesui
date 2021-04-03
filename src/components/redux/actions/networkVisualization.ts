@@ -6,7 +6,7 @@
 
 import {PerspectiveCamera, Renderer} from "three";
 import {Option, Vector} from "prelude-ts";
-import {SceneInfo} from "../../visualization/basethree/useScenes";
+import {SceneInfo} from "../../visualization/basethree/ThreeProvider";
 
 export const AXES_VISIBILITY_CHANGED = "network-visualization-axis-visibility-changed";
 export const GRID_VISIBILITY_CHANGED = "network-visualization-grid-visibility-changed";

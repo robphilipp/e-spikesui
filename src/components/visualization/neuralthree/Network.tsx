@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
-import ThreeProvider from '../basethree/ThreeProvider';
+import ThreeProvider, {SceneInfo} from '../basethree/ThreeProvider';
 import Grid from '../basethree/Grid';
 import CameraOrbitControls from "../basethree/CameraOrbitControls";
 import CoordinateAxes from "../basethree/CoordinateAxes";
@@ -12,7 +12,6 @@ import {connect} from "react-redux";
 import {ApplicationAction} from "../../redux/actions/actions";
 import {ThunkDispatch} from "redux-thunk";
 import {AppState} from "../../redux/reducers/root";
-import {SceneInfo, ScenesProvider} from "../basethree/useScenes";
 import Neurons, {NeuronInfo} from "./Neurons";
 import Connections, {ConnectionInfo} from "./Connections";
 import Synapses from "./Synapses";
@@ -324,12 +323,13 @@ function Network(props: Props): JSX.Element {
                 </Stack>
             </Stack.Item>
             <Stack.Item>
-                <ScenesProvider scenesSupplier={getScenes}>
+                {/*<ScenesProvider scenesSupplier={getScenes}>*/}
                 <ThreeProvider
                     canvasId="network-canvas"
                     getCamera={getCamera}
                     getRenderer={getRenderer}
                     // getScenes={getScenes}
+                    scenesSupplier={getScenes}
                     width={sceneWidth}
                     height={sceneHeight}
                     backgroundColor={new Color(itheme.palette.white)}
@@ -390,7 +390,7 @@ function Network(props: Props): JSX.Element {
                         spikeColor={spikeColor}
                     />
                 </ThreeProvider>
-                </ScenesProvider>
+                {/*</ScenesProvider>*/}
             </Stack.Item>
         </Stack>
     );

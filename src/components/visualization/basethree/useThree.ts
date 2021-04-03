@@ -1,8 +1,8 @@
 import {useContext, useEffect, useRef} from 'react';
-import {UseThreeValues, ThreeContext} from './ThreeProvider';
+import {UseThreeValues, ThreeContext, SceneInfo} from './ThreeProvider';
 import {Object3D, WebGLRenderer} from "three";
 import {noop} from "../../../commons";
-import {UseSceneValues} from "./useScenes";
+import {Option} from "prelude-ts";
 
 /**
  * React hook for three-js when the set-up function returns an entity (i.e. something that derives from
@@ -18,7 +18,7 @@ import {UseSceneValues} from "./useScenes";
  * 2. a supplier for the entity (i.e. a function that returns the entity)
  */
 export function useThree<E extends Object3D | Array<Object3D>>(
-    scenesContext: UseSceneValues,
+    sceneFor: (sceneId: string) => Option<SceneInfo>,
     setup: (context: UseThreeValues) => [string, E] = () => ['default', new Object3D() as E],
     destroy?: (context: UseThreeValues, entity: E) => void,
 ): { getEntity: () => E, context: UseThreeValues } {
@@ -41,15 +41,7 @@ export function useThree<E extends Object3D | Array<Object3D>>(
             // clean-up function
             return (): void => {
                 destroy?.(context, entityRef.current);
-                // context.scenesContext.sceneFor(sceneIdRef.current)
-                //     .ifSome(info => {
-                //         if (entityRef.current instanceof Array) {
-                //             entityRef.current.forEach(entity => info.scene.remove(entity))
-                //         } else {
-                //             info.scene.remove(entityRef.current as Object3D)
-                //         }
-                //     });
-                scenesContext.sceneFor(sceneIdRef.current)
+                sceneFor(sceneIdRef.current)
                     .ifSome(info => {
                         if (entityRef.current instanceof Array) {
                             entityRef.current.forEach(entity => info.scene.remove(entity))
@@ -99,17 +91,17 @@ export function useThreeContext(
  * This is not a react hook.
  * Calls the requested callback function and then renders the scene
  * @param {UseThreeValues} context The three-js context
- * @param scenesContext The scenes context
+ * @param scenes The array of the scenes
  * @param {() => void} callback The callback function
  */
-export function threeRender(context: UseThreeValues, scenesContext: UseSceneValues, callback: () => void): void {
+export function threeRender(context: UseThreeValues, scenes: Array<SceneInfo>, callback: () => void): void {
     // const scenesContext = useScenes()
     const {renderer, camera, canvas} = context;
     // const {renderer, camera, canvas, scenesContext} = context;
     requestAnimationFrame(() => {
         if (renderer && camera && canvas) {
             (renderer as WebGLRenderer).clear();
-            scenesContext.scenes
+            scenes
                 // .filter(info => info.visible)
                 .forEach(info => {
                     if(info.visible) {

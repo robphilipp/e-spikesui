@@ -145,7 +145,6 @@ export function rendererUpdated(id: string, renderer: Renderer): NetworkVisualiz
  * @param scenes The list of scene information
  * @return The action that the scenes have been changed.
  */
-// export function scenesUpdated(id: string, scenes: Vector<SceneInfo>): NetworkVisualizationScenesUpdateAction {
 export function scenesUpdated(id: string, scenes: Array<SceneInfo>): NetworkVisualizationScenesUpdateAction {
     return ({
         type: SCENES_UPDATED,

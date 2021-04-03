@@ -23,6 +23,7 @@ export interface ScenesContext {
     isVisible: (sceneId: string) => boolean;
     scenes: Array<SceneInfo>;
     // scenes: Vector<SceneInfo>;
+    clearScenes: () => void
 }
 
 // the default, initial settings for the scene context
@@ -35,14 +36,15 @@ export const emptySceneContext: ScenesContext = {
     // (sceneId: string) => boolean,
     isVisible: () => false,
     // scenes: Vector.empty()
-    scenes: []
+    scenes: [],
+    clearScenes: noop,
 };
 
 /**
  * Three react context holding the three-scene context
  * @type {React.Context<ScenesContext>} The react context holding the three scenes
  */
-export const initialSceneContext = createContext<ScenesContext>(emptySceneContext);
+export const SceneContext = createContext<ScenesContext>(emptySceneContext);
 
 /**
  * React-hook for managing the ThreeJs scene objects. Holds on to a list of `SceneInfo`
@@ -60,7 +62,7 @@ export function useScenes(
     destroy?: (scenes: ScenesContext) => void
 ): ScenesContext {
 
-    const context = useContext<ScenesContext>(initialSceneContext);
+    const context = useContext<ScenesContext>(SceneContext);
 
     /**
      * Returns the scene for the specified name
@@ -110,6 +112,10 @@ export function useScenes(
         return sceneFor(sceneId).map(info => info.visible).getOrElse(false);
     }
 
+    function clearScenes(): void {
+        context.scenes = []
+    }
+
     // calls the setup function passed by the caller and keeps a hold on the
     // entity just created as a reference. when components are unmounted, destroys
     // the entity and removes it from the scene.
@@ -126,5 +132,5 @@ export function useScenes(
         []
     );
 
-    return {sceneFor, addToScene, visibility, isVisible, scenes: context.scenes};
+    return {sceneFor, addToScene, visibility, isVisible, scenes: context.scenes, clearScenes};
 }

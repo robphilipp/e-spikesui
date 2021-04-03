@@ -193,8 +193,8 @@ export type NetworkManagementAction = NetworkDescriptionChangedAction
  |
  */
 
-export const BUILD_MESSAGE = {command: "build"};
-export const START_MESSAGE = {command: "start"};
+// export const BUILD_MESSAGE = {command: "build"};
+// export const START_MESSAGE = {command: "start"};
 export const STOP_MESSAGE = {command: "stop"};
 
 type NetworkDescriptionLoadedThunkAction = ThunkAction<Promise<NetworkDescriptionLoadedAction>, unknown, unknown, NetworkDescriptionLoadedAction>;
@@ -360,8 +360,6 @@ export function networkManagementActionCreators(): NetworkManagementActionCreato
      */
     function deleteNetwork(networkId: string): NetworkDeletedThunkAction {
         return (dispatch: ThunkDispatch<unknown, unknown, NetworkDeletedAction>): Promise<NetworkDeletedAction> => {
-            // return axios
-            //     .delete(`http://${serverSettings.host}:${serverSettings.port}/network-management/network/${networkId}`)
             return remoteRepositories.networkManagement.deleteNetwork(networkId)
                 .then(() => dispatch(successAction(NETWORK_DELETED, networkId)))
                 .catch((reason: AxiosError) => {

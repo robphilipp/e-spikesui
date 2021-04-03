@@ -217,7 +217,7 @@ export function networkManagementReducer(state = initialNetworkState, action: Ap
         case NETWORK_DELETED:
             // only update the state if there are no errors
             return action.result
-                .map((_: string) => ({
+                .map(() => ({
                     ...state,
                     networkId: Option.none<string>(),
                 }))

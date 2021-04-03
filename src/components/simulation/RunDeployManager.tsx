@@ -75,7 +75,7 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    onDeleteNetwork: (networkId: string) => Promise<NetworkDeletedAction>;
+    onDeleteNetworkFromServer: (networkId: string) => Promise<NetworkDeletedAction>;
     onClearNetworkState: () => DeleteNetworkAction;
 
     createWebSocketSubject: (networkId: string) => WebsocketCreatedAction;
@@ -101,7 +101,7 @@ function RunDeployManager(props: Props): JSX.Element {
         subscription,
         pauseSubscription,
 
-        onDeleteNetwork,
+        onDeleteNetworkFromServer,
         onClearNetworkState,
 
         onUnsubscribe,
@@ -266,7 +266,7 @@ function RunDeployManager(props: Props): JSX.Element {
         updateLoadingState(true, `Deleting network`);
 
         try {
-            const action = await onDeleteNetwork(id);
+            const action = await onDeleteNetworkFromServer(id);
             action.result
                 .ifLeft(messages => setMessage(MessageBarType.error, asErrorMessage(messages)))
                 .ifRight(() => {
@@ -280,6 +280,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 })
         } finally {
             updateLoadingState(false)
+            setSubjectObservable(undefined)
         }
     }
 
@@ -655,7 +656,7 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
-    onDeleteNetwork: (networkId: string) =>
+    onDeleteNetworkFromServer: (networkId: string) =>
         dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),
 
     onClearNetworkState: () => dispatch(deleteNetwork()),

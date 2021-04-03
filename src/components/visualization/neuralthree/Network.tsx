@@ -114,7 +114,6 @@ function Network(props: Props): JSX.Element {
 
     const {
         visualizationId,
-        // itheme,
         sceneWidth,
         sceneHeight,
         axesOffset = origin(),
@@ -150,6 +149,15 @@ function Network(props: Props): JSX.Element {
     ));
 
     const cameraPositionRef = useRef<Coordinate>(cameraCoordinates());
+
+    useEffect(
+        () => {
+            if (networkObservable === undefined) {
+                scenesContext.clearScenes()
+            }
+        },
+        [networkObservable]
+    )
 
     // updates the axis color when the background color is changed
     useEffect(
@@ -398,8 +406,6 @@ function Network(props: Props): JSX.Element {
  * @return The updated the state-properties, which in our case is the network neurons and connections
  */
 const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
-    // itheme: state.settings.itheme,
-
     networkId: state.networkManagement.networkId,
     neurons: state.networkEvent.neurons,
     connections: state.networkEvent.connections,

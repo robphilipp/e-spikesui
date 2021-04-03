@@ -167,11 +167,11 @@ function startNetwork(sensorDescription: string, timeFactor: number): void {
 }
 
 function stopNetwork(): void {
-    websocket.send(STOP_MESSAGE.command);
+    websocket?.send(STOP_MESSAGE.command);
     signalGeneratorSubscription?.unsubscribe();
 
     // clean up
-    websocket.close()
+    websocket?.close()
     websocket = undefined;
     networkEventObservable = undefined;
     signalGeneratorSubscription = undefined;

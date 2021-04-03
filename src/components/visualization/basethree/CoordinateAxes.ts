@@ -1,4 +1,4 @@
-import {ThreeContext} from "./ThreeJsManager";
+import {UseThreeValues} from "./ThreeProvider";
 import {
     BufferAttribute,
     BufferGeometry,
@@ -8,7 +8,7 @@ import {
     LineSegments, Points, PointsMaterial, Texture,
     TextureLoader
 } from "three";
-import {useThree} from "./useThree";
+import {useThree, useThreeContext} from "./useThree";
 import {Coordinate, origin} from "./Coordinate";
 import {useEffect, useRef} from "react";
 
@@ -138,10 +138,12 @@ function CoordinateAxes(props: OwnProps): null {
     );
 
 
+    const {addToScene} = useThreeContext();
+
     // sets up the coordinate axes as line segments, adds them to the scene, holds on
     // to the line segments
-    const {getEntity} = useThree<LineSegments>((context: ThreeContext) => {
-        const {scenesContext} = context;
+    const {getEntity} = useThree<LineSegments>((context: UseThreeValues) => {
+        // const {scenesContext} = context;
 
         const geometry = new BufferGeometry()
             .setAttribute('position', verticesRef.current)
@@ -152,15 +154,16 @@ function CoordinateAxes(props: OwnProps): null {
             opacity: opacity,
         });
 
-        return scenesContext.addToScene(sceneId, new LineSegments(geometry, material));
+        return addToScene(sceneId, new LineSegments(geometry, material));
     });
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Array<Points>>((context: ThreeContext): [scenedId: string, points: Array<Points>] => {
+    useThree<Array<Points>>((context: UseThreeValues): [scenedId: string, points: Array<Points>] => {
         // contextRef.current = context;
         // return context.scenesContext.addToScene(sceneId, pointsRef.current);
-        const points = pointsRef.current.map(point => context.scenesContext.addToScene(sceneId, point)[1]);
+        // const points = pointsRef.current.map(point => context.scenesContext.addToScene(sceneId, point)[1]);
+        const points = pointsRef.current.map(point => addToScene(sceneId, point)[1]);
         return [sceneId, points];
     });
 

@@ -2,12 +2,12 @@ import {Color, ConeGeometry, Mesh, MeshBasicMaterial, MeshBasicMaterialParameter
 import {ConnectionInfo, outgoingConnectionsFor} from "./Connections";
 import {ColorRange} from "./Network";
 import {useEffect, useRef} from "react";
-import {threeRender, useThree} from "../basethree/useThree";
-import {ThreeContext} from "../basethree/ThreeJsManager";
-import {noop} from "../../../commons";
+import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
 import {filter} from "rxjs/operators";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
+import {UseThreeValues} from "../basethree/ThreeProvider";
+import {noop} from "../../../commons";
 
 export interface OwnProps {
     sceneId: string;
@@ -105,7 +105,8 @@ function Synapses(props: OwnProps): null {
         spikeColor,
     } = props;
 
-    const contextRef = useRef<ThreeContext>();
+    const {addToScene} = useThreeContext();
+
     const renderRef = useRef<() => void>(noop);
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
     const materialRef = useRef<Array<MeshBasicMaterial>>(
@@ -157,7 +158,7 @@ function Synapses(props: OwnProps): null {
                     connectionsRef.current.set(key, conesRef.current.length);
                     const newCone = createCone(connection, geometryRef.current, materialRef.current[i]);
                     conesRef.current.push(newCone);
-                    contextRef.current.scenesContext.addToScene(sceneId, newCone);
+                    addToScene(sceneId, newCone);
                 }
             })
 
@@ -174,21 +175,16 @@ function Synapses(props: OwnProps): null {
         [spikeColor]
     )
 
-
     // sets up the synapses, and adds them to the network scene
-    useThree<Array<Mesh>>((context: ThreeContext): [string, Array<Mesh>] => {
-        contextRef.current = context;
-        const meshes = conesRef.current.map(cone => context.scenesContext.addToScene(sceneId, cone)[1]);
-        return [sceneId, meshes];
-    });
+    const {context} = useThree<Array<Mesh>>(() => [sceneId, conesRef.current])
 
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the neurons' spiking
     useEffect(
         () => {
-            renderRef.current = () => threeRender(contextRef.current, noop)
+            renderRef.current = () => threeRender(context, noop)
         },
-        [contextRef.current]
+        [context]
     );
 
     /**
@@ -201,6 +197,7 @@ function Synapses(props: OwnProps): null {
         updateSynapseColors(spikingConnections, spiking);
 
         // render the scene with three-js
+        // render();
         renderRef.current();
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
@@ -240,7 +237,7 @@ function Synapses(props: OwnProps): null {
                 .pipe(filter(event => event.type === SPIKE))
                 .subscribe({
                     next: event => {
-                        if (contextRef.current && conesRef.current) {
+                        if (context && conesRef.current) {
                             const spikingConnections = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsInfoRef.current)
                                 .map(([, info]) => info)
                                 // .map(([, info]) => connectionKeyFor(info))

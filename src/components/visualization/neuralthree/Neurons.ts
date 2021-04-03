@@ -1,6 +1,5 @@
-import {ThreeContext} from "../basethree/ThreeJsManager";
 import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
-import {threeRender, useThree} from "../basethree/useThree";
+import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
@@ -147,7 +146,6 @@ function Neurons(props: OwnProps): null {
     const colorRangeRef = useRef<ColorRange>(colorRange);
 
     const pointsRef = useRef<Points>();
-    const contextRef = useRef<ThreeContext>();
     const renderRef = useRef<() => void>(noop);
     const neuronGeometryRef = useRef(new BufferGeometry());
 
@@ -198,18 +196,15 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Points>((context: ThreeContext): [scenedId: string, points: Points] => {
-        contextRef.current = context;
-        return context.scenesContext.addToScene(sceneId, pointsRef.current);
-    });
+    const {context} = useThree<Points>(() => [sceneId, pointsRef.current]);
 
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the neurons' spiking
     useEffect(
         () => {
-            renderRef.current = () => threeRender(contextRef.current, noop)
+            renderRef.current = () => threeRender(context, noop)
         },
-        [contextRef.current]
+        [context]
     );
 
     /**
@@ -252,7 +247,7 @@ function Neurons(props: OwnProps): null {
                 .pipe(filter(event => event.type === SPIKE))
                 .subscribe({
                     next: event => {
-                        if (contextRef.current && pointsRef.current) {
+                        if (context && pointsRef.current) {
                             const neuronIndex = neuronIndexFrom((event.payload as Spike).neuronId, neurons);
                             const neuronColor = neuronColorFor(neurons[neuronIndex], colorRangeRef.current);
 

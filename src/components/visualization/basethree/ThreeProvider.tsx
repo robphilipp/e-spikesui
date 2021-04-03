@@ -3,30 +3,60 @@ import {createContext, useEffect, useRef, useState} from 'react';
 
 import Canvas, {CanvasStyle} from './Canvas';
 import {Coordinate} from "./Coordinate";
-import {Color, PerspectiveCamera, Renderer, WebGLRenderer} from "three";
-import {emptySceneContext, SceneInfo, ScenesContext, useScenes} from "./useScenes";
+import {Color, Object3D, PerspectiveCamera, Renderer, Scene, WebGLRenderer} from "three";
 import useAnimationFrame from "./useAnimationFrame";
+import {Option} from "prelude-ts";
+
+function noop(): void {
+    /* empty */
+}
+
+/**
+ * The scene information.
+ */
+export interface SceneInfo {
+    readonly name: string;
+    readonly scene: Scene;
+    visible: boolean;
+}
 
 /**
  * Holds the three-js components needed to render the three-js view: scene, camera, canvas, and
  * an animation timer. The scene and camera are three-js objects.
  */
-export interface ThreeContext {
-    scenesContext: ScenesContext;
+export interface UseThreeValues {
+    // functions for managing scenes
+    scenes: Array<SceneInfo>
+    sceneFor: (sceneId: string) => Option<SceneInfo>;
+    addToScene: <E extends Object3D>(sceneId: string, entity: E) => [string, E];
+    visibility: (sceneId: string, visible: boolean) => void;
+    isVisible: (sceneId: string) => boolean;
+    clearScenes: () => void
+
+    // three-js objects
     camera?: PerspectiveCamera;
     renderer?: Renderer;
     canvas: HTMLCanvasElement | null;
+
     timer: number
 }
 
 /**
  * Three react context holding the three-js context
- * @type {React.Context<ThreeContext>} The react context holding the three-js elements
+ * @type {React.Context<UseThreeValues>} The react context holding the three-js elements
  */
-export const initialThreeContext = createContext<ThreeContext>({
+export const ThreeContext = createContext<UseThreeValues>({
     canvas: null,
     timer: 0,
-    scenesContext: emptySceneContext
+    sceneFor: () => Option.none(),
+    addToScene: <E extends Object3D>(sceneId: string, entity: E) => [sceneId, entity],
+    // (sceneId: string, visible: boolean) => void,
+    visibility: noop,
+    // (sceneId: string) => boolean,
+    isVisible: () => false,
+    // scenes: Vector.empty()
+    scenes: [],
+    clearScenes: noop,
 });
 
 /**
@@ -34,14 +64,14 @@ export const initialThreeContext = createContext<ThreeContext>({
  */
 export interface OwnProps {
     canvasId: string;
-    // the children of this "three-js scene" to whom the three-js context will be passed
-    children: JSX.Element[] | JSX.Element;
+
+    // functions for managing scenes
+    scenesSupplier?: () => Array<SceneInfo>
+
     // function that returns the perspective camera given the canvas offsets and camera position
     getCamera: (offsetWidth: number, offsetHeight: number, position?: Coordinate) => PerspectiveCamera;
     // function that returns the renderer for the scene
     getRenderer: (canvas: HTMLCanvasElement) => Renderer;
-    // function that returns an array of scene objects to which all the scene elements have been added
-    getScenes: () => Array<SceneInfo>
     // the background color
     backgroundColor: Color;
     // canvas width and height
@@ -50,6 +80,8 @@ export interface OwnProps {
     // additional canvas style objects
     canvasStyle: CanvasStyle;
     animate?: boolean;
+    // the children of this "three-js scene" to whom the three-js context will be passed
+    children: JSX.Element[] | JSX.Element;
 }
 
 /**
@@ -101,13 +133,13 @@ export interface OwnProps {
  * @return {Element} The rendered three-js scene
  * @constructor
  */
-function ThreeJsManager(props: OwnProps): JSX.Element {
+function ThreeProvider(props: OwnProps): JSX.Element {
     const {
         canvasId,
         children,
         getCamera,
         getRenderer,
-        getScenes,
+        scenesSupplier,
         canvasStyle,
         animate = false,
         width,
@@ -118,17 +150,10 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
     const timerRef = useRef<number>(0);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const scenesContext = useScenes(() => getScenes());
     const cameraRef = useRef<PerspectiveCamera>();
     const rendererRef = useRef<Renderer>();
 
-    const threeContext: ThreeContext = {
-        scenesContext: scenesContext,
-        camera: cameraRef.current,
-        renderer: rendererRef.current,
-        canvas: canvasRef.current,
-        timer: timerRef.current,
-    };
+    const [scenes, setScenes] = useState<Array<SceneInfo>>(scenesSupplier())
 
     /**
      * Updates the background colors of the scene so that only the first visible scene receives
@@ -137,7 +162,8 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
      * transparently, on top of the first visible scene.
      */
     function updateBackground(): void {
-        const visibleScenes = scenesContext.scenes.filter(info => info.visible);
+        const visibleScenes = scenes.filter(info => info.visible);
+        // const visibleScenes = scenesContext.scenes.filter(info => info.visible);
         const numScenes = visibleScenes.length;
         if (numScenes > 0) {
             visibleScenes[0].scene.background = props.backgroundColor;
@@ -206,7 +232,7 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         if(animate) {
             timerRef.current = timer;
             if(rendererRef.current && cameraRef.current) {
-                scenesContext.scenes
+                scenes
                     .forEach(info => {
                         if (info.visible) {
                             rendererRef.current.render(info.scene, cameraRef.current);
@@ -226,12 +252,12 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
                 updateBackground();
 
                 // when there are no scenes, don't clear the background
-                if(scenesContext.scenes.length > 0) {
+                if(scenes.length > 0) {
                     (renderer as WebGLRenderer).clear();
                 }
 
                 // render each of the scenes
-                scenesContext.scenes
+                scenes
                     .forEach(info => {
                         if (info.visible) {
                             renderer.render(info.scene, cameraRef.current);
@@ -242,6 +268,70 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
         }
     );
 
+    /**
+     * Returns the scene for the specified name
+     * @param {string} sceneId The ID of the scene (generally a descriptive name)
+     * @return {Option<SceneInfo>} An option holding the scene information, if found; else
+     * an empty option
+     */
+    function sceneFor(sceneId: string): Option<SceneInfo> {
+        return Option.ofNullable(scenes.find(info => info.name === sceneId));
+    }
+
+    /**
+     * Adds the entity to the scene for the specified ID. If the scene ID is not found,
+     * then the scene is not added.
+     * @param {string} sceneId The ID of the scene to which to add the entity
+     * @param {E} entity The entity to add to the scene
+     * @return {[string, E]} A tuple holding the scene ID and the entity, passed through.
+     */
+    function addToScene<E extends Object3D>(sceneId: string, entity: E): [string, E] {
+        sceneFor(sceneId)
+            .ifSome(info => info.scene.add(entity))
+            .ifNone(() => console.log(`Unable to add entity to the scene because the scene was not found: scene ID: ${sceneId}`))
+            .isSome();
+        return [sceneId, entity];
+    }
+
+    /**
+     * Sets the visibility of the scene with the specified ID. When setting the visibility
+     * of the scene to `false`, the entire scene will no longer be rendered.
+     * @param {string} sceneId The ID of the scene
+     * @param {boolean} visible The visibility of the scene.
+     */
+    function visibility(sceneId: string, visible: boolean): void {
+        sceneFor(sceneId)
+            .ifSome(info => info.visible = visible)
+            .ifNone(() => console.log(`Unable to set scene visibility because the scene was not found: scene ID: ${sceneId}; visible: ${visible}`));
+    }
+
+    /**
+     * Returns the visibility of the scene.
+     * @param {string} sceneId The ID of the scene
+     * @return {boolean} `true` if the scene is visible; `false` if the scene is not visible.
+     */
+    function isVisible(sceneId: string): boolean {
+        return sceneFor(sceneId).map(info => info.visible).getOrElse(false);
+    }
+
+    function clearScenes(): void {
+        setScenes([])
+    }
+
+    const threeContext: UseThreeValues = {
+        scenes,
+        sceneFor,
+        addToScene,
+        visibility,
+        isVisible,
+        clearScenes,
+
+        camera: cameraRef.current,
+        renderer: rendererRef.current,
+        canvas: canvasRef.current,
+        timer: timerRef.current,
+    };
+
     return (
         <>
             <Canvas
@@ -250,12 +340,12 @@ function ThreeJsManager(props: OwnProps): JSX.Element {
                 style={canvasStyle}
             />
             {threeIsReady && (
-                <initialThreeContext.Provider value={threeContext}>
+                <ThreeContext.Provider value={threeContext}>
                     {children}
-                </initialThreeContext.Provider>
+                </ThreeContext.Provider>
             )}
         </>
     );
 }
 
-export default ThreeJsManager;
+export default ThreeProvider;

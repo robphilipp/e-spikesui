@@ -1,6 +1,5 @@
-import {ThreeContext} from "../basethree/ThreeJsManager";
-import {BufferAttribute, BufferGeometry, Clock, Color, LineBasicMaterial, LineSegments} from "three";
-import {threeRender, useThree} from "../basethree/useThree";
+import {BufferAttribute, BufferGeometry, Color, LineBasicMaterial, LineSegments} from "three";
+import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
 import {NeuronInfo} from "./Neurons";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
@@ -188,12 +187,12 @@ function Connections(props: OwnProps): null {
         networkObservable
     } = props;
 
+    const renderRef = useRef<() => void>(noop);
+
     const connectionPositionsRef = useRef<Float32Array>(connectionPositionsFrom(connections));
     const connectionColorsRef = useRef<Float32Array>(connectionColorsFrom(connections, colorRange));
     const connectionsRef = useRef<Array<ConnectionInfo>>(connections);
     const lineSegmentsRef = useRef<LineSegments>();
-    const contextRef = useRef<ThreeContext>();
-    const renderRef = useRef<() => void>(noop);
 
     const connectionGeometryRef = useRef(new BufferGeometry());
 
@@ -227,17 +226,15 @@ function Connections(props: OwnProps): null {
         [connections, colorRange]
     );
 
-    // creates the connections between the pre- and post-synaptic neurons and adds them to the scene
-    useThree<LineSegments>((context: ThreeContext): [string, LineSegments] => {
-        contextRef.current = context;
-        return context.scenesContext.addToScene(sceneId, lineSegmentsRef.current);
-    });
+    const {context} = useThree<LineSegments>(() => [sceneId, lineSegmentsRef.current])
 
     // called when the component is mounted or the context changes to set the render function needed to animate
-    // the connections' spiking
+    // the neurons' spiking
     useEffect(
-        () => renderRef.current = () => threeRender(contextRef.current, noop),
-        [contextRef.current]
+        () => {
+            renderRef.current = () => threeRender(context, noop)
+        },
+        [context]
     );
 
     /**
@@ -287,7 +284,7 @@ function Connections(props: OwnProps): null {
                 .pipe(filter(event => event.type === SPIKE))
                 .subscribe({
                     next: event => {
-                        if (contextRef.current && lineSegmentsRef.current) {
+                        if (context && lineSegmentsRef.current) {
                             const originalColors = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsRef.current)
                                 .map(info => connectionColorFor(info[0], info[1], props.colorRange));
 

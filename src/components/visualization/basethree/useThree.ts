@@ -1,5 +1,5 @@
 import {useContext, useEffect, useRef} from 'react';
-import {ThreeContext, initialThreeContext} from './ThreeJsManager';
+import {ThreeContext, UseThreeValues} from './ThreeProvider';
 import {Object3D, WebGLRenderer} from "three";
 import {noop} from "../../../commons";
 
@@ -17,13 +17,13 @@ import {noop} from "../../../commons";
  * 2. a supplier for the entity (i.e. a function that returns the entity)
  */
 export function useThree<E extends Object3D | Array<Object3D>>(
-    setup: (context: ThreeContext) => [string, E] = () => ['default', new Object3D() as E],
-    destroy?: (context: ThreeContext, entity: E) => void
-): { getEntity: () => E, context: ThreeContext } {
+    setup: (context: UseThreeValues) => [string, E] = () => ['default', new Object3D() as E],
+    destroy?: (context: UseThreeValues, entity: E) => void,
+): { getEntity: () => E, context: UseThreeValues } {
 
     const entityRef = useRef<E>();
     const sceneIdRef = useRef<string>('default');
-    const context = useContext<ThreeContext>(initialThreeContext);
+    const context = useContext<UseThreeValues>(ThreeContext);
 
     const getEntity = (): E => entityRef.current;
 
@@ -35,11 +35,16 @@ export function useThree<E extends Object3D | Array<Object3D>>(
             const [sceneId, entity] = setup(context);
             sceneIdRef.current = sceneId;
             entityRef.current = entity;
+            if (entity instanceof Array) {
+                entity.forEach(e => context.addToScene(sceneId, e as Object3D))
+            } else {
+                context.addToScene(sceneId, entity as Object3D)
+            }
 
             // clean-up function
             return (): void => {
                 destroy?.(context, entityRef.current);
-                context.scenesContext.sceneFor(sceneIdRef.current)
+                context.sceneFor(sceneIdRef.current)
                     .ifSome(info => {
                         if (entityRef.current instanceof Array) {
                             entityRef.current.forEach(entity => info.scene.remove(entity))
@@ -54,7 +59,7 @@ export function useThree<E extends Object3D | Array<Object3D>>(
 
     return {
         getEntity,
-        context
+        context,
     };
 }
 
@@ -65,14 +70,14 @@ export function useThree<E extends Object3D | Array<Object3D>>(
  * @param {(context: ThreeContext) => void} setup A function that is called to set up the object
  * @param {(context: ThreeContext) => void} destroy A function that performs any clean up when the component
  * is unmounted
- * @return {ThreeContext} The three-js context.
+ * @return {UseThreeValues} The three-js context.
  */
 export function useThreeContext(
-    setup: (context: ThreeContext) => void = noop,
-    destroy?: (context: ThreeContext) => void
-): ThreeContext {
+    setup: (context: UseThreeValues) => void = noop,
+    destroy?: (context: UseThreeValues) => void
+): UseThreeValues {
 
-    const context = useContext<ThreeContext>(initialThreeContext);
+    const context = useContext<UseThreeValues>(ThreeContext);
 
     useEffect(() => {
         setup(context);
@@ -88,16 +93,15 @@ export function useThreeContext(
 /**
  * This is not a react hook.
  * Calls the requested callback function and then renders the scene
- * @param {ThreeContext} context The three-js context
+ * @param {UseThreeValues} context The three-js context
  * @param {() => void} callback The callback function
  */
-export function threeRender(context: ThreeContext, callback: () => void): void {
-    const {renderer, camera, canvas, scenesContext} = context;
+export function threeRender(context: UseThreeValues, callback: () => void): void {
+    const {renderer, camera, canvas} = context;
     requestAnimationFrame(() => {
         if (renderer && camera && canvas) {
             (renderer as WebGLRenderer).clear();
-            scenesContext.scenes
-                // .filter(info => info.visible)
+            context.scenes
                 .forEach(info => {
                     if(info.visible) {
                         callback();

@@ -19,13 +19,12 @@ import {noop} from "../../../commons";
 export function useThree<E extends Object3D | Array<Object3D>>(
     setup: (context: UseThreeValues) => [string, E] = () => ['default', new Object3D() as E],
     destroy?: (context: UseThreeValues, entity: E) => void,
-): { getEntity: () => E, context: UseThreeValues, render: () => void } {
+): { getEntity: () => E, context: UseThreeValues } {
 
     const entityRef = useRef<E>();
     const sceneIdRef = useRef<string>('default');
     const context = useContext<UseThreeValues>(ThreeContext);
 
-    const renderRef = useRef<() => void>(noop);
     const getEntity = (): E => entityRef.current;
 
     // calls the setup function passed by the caller and keeps a hold on the
@@ -41,7 +40,6 @@ export function useThree<E extends Object3D | Array<Object3D>>(
             } else {
                 context.addToScene(sceneId, entity as Object3D)
             }
-            renderRef.current = () => threeRender(context, noop)
 
             // clean-up function
             return (): void => {
@@ -62,7 +60,6 @@ export function useThree<E extends Object3D | Array<Object3D>>(
     return {
         getEntity,
         context,
-        render: renderRef.current
     };
 }
 

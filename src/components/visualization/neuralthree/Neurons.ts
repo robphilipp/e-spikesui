@@ -1,11 +1,12 @@
 import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
-import {useThree, useThreeContext} from "../basethree/useThree";
+import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
 import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
+import {noop} from "../../../commons";
 
 export interface NeuronInfo {
     name: string;
@@ -138,9 +139,6 @@ function Neurons(props: OwnProps): null {
         networkObservable
     } = props;
 
-    const context = useThreeContext();
-    // const {addToScene, clearScenes} = useThreeContext();
-
     const neuronPositionsRef = useRef<Float32Array>(neuronPositionsFrom(neurons));
     const neuronColorsRef = useRef<Float32Array>(
         neuronColorsFrom(neurons, new Color(excitatoryNeuronColor), new Color(inhibitoryNeuronColor))
@@ -148,8 +146,7 @@ function Neurons(props: OwnProps): null {
     const colorRangeRef = useRef<ColorRange>(colorRange);
 
     const pointsRef = useRef<Points>();
-    // const contextRef = useRef<UseThreeValues>();
-    // const renderRef = useRef<() => void>(noop);
+    const renderRef = useRef<() => void>(noop);
     const neuronGeometryRef = useRef(new BufferGeometry());
 
     const spikeColorRef = useRef<Color>(spikeColor)
@@ -199,22 +196,16 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    const {render} = useThree<Points>(() => [sceneId, pointsRef.current]);
-    // const {render} = useThree<Points>((context: UseThreeValues): [scenedId: string, points: Points] => {
-    //     // contextRef.current = context;
-    //     // renderRef.current = () => threeRender(contextRef.current, noop)
-    //     return [sceneId, pointsRef.current];
-    //     // return addToScene(sceneId, pointsRef.current);
-    // });
+    const {context} = useThree<Points>(() => [sceneId, pointsRef.current]);
 
-    // // called when the component is mounted or the context changes to set the render function needed to animate
-    // // the neurons' spiking
-    // useEffect(
-    //     () => {
-    //         renderRef.current = () => threeRender(contextRef.current, noop)
-    //     },
-    //     [contextRef.current]
-    // );
+    // called when the component is mounted or the context changes to set the render function needed to animate
+    // the neurons' spiking
+    useEffect(
+        () => {
+            renderRef.current = () => threeRender(context, noop)
+        },
+        [context]
+    );
 
     /**
      * Animates the neuron spike by changing the neuron's color to the spike-color, and then after the an number
@@ -236,7 +227,7 @@ function Neurons(props: OwnProps): null {
         }
 
         // render the scene with three-js
-        render();
+        renderRef.current();
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
         // its original value

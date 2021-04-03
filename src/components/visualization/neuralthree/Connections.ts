@@ -1,11 +1,12 @@
 import {BufferAttribute, BufferGeometry, Color, LineBasicMaterial, LineSegments} from "three";
-import {useThree, useThreeContext} from "../basethree/useThree";
+import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
 import {NeuronInfo} from "./Neurons";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
 import {Observable} from "rxjs";
 import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
+import {noop} from "../../../commons";
 
 export interface ConnectionInfo {
     preSynaptic: NeuronInfo;
@@ -186,7 +187,7 @@ function Connections(props: OwnProps): null {
         networkObservable
     } = props;
 
-    const context = useThreeContext()
+    const renderRef = useRef<() => void>(noop);
 
     const connectionPositionsRef = useRef<Float32Array>(connectionPositionsFrom(connections));
     const connectionColorsRef = useRef<Float32Array>(connectionColorsFrom(connections, colorRange));
@@ -225,7 +226,16 @@ function Connections(props: OwnProps): null {
         [connections, colorRange]
     );
 
-    const {render} = useThree<LineSegments>(() => [sceneId, lineSegmentsRef.current])
+    const {context} = useThree<LineSegments>(() => [sceneId, lineSegmentsRef.current])
+
+    // called when the component is mounted or the context changes to set the render function needed to animate
+    // the neurons' spiking
+    useEffect(
+        () => {
+            renderRef.current = () => threeRender(context, noop)
+        },
+        [context]
+    );
 
     /**
      * Animates the neuron spike by changing the neuron's color to the spike-color, and then after the an number
@@ -253,7 +263,7 @@ function Connections(props: OwnProps): null {
         }
 
         // render the scene with three-js
-        render();
+        renderRef.current();
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
         // its original value

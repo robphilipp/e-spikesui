@@ -105,10 +105,8 @@ function Synapses(props: OwnProps): null {
         spikeColor,
     } = props;
 
-    // const context = useThreeContext();
     const {addToScene} = useThreeContext();
 
-    const contextRef = useRef<UseThreeValues>();
     const renderRef = useRef<() => void>(noop);
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
     const materialRef = useRef<Array<MeshBasicMaterial>>(
@@ -161,7 +159,6 @@ function Synapses(props: OwnProps): null {
                     const newCone = createCone(connection, geometryRef.current, materialRef.current[i]);
                     conesRef.current.push(newCone);
                     addToScene(sceneId, newCone);
-                    // contextRef.current.scenesContext.addToScene(sceneId, newCone);
                 }
             })
 
@@ -178,29 +175,17 @@ function Synapses(props: OwnProps): null {
         [spikeColor]
     )
 
-    // const {render} = useThree<Array<Mesh>>(() => {
-    //     return [sceneId, conesRef.current];
-    // })
-
     // sets up the synapses, and adds them to the network scene
-    const {render, context} = useThree<Array<Mesh>>(() => [sceneId, conesRef.current])
-    // renderRef.current = render
-    contextRef.current = context
+    const {context} = useThree<Array<Mesh>>(() => [sceneId, conesRef.current])
 
     // called when the component is mounted or the context changes to set the render function needed to animate
     // the neurons' spiking
     useEffect(
         () => {
-            renderRef.current = () => threeRender(contextRef.current, noop)
+            renderRef.current = () => threeRender(context, noop)
         },
         [context]
     );
-    // useEffect(
-    //     () => {
-    //         renderRef.current = () => threeRender(contextRef.current, noop)
-    //     },
-    //     [contextRef.current]
-    // );
 
     /**
      * Function that changes the color of the synapse to it's spiking color, calling itself after the spiking
@@ -252,7 +237,7 @@ function Synapses(props: OwnProps): null {
                 .pipe(filter(event => event.type === SPIKE))
                 .subscribe({
                     next: event => {
-                        if (contextRef.current && conesRef.current) {
+                        if (context && conesRef.current) {
                             const spikingConnections = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsInfoRef.current)
                                 .map(([, info]) => info)
                                 // .map(([, info]) => connectionKeyFor(info))

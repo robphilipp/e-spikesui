@@ -1,4 +1,4 @@
-import {threeRender, useThreeContext} from './useThree';
+import {renderScenes, useThreeContext} from './useThree';
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import {Camera} from "three";
 import {forwardRef, MutableRefObject, useEffect, useState} from "react";
@@ -103,7 +103,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
             if (controls) {
                 controls.addEventListener(
                     'change',
-                    () => threeRender(context, () => controls.update())
+                    () => renderScenes(context, () => controls.update())
                 );
             }
 
@@ -112,7 +112,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
                 if(controls) {
                     controls.removeEventListener(
                         'change',
-                        () => threeRender(context,() => controls.update())
+                        () => renderScenes(context,() => controls.update())
                     );
                 }
             }

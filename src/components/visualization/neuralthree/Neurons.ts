@@ -1,5 +1,5 @@
 import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
-import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
+import {renderScenes, useThree, useThreeContext} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
@@ -146,7 +146,6 @@ function Neurons(props: OwnProps): null {
     const colorRangeRef = useRef<ColorRange>(colorRange);
 
     const pointsRef = useRef<Points>();
-    const renderRef = useRef<() => void>(noop);
     const neuronGeometryRef = useRef(new BufferGeometry());
 
     const spikeColorRef = useRef<Color>(spikeColor)
@@ -196,16 +195,7 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    const {context} = useThree<Points>(() => [sceneId, pointsRef.current]);
-
-    // called when the component is mounted or the context changes to set the render function needed to animate
-    // the neurons' spiking
-    useEffect(
-        () => {
-            renderRef.current = () => threeRender(context, noop)
-        },
-        [context]
-    );
+    const {render, context} = useThree<Points>(() => [sceneId, pointsRef.current]);
 
     /**
      * Animates the neuron spike by changing the neuron's color to the spike-color, and then after the an number
@@ -227,7 +217,7 @@ function Neurons(props: OwnProps): null {
         }
 
         // render the scene with three-js
-        renderRef.current();
+        render()
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
         // its original value

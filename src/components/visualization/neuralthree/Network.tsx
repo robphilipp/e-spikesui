@@ -323,7 +323,6 @@ function Network(props: Props): JSX.Element {
                 </Stack>
             </Stack.Item>
             <Stack.Item>
-                {/*<ScenesProvider scenesSupplier={getScenes}>*/}
                 <ThreeProvider
                     canvasId="network-canvas"
                     getCamera={getCamera}
@@ -390,7 +389,6 @@ function Network(props: Props): JSX.Element {
                         spikeColor={spikeColor}
                     />
                 </ThreeProvider>
-                {/*</ScenesProvider>*/}
             </Stack.Item>
         </Stack>
     );

@@ -19,7 +19,7 @@ import {noop} from "../../../commons";
 export function useThree<E extends Object3D | Array<Object3D>>(
     setup: (context: UseThreeValues) => [string, E] = () => ['default', new Object3D() as E],
     destroy?: (context: UseThreeValues, entity: E) => void,
-): { getEntity: () => E, context: UseThreeValues } {
+): { getEntity: () => E, context: UseThreeValues, render: () => void } {
 
     const entityRef = useRef<E>();
     const sceneIdRef = useRef<string>('default');
@@ -60,6 +60,7 @@ export function useThree<E extends Object3D | Array<Object3D>>(
     return {
         getEntity,
         context,
+        render: () => renderScenes(context, noop)
     };
 }
 
@@ -96,7 +97,7 @@ export function useThreeContext(
  * @param {UseThreeValues} context The three-js context
  * @param {() => void} callback The callback function
  */
-export function threeRender(context: UseThreeValues, callback: () => void): void {
+export function renderScenes(context: UseThreeValues, callback: () => void): void {
     const {renderer, camera, canvas} = context;
     requestAnimationFrame(() => {
         if (renderer && camera && canvas) {

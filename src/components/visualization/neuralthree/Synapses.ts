@@ -2,12 +2,10 @@ import {Color, ConeGeometry, Mesh, MeshBasicMaterial, MeshBasicMaterialParameter
 import {ConnectionInfo, outgoingConnectionsFor} from "./Connections";
 import {ColorRange} from "./Network";
 import {useEffect, useRef} from "react";
-import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
+import {useThree, useThreeContext} from "../basethree/useThree";
 import {filter} from "rxjs/operators";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {Observable} from "rxjs";
-import {UseThreeValues} from "../basethree/ThreeProvider";
-import {noop} from "../../../commons";
 
 export interface OwnProps {
     sceneId: string;
@@ -107,7 +105,6 @@ function Synapses(props: OwnProps): null {
 
     const {addToScene} = useThreeContext();
 
-    const renderRef = useRef<() => void>(noop);
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
     const materialRef = useRef<Array<MeshBasicMaterial>>(
         connections.map(connection => new MeshBasicMaterial(meshParametersFor(colorRange, connection.preSynaptic.type === 'e')))
@@ -176,16 +173,7 @@ function Synapses(props: OwnProps): null {
     )
 
     // sets up the synapses, and adds them to the network scene
-    const {context} = useThree<Array<Mesh>>(() => [sceneId, conesRef.current])
-
-    // called when the component is mounted or the context changes to set the render function needed to animate
-    // the neurons' spiking
-    useEffect(
-        () => {
-            renderRef.current = () => threeRender(context, noop)
-        },
-        [context]
-    );
+    const {render, context} = useThree<Array<Mesh>>(() => [sceneId, conesRef.current])
 
     /**
      * Function that changes the color of the synapse to it's spiking color, calling itself after the spiking
@@ -197,8 +185,7 @@ function Synapses(props: OwnProps): null {
         updateSynapseColors(spikingConnections, spiking);
 
         // render the scene with three-js
-        // render();
-        renderRef.current();
+        render();
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
         // its original value

@@ -21,19 +21,6 @@ export interface SceneInfo {
 }
 
 /**
- * The scenes context holding the list of scenes and accessor function
- */
-interface UseSceneValues {
-    sceneFor: (sceneId: string) => Option<SceneInfo>;
-    addToScene: <E extends Object3D>(sceneId: string, entity: E) => [string, E];
-    visibility: (sceneId: string, visible: boolean) => void;
-    isVisible: (sceneId: string) => boolean;
-    scenes: Array<SceneInfo>;
-    // scenes: Vector<SceneInfo>;
-    clearScenes: () => void
-}
-
-/**
  * Holds the three-js components needed to render the three-js view: scene, camera, canvas, and
  * an animation timer. The scene and camera are three-js objects.
  */
@@ -46,9 +33,11 @@ export interface UseThreeValues {
     isVisible: (sceneId: string) => boolean;
     clearScenes: () => void
 
+    // three-js objects
     camera?: PerspectiveCamera;
     renderer?: Renderer;
     canvas: HTMLCanvasElement | null;
+
     timer: number
 }
 
@@ -150,7 +139,6 @@ function ThreeProvider(props: OwnProps): JSX.Element {
         children,
         getCamera,
         getRenderer,
-        // getScenes,
         scenesSupplier,
         canvasStyle,
         animate = false,
@@ -162,8 +150,6 @@ function ThreeProvider(props: OwnProps): JSX.Element {
     const timerRef = useRef<number>(0);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    // const scenesContext = useScenes();
-    // const scenesContext = useScenes(() => getScenes());
     const cameraRef = useRef<PerspectiveCamera>();
     const rendererRef = useRef<Renderer>();
 

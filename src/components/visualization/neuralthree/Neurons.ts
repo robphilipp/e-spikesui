@@ -1,13 +1,11 @@
-import {UseThreeValues} from "../basethree/ThreeProvider";
 import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
-import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
+import {useThree, useThreeContext} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
 import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
-import {noop} from "../../../commons";
 
 export interface NeuronInfo {
     name: string;
@@ -140,7 +138,8 @@ function Neurons(props: OwnProps): null {
         networkObservable
     } = props;
 
-    const {scenes, addToScene} = useThreeContext();
+    const context = useThreeContext();
+    // const {addToScene, clearScenes} = useThreeContext();
 
     const neuronPositionsRef = useRef<Float32Array>(neuronPositionsFrom(neurons));
     const neuronColorsRef = useRef<Float32Array>(
@@ -149,8 +148,8 @@ function Neurons(props: OwnProps): null {
     const colorRangeRef = useRef<ColorRange>(colorRange);
 
     const pointsRef = useRef<Points>();
-    const contextRef = useRef<UseThreeValues>();
-    const renderRef = useRef<() => void>(noop);
+    // const contextRef = useRef<UseThreeValues>();
+    // const renderRef = useRef<() => void>(noop);
     const neuronGeometryRef = useRef(new BufferGeometry());
 
     const spikeColorRef = useRef<Color>(spikeColor)
@@ -200,20 +199,22 @@ function Neurons(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Points>((context: UseThreeValues): [scenedId: string, points: Points] => {
-        contextRef.current = context;
-        return addToScene(sceneId, pointsRef.current);
-        // return context.scenesContext.addToScene(sceneId, pointsRef.current);
-    });
+    const {render} = useThree<Points>(() => [sceneId, pointsRef.current]);
+    // const {render} = useThree<Points>((context: UseThreeValues): [scenedId: string, points: Points] => {
+    //     // contextRef.current = context;
+    //     // renderRef.current = () => threeRender(contextRef.current, noop)
+    //     return [sceneId, pointsRef.current];
+    //     // return addToScene(sceneId, pointsRef.current);
+    // });
 
-    // called when the component is mounted or the context changes to set the render function needed to animate
-    // the neurons' spiking
-    useEffect(
-        () => {
-            renderRef.current = () => threeRender(contextRef.current, scenes, noop)
-        },
-        [contextRef.current]
-    );
+    // // called when the component is mounted or the context changes to set the render function needed to animate
+    // // the neurons' spiking
+    // useEffect(
+    //     () => {
+    //         renderRef.current = () => threeRender(contextRef.current, noop)
+    //     },
+    //     [contextRef.current]
+    // );
 
     /**
      * Animates the neuron spike by changing the neuron's color to the spike-color, and then after the an number
@@ -235,7 +236,7 @@ function Neurons(props: OwnProps): null {
         }
 
         // render the scene with three-js
-        renderRef.current();
+        render();
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
         // its original value
@@ -255,7 +256,7 @@ function Neurons(props: OwnProps): null {
                 .pipe(filter(event => event.type === SPIKE))
                 .subscribe({
                     next: event => {
-                        if (contextRef.current && pointsRef.current) {
+                        if (context && pointsRef.current) {
                             const neuronIndex = neuronIndexFrom((event.payload as Spike).neuronId, neurons);
                             const neuronColor = neuronColorFor(neurons[neuronIndex], colorRangeRef.current);
 

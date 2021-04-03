@@ -1,13 +1,11 @@
-import {UseThreeValues} from "../basethree/ThreeProvider";
 import {BufferAttribute, BufferGeometry, Color, LineBasicMaterial, LineSegments} from "three";
-import {threeRender, useThree, useThreeContext} from "../basethree/useThree";
+import {useThree, useThreeContext} from "../basethree/useThree";
 import {NeuronInfo} from "./Neurons";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
 import {Observable} from "rxjs";
 import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
-import {noop} from "../../../commons";
 
 export interface ConnectionInfo {
     preSynaptic: NeuronInfo;
@@ -188,14 +186,12 @@ function Connections(props: OwnProps): null {
         networkObservable
     } = props;
 
-    const {scenes, sceneFor, addToScene} = useThreeContext()
+    const context = useThreeContext()
 
     const connectionPositionsRef = useRef<Float32Array>(connectionPositionsFrom(connections));
     const connectionColorsRef = useRef<Float32Array>(connectionColorsFrom(connections, colorRange));
     const connectionsRef = useRef<Array<ConnectionInfo>>(connections);
     const lineSegmentsRef = useRef<LineSegments>();
-    const contextRef = useRef<UseThreeValues>();
-    const renderRef = useRef<() => void>(noop);
 
     const connectionGeometryRef = useRef(new BufferGeometry());
 
@@ -229,19 +225,7 @@ function Connections(props: OwnProps): null {
         [connections, colorRange]
     );
 
-    // creates the connections between the pre- and post-synaptic neurons and adds them to the scene
-    useThree<LineSegments>((context: UseThreeValues): [string, LineSegments] => {
-        contextRef.current = context;
-        return addToScene(sceneId, lineSegmentsRef.current);
-        // return context.scenesContext.addToScene(sceneId, lineSegmentsRef.current);
-    });
-
-    // called when the component is mounted or the context changes to set the render function needed to animate
-    // the connections' spiking
-    useEffect(
-        () => renderRef.current = () => threeRender(contextRef.current, scenes, noop),
-        [contextRef.current]
-    );
+    const {render} = useThree<LineSegments>(() => [sceneId, lineSegmentsRef.current])
 
     /**
      * Animates the neuron spike by changing the neuron's color to the spike-color, and then after the an number
@@ -269,7 +253,7 @@ function Connections(props: OwnProps): null {
         }
 
         // render the scene with three-js
-        renderRef.current();
+        render();
 
         // if spiking, then call this function again after a delay to set the neuron's color back to
         // its original value
@@ -290,7 +274,7 @@ function Connections(props: OwnProps): null {
                 .pipe(filter(event => event.type === SPIKE))
                 .subscribe({
                     next: event => {
-                        if (contextRef.current && lineSegmentsRef.current) {
+                        if (context && lineSegmentsRef.current) {
                             const originalColors = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsRef.current)
                                 .map(info => connectionColorFor(info[0], info[1], props.colorRange));
 

@@ -103,7 +103,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
             if (controls) {
                 controls.addEventListener(
                     'change',
-                    () => threeRender(context, scenes, () => controls.update())
+                    () => threeRender(context, () => controls.update())
                 );
             }
 
@@ -112,7 +112,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
                 if(controls) {
                     controls.removeEventListener(
                         'change',
-                        () => threeRender(context, scenes,() => controls.update())
+                        () => threeRender(context,() => controls.update())
                     );
                 }
             }

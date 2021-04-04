@@ -55,8 +55,6 @@ export interface OwnProps {
 }
 
 export interface StateProps {
-    // itheme: ITheme;
-
     networkId: Option<string>;
     neurons: HashMap<string, NeuronInfo>;
     connections: HashMap<string, ConnectionInfo>;
@@ -134,8 +132,6 @@ function Network(props: Props): JSX.Element {
         spikeDuration = 50
     } = props;
 
-    // const scenesContext = useScenes(() => getScenes());
-
     const [axesColor, setAxesColor] = useState<Color>(new Color(itheme.palette.themeDarker));
     const [spikeColor, setSpikeColor] = useState<Color>(new Color(itheme.palette.black));
 
@@ -148,15 +144,6 @@ function Network(props: Props): JSX.Element {
     ));
 
     const cameraPositionRef = useRef<Coordinate>(cameraCoordinates());
-
-    // useEffect(
-    //     () => {
-    //         if (networkObservable === undefined) {
-    //             scenesContext.clearScenes()
-    //         }
-    //     },
-    //     [networkObservable]
-    // )
 
     // updates the axis color when the background color is changed
     useEffect(
@@ -300,6 +287,9 @@ function Network(props: Props): JSX.Element {
     }
 
     const stackTokens: IStackTokens = {childrenGap: 20};
+    // todo move the controls into a separate component that is then inside the ThreeProvider
+    //      and uses the useThreeContext to get axes to the scenes for the axis, grid, network
+    //      so that it manage their visibility
     return (
         <Stack>
             <Stack.Item>
@@ -327,7 +317,6 @@ function Network(props: Props): JSX.Element {
                     canvasId="network-canvas"
                     getCamera={getCamera}
                     getRenderer={getRenderer}
-                    // getScenes={getScenes}
                     scenesSupplier={getScenes}
                     width={sceneWidth}
                     height={sceneHeight}

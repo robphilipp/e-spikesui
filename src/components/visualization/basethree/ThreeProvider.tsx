@@ -50,11 +50,8 @@ export const ThreeContext = createContext<UseThreeValues>({
     timer: 0,
     sceneFor: () => Option.none(),
     addToScene: <E extends Object3D>(sceneId: string, entity: E) => [sceneId, entity],
-    // (sceneId: string, visible: boolean) => void,
     visibility: noop,
-    // (sceneId: string) => boolean,
     isVisible: () => false,
-    // scenes: Vector.empty()
     scenes: [],
     clearScenes: noop,
 });
@@ -169,7 +166,7 @@ function ThreeProvider(props: OwnProps): JSX.Element {
             visibleScenes[0].scene.background = props.backgroundColor;
         }
         if (numScenes > 1) {
-            visibleScenes[numScenes-1].scene.background = null;
+            visibleScenes[numScenes - 1].scene.background = null;
         }
     }
 
@@ -229,9 +226,9 @@ function ThreeProvider(props: OwnProps): JSX.Element {
 
     // set animation frame timer value and rerender the scene
     useAnimationFrame(timer => {
-        if(animate) {
+        if (animate) {
             timerRef.current = timer;
-            if(rendererRef.current && cameraRef.current) {
+            if (rendererRef.current && cameraRef.current) {
                 scenes
                     .forEach(info => {
                         if (info.visible) {
@@ -252,18 +249,17 @@ function ThreeProvider(props: OwnProps): JSX.Element {
                 updateBackground();
 
                 // when there are no scenes, don't clear the background
-                if(scenes.length > 0) {
+                if (scenes.length > 0) {
                     (renderer as WebGLRenderer).clear();
                 }
 
                 // render each of the scenes
-                scenes
-                    .forEach(info => {
-                        if (info.visible) {
-                            renderer.render(info.scene, cameraRef.current);
-                            (renderer as WebGLRenderer).clearDepth();
-                        }
-                    })
+                scenes.forEach(info => {
+                    if (info.visible) {
+                        renderer.render(info.scene, cameraRef.current);
+                        (renderer as WebGLRenderer).clearDepth();
+                    }
+                })
             }
         }
     );

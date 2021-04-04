@@ -122,6 +122,21 @@ app.on('activate', () => {
     }
 });
 
+app.on('child-process-gone', (event, details) => {
+    console.log('Child process is gone');
+    if (details.type === "GPU") {
+
+    }
+    console.log(`GPU Process has stopped; reason: ${details.reason}`);
+    if (details.reason !== "clean-exit") {
+        console.log(event);
+    }
+});
+
+app.on('gpu-info-update', () => {
+    app.getGPUInfo('basic').then(info => console.dir(info))
+})
+
 // if upgrading electron breaks because of `webSecurity: false` then try with the
 // line below uncommented
 // app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');

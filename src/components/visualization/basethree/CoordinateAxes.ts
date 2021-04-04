@@ -1,11 +1,13 @@
-import {UseThreeValues} from "./ThreeProvider";
 import {
     BufferAttribute,
     BufferGeometry,
     Color,
     Float32BufferAttribute,
     LineBasicMaterial,
-    LineSegments, Points, PointsMaterial, Texture,
+    LineSegments,
+    Points,
+    PointsMaterial,
+    Texture,
     TextureLoader
 } from "three";
 import {useThree, useThreeContext} from "./useThree";
@@ -138,13 +140,11 @@ function CoordinateAxes(props: OwnProps): null {
     );
 
 
-    const {addToScene} = useThreeContext();
+    const {context: {addToScene}} = useThreeContext();
 
     // sets up the coordinate axes as line segments, adds them to the scene, holds on
     // to the line segments
-    const {getEntity} = useThree<LineSegments>((context: UseThreeValues) => {
-        // const {scenesContext} = context;
-
+    const {getEntity} = useThree<LineSegments>(() => {
         const geometry = new BufferGeometry()
             .setAttribute('position', verticesRef.current)
             .setAttribute('color', colorsRef.current);
@@ -159,13 +159,7 @@ function CoordinateAxes(props: OwnProps): null {
 
     // called when this component is mounted to create the neurons (geometry, material, and mesh) and
     // adds them to the network scene
-    useThree<Array<Points>>((context: UseThreeValues): [scenedId: string, points: Array<Points>] => {
-        // contextRef.current = context;
-        // return context.scenesContext.addToScene(sceneId, pointsRef.current);
-        // const points = pointsRef.current.map(point => context.scenesContext.addToScene(sceneId, point)[1]);
-        const points = pointsRef.current.map(point => addToScene(sceneId, point)[1]);
-        return [sceneId, points];
-    });
+    useThree<Array<Points>>(() => [sceneId, pointsRef.current]);
 
     // called when the axes colors change and need to be updated
     useEffect(

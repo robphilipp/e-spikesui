@@ -103,7 +103,7 @@ function Synapses(props: OwnProps): null {
         spikeColor,
     } = props;
 
-    const {addToScene} = useThreeContext();
+    const {context: {addToScene}} = useThreeContext();
 
     const geometryRef = useRef<ConeGeometry>(new ConeGeometry(2, 7));
     const materialRef = useRef<Array<MeshBasicMaterial>>(

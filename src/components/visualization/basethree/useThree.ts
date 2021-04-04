@@ -4,12 +4,68 @@ import {Object3D, WebGLRenderer} from "three";
 import {noop} from "../../../commons";
 
 /**
+ * The render function renders the three-js scenes, calling the specified callback before rendering
+ * each scene
+ */
+type RenderFunction = (callback?: () => void) => void
+
+type EntityCallback = (context: UseThreeValues) => void
+type DestroyCallback = (context: UseThreeValues) => void
+type EntitySupplier<E extends Object3D | Array<Object3D>> = (context: UseThreeValues) => [string, E]
+type EntityDestroyer<E extends Object3D | Array<Object3D>> = (context: UseThreeValues, entity: E) => void
+
+function defaultSupplier<E extends Object3D | Array<Object3D>>(): () => [string, E] {
+    return () => ['default', new Object3D() as E]
+}
+
+/**
+ * Object returned by the useThreeContext hook
+ */
+interface UseThreeContextValues {
+    context: UseThreeValues
+    render: RenderFunction
+}
+
+/**
+ * Object returned by the useThree hook
+ */
+interface UseThreeEntityValues<E extends Object3D | Array<Object3D>> extends UseThreeContextValues {
+    getEntity: () => E
+}
+
+/**
+ * React hook for three-js context when the set-up function does not return anything. The hook returns
+ * the three-js context. Generally, use this hook for controls, such as the OrbitControls, or the FlyControls,
+ * etc.
+ * @param setup A function that is called to set up the object
+ * @param destroy A function that performs any clean up when the component
+ * is unmounted
+ * @return The three-js context.
+ */
+export function useThreeContext(setup: EntityCallback = noop, destroy?: DestroyCallback): UseThreeContextValues {
+    const context = useContext<UseThreeValues>(ThreeContext);
+
+    useEffect(() => {
+        setup(context);
+
+        return (): void => {
+            destroy?.(context);
+        }
+    }, []);
+
+    return {
+        context,
+        render: (callback: () => void = noop) => renderScenes(context, callback)
+    };
+}
+
+/**
  * React hook for three-js when the set-up function returns an entity (i.e. something that derives from
  * an `Object3D`). Generally use this hook for objects that are added to a scene.
  * This hook returns two things:
  * 1. the `ThreeContext` for components that are children of the `ThreeJsManager`
  * 2. a function that returns a reference to the entity returned by the set-up function
- * @param {(context: ThreeContext) => E} setup The set-up function that returns the entity for which we
+ * @param setup The set-up function that returns the entity for which we
  * hold the reference
  * @param {(context: ThreeContext, entity: E) => void} destroy The function that removes the entity from the scene
  * @return {{getEntity: () => E; context: ThreeContext}} An object holding two things:
@@ -17,9 +73,9 @@ import {noop} from "../../../commons";
  * 2. a supplier for the entity (i.e. a function that returns the entity)
  */
 export function useThree<E extends Object3D | Array<Object3D>>(
-    setup: (context: UseThreeValues) => [string, E] = () => ['default', new Object3D() as E],
-    destroy?: (context: UseThreeValues, entity: E) => void,
-): { getEntity: () => E, context: UseThreeValues, render: () => void } {
+    setup: EntitySupplier<E> = defaultSupplier<E>(),
+    destroy?: EntityDestroyer<E>
+): UseThreeEntityValues<E> {
 
     const entityRef = useRef<E>();
     const sceneIdRef = useRef<string>('default');
@@ -60,44 +116,17 @@ export function useThree<E extends Object3D | Array<Object3D>>(
     return {
         getEntity,
         context,
-        render: () => renderScenes(context, noop)
+        render: (callback: () => void = noop) => renderScenes(context, callback)
     };
 }
 
 /**
- * React hook for three-js context when the set-up function does not return anything. The hook returns
- * the three-js context. Generally, use this hook for controls, such as the OrbitControls, or the FlyControls,
- * etc.
- * @param {(context: ThreeContext) => void} setup A function that is called to set up the object
- * @param {(context: ThreeContext) => void} destroy A function that performs any clean up when the component
- * is unmounted
- * @return {UseThreeValues} The three-js context.
- */
-export function useThreeContext(
-    setup: (context: UseThreeValues) => void = noop,
-    destroy?: (context: UseThreeValues) => void
-): UseThreeValues {
-
-    const context = useContext<UseThreeValues>(ThreeContext);
-
-    useEffect(() => {
-        setup(context);
-
-        return (): void => {
-            destroy?.(context);
-        }
-    }, []);
-
-    return context;
-}
-
-/**
- * This is not a react hook.
  * Calls the requested callback function and then renders the scene
- * @param {UseThreeValues} context The three-js context
- * @param {() => void} callback The callback function
+ * @param context The three-js context
+ * @param callback An optional callback function which this methods calls before updating
+ * each three-js scene.
  */
-export function renderScenes(context: UseThreeValues, callback: () => void): void {
+function renderScenes(context: UseThreeValues, callback: () => void = noop): void {
     const {renderer, camera, canvas} = context;
     requestAnimationFrame(() => {
         if (renderer && camera && canvas) {

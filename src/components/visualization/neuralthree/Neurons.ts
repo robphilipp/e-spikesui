@@ -1,12 +1,11 @@
 import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
-import {renderScenes, useThree, useThreeContext} from "../basethree/useThree";
+import {useThree} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
 import {ColorRange} from "./Network";
 import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
-import {noop} from "../../../commons";
 
 export interface NeuronInfo {
     name: string;

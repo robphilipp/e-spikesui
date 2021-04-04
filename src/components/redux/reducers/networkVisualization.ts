@@ -39,7 +39,7 @@ interface NetVisualizationState {
 }
 
 export const initialNetVisState: NetVisualizationState = {
-    axesVisible: false,
+    axesVisible: true,
     gridVisible: true,
     camera: Option.none(),
     renderer: Option.none(),

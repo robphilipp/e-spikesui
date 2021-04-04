@@ -85,7 +85,7 @@ function Grid(props: GridProps): null {
         return colors;
     }
 
-    const {addToScene} = useThreeContext();
+    const {context: {addToScene}} = useThreeContext();
 
     // sets up the grid as a bunch of line segments and grabs the line segments that
     // were just created or exist already

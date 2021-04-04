@@ -1,4 +1,4 @@
-import {renderScenes, useThreeContext} from './useThree';
+import {useThreeContext} from './useThree';
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import {Camera} from "three";
 import {forwardRef, MutableRefObject, useEffect, useState} from "react";
@@ -52,10 +52,8 @@ const defaultProps = {
 function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControls>): null {
     const [controls, setControls] = useState<OrbitControls>();
 
-    const {scenes} = useThreeContext()
-
     // set up the controls using the react context hook
-    const context = useThreeContext((context: UseThreeValues): void => {
+    const {render} = useThreeContext((context: UseThreeValues): void => {
         const {camera, canvas} = context;
         const {
             enableDamping = defaultProps.enableDamping,
@@ -103,7 +101,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
             if (controls) {
                 controls.addEventListener(
                     'change',
-                    () => renderScenes(context, () => controls.update())
+                    () => render(() => controls.update())
                 );
             }
 
@@ -112,7 +110,7 @@ function CameraOrbitControls(props: OwnProps, ref: MutableRefObject<OrbitControl
                 if(controls) {
                     controls.removeEventListener(
                         'change',
-                        () => renderScenes(context,() => controls.update())
+                        () => render(() => controls.update())
                     );
                 }
             }

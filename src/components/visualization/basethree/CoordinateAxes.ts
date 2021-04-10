@@ -115,9 +115,8 @@ function CoordinateAxes(props: OwnProps): null {
         });
     }
 
-    // called when the neurons or the color ranges change so that we can recalculate the colors
-    useEffect(
-        () => {
+    // sets up the "points" which have the image of the x, y, z letters
+    const {getEntity: labelEntity} = useThree<Array<Points>>(() => {
             axesGeometryRef.current.forEach((geometry, axis) => {
                 axesGeometryRef.current[axis].setAttribute(
                     'color',
@@ -130,17 +129,46 @@ function CoordinateAxes(props: OwnProps): null {
                 );
             })
 
-            pointsRef.current = [
+            const points = [
                 new Points(axesGeometryRef.current[0], pointsMaterial(x)),
                 new Points(axesGeometryRef.current[1], pointsMaterial(y)),
                 new Points(axesGeometryRef.current[2], pointsMaterial(z)),
             ];
+
+            return [sceneId, points]
+        }
+    );
+
+    // called when the neurons or the color ranges change so that we can recalculate the colors
+    useEffect(
+        () => {
+            colorsRef.current.set(vertexColors(color));
+            labelEntity().forEach(point => {
+                (point.geometry.getAttribute('color') as BufferAttribute).needsUpdate = true;
+            })
+            axesGeometryRef.current.forEach(geometry => {
+                geometry.getAttribute('color').needsUpdate = true
+            })
+            // axesGeometryRef.current.forEach((geometry, axis) => {
+            //     axesGeometryRef.current[axis].setAttribute(
+            //         'color',
+            //         new Float32BufferAttribute(axesColor(color), 3)
+            //     );
+            //     axesGeometryRef.current[axis].setDrawRange(0, 1);
+            //     axesGeometryRef.current[axis].setAttribute(
+            //         'position',
+            //         new Float32BufferAttribute(axesLabel(originOffset || origin(), axis), 3)
+            //     );
+            // })
+            //
+            // pointsRef.current = [
+            //     new Points(axesGeometryRef.current[0], pointsMaterial(x)),
+            //     new Points(axesGeometryRef.current[1], pointsMaterial(y)),
+            //     new Points(axesGeometryRef.current[2], pointsMaterial(z)),
+            // ];
         },
         [color]
     );
-
-
-    const {context: {addToScene}} = useThreeContext();
 
     // sets up the coordinate axes as line segments, adds them to the scene, holds on
     // to the line segments
@@ -152,14 +180,12 @@ function CoordinateAxes(props: OwnProps): null {
         const material = new LineBasicMaterial({
             vertexColors: true,
             opacity: opacity,
+            transparent: true
         });
 
-        return addToScene(sceneId, new LineSegments(geometry, material));
+        const lines = new LineSegments(geometry, material)
+        return [sceneId, lines]
     });
-
-    // called when this component is mounted to create the neurons (geometry, material, and mesh) and
-    // adds them to the network scene
-    useThree<Array<Points>>(() => [sceneId, pointsRef.current]);
 
     // called when the axes colors change and need to be updated
     useEffect(

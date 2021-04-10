@@ -159,15 +159,14 @@ function ThreeProvider(props: OwnProps): JSX.Element {
      * transparently, on top of the first visible scene.
      */
     function updateBackground(): void {
-        const visibleScenes = scenes.filter(info => info.visible);
-        // const visibleScenes = scenesContext.scenes.filter(info => info.visible);
-        const numScenes = visibleScenes.length;
-        if (numScenes > 0) {
-            visibleScenes[0].scene.background = props.backgroundColor;
-        }
-        if (numScenes > 1) {
-            visibleScenes[numScenes - 1].scene.background = null;
-        }
+        scenes
+            .filter(info => info.visible)
+            .forEach((scene, index) => {
+                if (index === 0) {
+                    scene.scene.background = props.backgroundColor
+                }
+                scene.scene.background = null
+            })
     }
 
     // setup scene, camera, and renderer, and store references. importantly, this use-effects method

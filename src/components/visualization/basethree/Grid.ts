@@ -1,14 +1,6 @@
-import {useThree, useThreeContext} from './useThree';
-import {
-    BufferAttribute,
-    BufferGeometry,
-    Color,
-    Float32BufferAttribute,
-    LineBasicMaterial,
-    LineSegments,
-} from "three";
-import {useEffect, useState} from "react";
-import {UseThreeValues} from "./ThreeProvider";
+import {useThree} from './useThree';
+import {BufferAttribute, BufferGeometry, Color, Float32BufferAttribute, LineBasicMaterial, LineSegments,} from "three";
+import {useEffect, useRef} from "react";
 
 interface GridProps {
     sceneId: string;
@@ -36,8 +28,8 @@ function Grid(props: GridProps): null {
         sceneId
     } = props;
 
-    const [colors, ] = useState(new Float32BufferAttribute(vertexColors(size, divisions), 3));
-    const [vertices, ] = useState(new Float32BufferAttribute(vertexCoords(size, divisions), 3));
+    const colorsRef = useRef(new Float32BufferAttribute(vertexColors(size, divisions), 3))
+    const verticesRef = useRef(new Float32BufferAttribute(vertexCoords(size, divisions), 3))
 
     /**
      * Calculates the vertices for the grid mesh
@@ -85,15 +77,12 @@ function Grid(props: GridProps): null {
         return colors;
     }
 
-    const {context: {addToScene}} = useThreeContext();
-
     // sets up the grid as a bunch of line segments and grabs the line segments that
     // were just created or exist already
-    const {getEntity} = useThree<LineSegments>((context: UseThreeValues) => {
-        // const {scenesContext} = context;
+    const {getEntity} = useThree<LineSegments>(() => {
         const geometry = new BufferGeometry();
-        geometry.setAttribute('position', vertices);
-        geometry.setAttribute('color', colors);
+        geometry.setAttribute('position', verticesRef.current);
+        geometry.setAttribute('color', colorsRef.current);
 
         const material = new LineBasicMaterial({
             vertexColors: true,
@@ -102,7 +91,9 @@ function Grid(props: GridProps): null {
             transparent: true
         });
 
-        return addToScene(sceneId, new LineSegments(geometry, material));
+        const lines = new LineSegments(geometry, material)
+
+        return [sceneId, lines];
     });
 
     // called when the axes colors change and need to be updated
@@ -110,7 +101,7 @@ function Grid(props: GridProps): null {
         () => {
             const bufferGeometry = getEntity().geometry as BufferGeometry;
             if(bufferGeometry) {
-                colors.set(vertexColors(size, divisions));
+                colorsRef.current.set(vertexColors(size, divisions));
                 (bufferGeometry.getAttribute('color') as BufferAttribute).needsUpdate = true;
             }
         },

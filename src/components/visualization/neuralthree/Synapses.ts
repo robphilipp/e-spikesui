@@ -18,6 +18,8 @@ export interface OwnProps {
     spikeColor: Color;
 }
 
+// unit vector representing the base direction of the cone. the direction from the pre- to
+// post-synaptic neuron is then applied to this unit-vector for rendering the code
 const coneUnitVector = new Vector3(0, -1, 0);
 
 /**
@@ -33,11 +35,14 @@ function synapseDirection(connection: ConnectionInfo): Vector3 {
 
 /**
  * Calculates the synapse's 3-dimensional coordinates
- * @param connection The connection
- * @param direction The direction from the pre-synaptic to the post-synaptic neuron
+ * @param connection The connection information holding the coordinate of the pre- and post-synaptic neurons
+ * @param direction An optional unit vector representing the direction from the pre-synaptic to the
+ * post-synaptic neuron. If the direction is not specified, then calculates the direction using the
+ * `synapseDirection(...)` function.
  * @return A array representing a 3-tuple (x, y, z).
+ * @see synapseDirection
  */
-function synapseLocation(connection: ConnectionInfo, direction: Vector3): [x: number, y: number, z: number] {
+function synapseLocation(connection: ConnectionInfo, direction: Vector3 = synapseDirection(connection)): [x: number, y: number, z: number] {
     const [x, y, z] = connection.postSynaptic.coords.toArray();
     const [xp, yp, zp] = connection.preSynaptic.coords.toArray();
     const distance = Math.min(8, Math.sqrt((x - xp) * (x  - xp) + (y - yp) * (y - yp) + (z - zp) * (z - zp)));
@@ -50,9 +55,9 @@ function synapseLocation(connection: ConnectionInfo, direction: Vector3): [x: nu
 
 /**
  * Creates a cone representing the synapse, pointing to the post-synaptic neuron from the pre-synaptic neuron.
- * @param connection The connection
+ * @param connection The connection information holding the coordinate of the pre- and post-synaptic neurons
  * @param geometry The cone geometry
- * @param material The basic mesh material
+ * @param material The basic mesh material that is applied to the geometry
  * @return A mesh representing the synapse (cone)
  */
 function createCone(connection: ConnectionInfo, geometry: ConeGeometry, material: MeshBasicMaterial): Mesh {

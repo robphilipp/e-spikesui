@@ -14,8 +14,8 @@ interface GridProps {
 /**
  * Grid plane. Code converted from [GridHelper.js](https://github.com/mrdoob/three.js/blob/master/src/helpers/GridHelper.js)
  * written by mrdoob.
- * @param {GridProps} props The grid properties
- * @return {null} Always nothing
+ * @param props The grid properties
+ * @return Always nothing
  * @constructor
  */
 function Grid(props: GridProps): null {
@@ -33,9 +33,9 @@ function Grid(props: GridProps): null {
 
     /**
      * Calculates the vertices for the grid mesh
-     * @param {number} size The number of the mesh
-     * @param {number} divisions The number of divisions making up the grid
-     * @return {Array<number>} The vertex locations as (x, y, z)-start to (x, y, z)-end
+     * @param size The number of the mesh
+     * @param divisions The number of divisions making up the grid
+     * @return The vertex locations as (x, y, z)-start to (x, y, z)-end
      */
     function vertexCoords(size: number, divisions: number): Array<number> {
         const step = size / divisions;
@@ -51,9 +51,9 @@ function Grid(props: GridProps): null {
 
     /**
      * Calculates the colors for the line segment vertices
-     * @param {number} size The number of the mesh
-     * @param {number} divisions The number of divisions making up the grid
-     * @return {Array<number>} The vertex colors (r, g, b)-start-start, (r, g, b)-start-end, (r, g, b)-end-start
+     * @param size The number of the mesh
+     * @param divisions The number of divisions making up the grid
+     * @return The vertex colors (r, g, b)-start-start, (r, g, b)-start-end, (r, g, b)-end-start
      */
     function vertexColors(size: number, divisions: number): Array<number> {
         const center = divisions / 2;

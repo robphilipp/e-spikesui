@@ -14,23 +14,21 @@ type DestroyCallback = (context: UseThreeValues) => void
 type EntitySupplier<E extends Object3D | Array<Object3D>> = (context: UseThreeValues) => [string, E]
 type EntityDestroyer<E extends Object3D | Array<Object3D>> = (context: UseThreeValues, entity: E) => void
 
+/**
+ * The default entity supplier, if none is specified by the react hook. This entity supplier
+ * returns an array where the first element is default the scene ID (i.e. 'default') and the
+ * values a new three-js `Object3D()` of the specified type, `E`.
+ */
 function defaultSupplier<E extends Object3D | Array<Object3D>>(): () => [string, E] {
     return () => ['default', new Object3D() as E]
 }
 
 /**
- * Object returned by the useThreeContext hook
+ * Object returned by the `useThreeContext` hook. Holds the context and the renderer.
  */
 interface UseThreeContextValues {
     context: UseThreeValues
     render: RenderFunction
-}
-
-/**
- * Object returned by the useThree hook
- */
-interface UseThreeEntityValues<E extends Object3D | Array<Object3D>> extends UseThreeContextValues {
-    getEntity: () => E
 }
 
 /**
@@ -57,6 +55,14 @@ export function useThreeContext(setup: EntityCallback = noop, destroy?: DestroyC
         context,
         render: (callback: () => void = noop) => renderScenes(context, callback)
     };
+}
+
+/**
+ * Object returned by the `useThree` hook, extends the `UseThreeContext` by adding a function to
+ * to the returned object that allows the caller to retrieve the three-js entity.
+ */
+interface UseThreeEntityValues<E extends Object3D | Array<Object3D>> extends UseThreeContextValues {
+    getEntity: () => E
 }
 
 /**

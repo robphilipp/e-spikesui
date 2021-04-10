@@ -43,9 +43,8 @@ export interface UseThreeValues {
 
 /**
  * Three react context holding the three-js context
- * @type {React.Context<UseThreeValues>} The react context holding the three-js elements
  */
-export const ThreeContext = createContext<UseThreeValues>({
+export const ThreeContext: React.Context<UseThreeValues> = createContext<UseThreeValues>({
     canvas: null,
     timer: 0,
     sceneFor: () => Option.none(),
@@ -126,8 +125,8 @@ export interface OwnProps {
  *
  * export default CubeExample;
  *
- * @param {OwnProps} props The properties for the three-js manager
- * @return {Element} The rendered three-js scene
+ * @param props The properties for the three-js manager
+ * @return The rendered three-js scene
  * @constructor
  */
 function ThreeProvider(props: OwnProps): JSX.Element {
@@ -265,8 +264,8 @@ function ThreeProvider(props: OwnProps): JSX.Element {
 
     /**
      * Returns the scene for the specified name
-     * @param {string} sceneId The ID of the scene (generally a descriptive name)
-     * @return {Option<SceneInfo>} An option holding the scene information, if found; else
+     * @param sceneId The ID of the scene (generally a descriptive name)
+     * @return An option holding the scene information, if found; else
      * an empty option
      */
     function sceneFor(sceneId: string): Option<SceneInfo> {
@@ -276,9 +275,9 @@ function ThreeProvider(props: OwnProps): JSX.Element {
     /**
      * Adds the entity to the scene for the specified ID. If the scene ID is not found,
      * then the scene is not added.
-     * @param {string} sceneId The ID of the scene to which to add the entity
-     * @param {E} entity The entity to add to the scene
-     * @return {[string, E]} A tuple holding the scene ID and the entity, passed through.
+     * @param sceneId The ID of the scene to which to add the entity
+     * @param entity The entity to add to the scene
+     * @return A tuple holding the scene ID and the entity, passed through.
      */
     function addToScene<E extends Object3D>(sceneId: string, entity: E): [string, E] {
         sceneFor(sceneId)
@@ -291,8 +290,8 @@ function ThreeProvider(props: OwnProps): JSX.Element {
     /**
      * Sets the visibility of the scene with the specified ID. When setting the visibility
      * of the scene to `false`, the entire scene will no longer be rendered.
-     * @param {string} sceneId The ID of the scene
-     * @param {boolean} visible The visibility of the scene.
+     * @param sceneId The ID of the scene
+     * @param visible The visibility of the scene.
      */
     function visibility(sceneId: string, visible: boolean): void {
         sceneFor(sceneId)
@@ -302,8 +301,8 @@ function ThreeProvider(props: OwnProps): JSX.Element {
 
     /**
      * Returns the visibility of the scene.
-     * @param {string} sceneId The ID of the scene
-     * @return {boolean} `true` if the scene is visible; `false` if the scene is not visible.
+     * @param sceneId The ID of the scene
+     * @return `true` if the scene is visible; `false` if the scene is not visible.
      */
     function isVisible(sceneId: string): boolean {
         return sceneFor(sceneId).map(info => info.visible).getOrElse(false);

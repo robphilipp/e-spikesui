@@ -77,13 +77,13 @@ export const NETWORK_SCENE_ID = "network";
 
 /**
  * Calculates the color range for connections given the connection weight
- * @param {ITheme} itheme
- * @param {Color} excitationColor
- * @param {Color} inhibitionColor
- * @param {number} colorAttenuation
- * @return {{excitatory: {min: Color; max: Color}; inhibitory: {min: Color; max: Color}}}
+ * @param itheme The current fluent-ui theme
+ * @param excitationColor The color for excitatory neurons
+ * @param inhibitionColor The color for inhibitory neurons
+ * @param colorAttenuation The color attenuation from the minimum to the maximum weight value
+ * @return The color ranges for excitatory and inhibitory neurons
  */
-function colorRange(itheme: ITheme, excitationColor: Color, inhibitionColor: Color, colorAttenuation: number) {
+function colorRange(itheme: ITheme, excitationColor: Color, inhibitionColor: Color, colorAttenuation: number): ColorRange {
     const themePalette = itheme.palette;
     const excitationMinColor = new Color(excitationColor).lerp(new Color(themePalette.white), colorAttenuation);
     const excitationMaxColor = new Color(excitationColor);
@@ -97,8 +97,8 @@ function colorRange(itheme: ITheme, excitationColor: Color, inhibitionColor: Col
 
 /**
  * Sets up the visualization for the network.
- * @param {Props} props The properties of the network
- * @return {Element} The react element
+ * @param props The properties of the network
+ * @return The react element holding the network visualization and controls
  * @constructor
  */
 function Network(props: Props): JSX.Element {
@@ -166,7 +166,7 @@ function Network(props: Props): JSX.Element {
 
     /**
      * Calculates the coordinates of the camera based on the bounding sphere for the spiking network.
-     * @return {Coordinate} The camera's coordinates
+     * @return The camera's coordinates
      */
     function cameraCoordinates(): Coordinate {
         return coordinateFrom(1, 1, 1)
@@ -176,10 +176,10 @@ function Network(props: Props): JSX.Element {
 
     /**
      * Creates a perspective camera, sets the position, and returns the camera
-     * @param {number} offsetWidth The canvas offset width in pixels
-     * @param {number} offsetHeight The canvas offset height in pixels
-     * @param {Coordinate} position The initial camera position
-     * @return {PerspectiveCamera} The perspective camera
+     * @param offsetWidth The canvas offset width in pixels
+     * @param offsetHeight The canvas offset height in pixels
+     * @param position The initial camera position
+     * @return The perspective camera
      */
     function getCamera(offsetWidth: number,
                        offsetHeight: number,
@@ -195,8 +195,8 @@ function Network(props: Props): JSX.Element {
 
     /**
      * Creates and returns a WebGL renderer
-     * @param {HTMLCanvasElement} canvas The react HTML canvas element
-     * @return {Renderer} The WebGL renderer
+     * @param canvas The react HTML canvas element
+     * @return The WebGL renderer for rendering the canvas
      */
     function getRenderer(canvas: HTMLCanvasElement): Renderer {
         const context = canvas.getContext('webgl');

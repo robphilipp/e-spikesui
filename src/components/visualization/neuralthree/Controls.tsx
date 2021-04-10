@@ -62,7 +62,7 @@ function Controls(props: Props): JSX.Element {
     /**
      * Sets the visibility of the three-js axes-scene, and then dispatches a message that the axes'
      * visibility has changed.
-     * @param {boolean} visible Set to `true` for the axes to be visible; `false` for the
+     * @param visible Set to `true` for the axes to be visible; `false` for the
      * axes to be invisible.
      */
     function setAxesVisibility(visible: boolean): void {
@@ -73,7 +73,7 @@ function Controls(props: Props): JSX.Element {
     /**
      * Sets the visibility of the three-js grid-scene, and then dispatches a message that the grid's
      * visibility has changed.
-     * @param {boolean} visible Set to `true` for the grid to be visible; `false` for the
+     * @param visible Set to `true` for the grid to be visible; `false` for the
      * grid to be invisible.
      */
     function setGridVisibility(visible: boolean): void {
@@ -83,7 +83,7 @@ function Controls(props: Props): JSX.Element {
 
     /**
      * Calculates the coordinates of the camera based on the bounding sphere for the spiking network.
-     * @return {Coordinate} The camera's coordinates
+     * @return The camera's coordinates
      */
     function cameraCoordinates(): Coordinate {
         return coordinateFrom(1, 1, 1)

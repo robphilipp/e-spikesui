@@ -90,11 +90,14 @@ function CoordinateAxes(props: OwnProps): null {
     function axesLabel(offset: Coordinate, axis: number): Array<number> {
         switch (axis) {
             // x
-            case 0: return [length + 10, offset.y, offset.z];
+            case 0:
+                return [length + 10, offset.y, offset.z];
             // y
-            case 1: return [offset.x, length + 10, offset.z];
+            case 1:
+                return [offset.x, length + 10, offset.z];
             // z
-            case 2: return [offset.x, offset.y, length + 10];
+            case 2:
+                return [offset.x, offset.y, length + 10];
         }
     }
 
@@ -141,8 +144,9 @@ function CoordinateAxes(props: OwnProps): null {
     }
 
     // sets up the "points" which have the image of the x, y, z letters
-    useThree<Array<Points>>(() => {
-        updateAxesGeometry()
+    useThree<Array<Points>>(
+        () => {
+            updateAxesGeometry()
 
             const points = [
                 new Points(axesGeometryRef.current[0], pointsMaterial(x)),

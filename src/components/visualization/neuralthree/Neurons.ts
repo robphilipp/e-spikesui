@@ -7,6 +7,10 @@ import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../../redux/actions/networkEvent";
 import {filter} from "rxjs/operators";
 
+/**
+ * Information about the neuron. Holds it name, whether it is inhibitory or excitatory, and
+ * its coordinates,
+ */
 export interface NeuronInfo {
     name: string;
     type: string;
@@ -30,11 +34,11 @@ export interface OwnProps {
 
 /**
  * Calculates the neuron position array from the neuron information array
- * @param {[NeuronInfo]} neurons An array holding the neuron information objects
- * @param {Float32Array} [neuronPositions] An optional parameter holding the array of neuron positions used by ThreeJs.
+ * @param neurons An array holding the neuron information objects
+ * @param [neuronPositions] An optional parameter holding the array of neuron positions used by ThreeJs.
  * If this parameter is not specified, or of the size is inconsistent with the array of neurons, then a new
  * Float32Array is created and return, which changes the reference. Otherwise, the same array is used and returned.
- * @return {Float32Array} holding the flatten neuron positions. The length of the array is
+ * @return holding the flatten neuron positions. The length of the array is
  * 3 times the length of the neuron info array
  */
 function neuronPositionsFrom(neurons: Array<NeuronInfo>, neuronPositions?: Float32Array): Float32Array {
@@ -60,13 +64,13 @@ function neuronPositionsFrom(neurons: Array<NeuronInfo>, neuronPositions?: Float
  * neurons. Note that if the optional `neuronColors` array is not passed in, or if its size is not equal to three
  * times the length of the `neurons` array, then a new Float32Array will be created, and a new reference will be
  * returned.
- * @param {Array<NeuronInfo>} neurons An array holding the neuron information objects
- * @param {Color} excitatoryColor The color for excitatory neurons
- * @param {Color} inhibitoryColor The color for inhibitory neurons
- * @param {Float32Array} [neuronColors] An optional parameter holding the array of neuron colors used by ThreeJs.
+ * @param neurons An array holding the neuron information objects
+ * @param excitatoryColor The color for excitatory neurons
+ * @param inhibitoryColor The color for inhibitory neurons
+ * @param [neuronColors] An optional parameter holding the array of neuron colors used by ThreeJs.
  * If this parameter is not specified, or of the size is inconsistent with the array of neurons, then a new
  * Float32Array is created and return, which changes the reference. Otherwise, the same array is used and returned.
- * @return {Float32Array} holding the flatten neuron colors (RGB). The length of the array is
+ * @return holding the flatten neuron colors (RGB). The length of the array is
  * 3 times the length of the neuron info array
  */
 function neuronColorsFrom(neurons: Array<NeuronInfo>,
@@ -91,28 +95,31 @@ function neuronColorsFrom(neurons: Array<NeuronInfo>,
 }
 
 /**
- * @param {string} neuronId The ID of the neuron
- * @param {[NeuronInfo]} neurons The list of neurons
- * @return {number} The index of the neuron with the specified ID
+ * @param neuronId The ID of the neuron
+ * @param neurons The list of neurons
+ * @return The index of the neuron with the specified ID
  */
 function neuronIndexFrom(neuronId: string, neurons: Array<NeuronInfo>): number {
     return neurons.findIndex(neuron => neuron.name === neuronId);
 }
 
 /**
- * @param {NeuronInfo} neuron The neuron
- * @param {ColorRange} colors The colors for excitation and inhibition neurons
- * @return {Color} The current neuron color
+ * Returns the color for the neuron, depending on whether it is inhibitory or excitatory
+ * @param neuron The neuron information
+ * @param colors The colors for excitation and inhibition neurons
+ * @return The current neuron color
  */
 function neuronColorFor(neuron: NeuronInfo, colors: ColorRange): Color {
     return neuron?.type === 'e' ? colors.excitatory.max : colors.inhibitory.max;
 }
 
 /**
- * @param {number} neuronIndex The index of the neuron for which to update the color
- * @param {Float32Array} neuronColors A float-array holding the r, g, b values. Length of array is
+ * Updates the color of a neuron in-place, based on the neuron's index in the color list,
+ * the neuron colors, and the new color.
+ * @param neuronIndex The index of the neuron for which to update the color
+ * @param neuronColors A float-array holding the r, g, b values. Length of array is
  * three times the length of the neurons array
- * @param {Color} color The current neuron color
+ * @param color The current neuron color
  */
 function updateNeuronColor(neuronIndex: number, neuronColors: Float32Array, color: Color): void {
     neuronColors[neuronIndex * 3] = color.r;
@@ -120,13 +127,14 @@ function updateNeuronColor(neuronIndex: number, neuronColors: Float32Array, colo
     neuronColors[neuronIndex * 3 + 2] = color.b;
 }
 
+// holds the image of the ball used to represent the neuron
 const sprite = new TextureLoader().load( '/resources/ball.png');
 
 /**
  * Visualization of the neurons, as points, with the point colors representing an excitatory or inhibitory
  * neuron.
- * @param {OwnProps} props The neuron visualization properties
- * @return {null} Always null
+ * @param props The neuron visualization properties
+ * @return Always null
  * @constructor
  */
 function Neurons(props: OwnProps): null {
@@ -201,9 +209,9 @@ function Neurons(props: OwnProps): null {
      * of milliseconds specified by the spike-duration, the neuron's color is set back to its original color.
      * When this function is called, sets the neuron to the spiking color, then after a spike-duration (ms) calls
      * itself to set the color back to the neuron's original color.
-     * @param {number} neuronIndex The index of the neuron
-     * @param {Color} neuronColor The current neuron color (to go back to)
-     * @param {boolean} spiking Set to `true` will cause the connection to be displayed with the spike color; set to
+     * @param neuronIndex The index of the neuron
+     * @param neuronColor The current neuron color (to go back to)
+     * @param spiking Set to `true` will cause the connection to be displayed with the spike color; set to
      * `false` will cause the connection to be displayed in the original color.
      */
     function animateSpike(neuronIndex: number, neuronColor: Color, spiking: boolean) {

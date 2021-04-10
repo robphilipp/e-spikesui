@@ -19,7 +19,7 @@ import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
-import {Option} from 'prelude-ts';
+import {HashMap, Option} from 'prelude-ts';
 import {
     changeKafkaSettings,
     changeServerSettings,
@@ -39,14 +39,28 @@ import TemplateSettings from "./templateSettings";
 import {saveSettingsAsync} from "../repos/appSettingsRepo";
 import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 import {useTheme} from "../common/useTheme";
+import {ThemePalette} from "../repos/themeRepo";
 
-const themes: IDropdownOption[] = [
-    {key: "default", text: "Default Theme"},
-    {key: "light", text: "Light Theme"},
-    {key: "dark", text: "Dark Theme"},
-    {key: "darkGray", text: "Dark Gray Theme"},
-    {key: "darkSepia", text: "Dark Sepia Theme"}
-];
+// const themes: IDropdownOption[] = [
+//     {key: "default", text: "Default Theme"},
+//     {key: "light", text: "Light Theme"},
+//     {key: "dark", text: "Dark Theme"},
+//     {key: "darkGray", text: "Dark Gray Theme"},
+//     {key: "darkSepia", text: "Dark Sepia Theme"}
+// ];
+
+function dropDownOptionsFrom(palettes: HashMap<string, ThemePalette>): Array<IDropdownOption> {
+    const options = [{key: "default", text: "Default Theme"}]
+    const userOptions = Array
+        .from(palettes.valueIterable())
+        .map(tp => ({key: tp.name, text: tp.label}))
+        .sort((a, b) => {
+            if (a.text > b.text) return 1
+            if (a.text < b.text) return -1
+            return 0
+        })
+    return options.concat(userOptions)
+}
 
 interface OwnProps {
     nothing?: string
@@ -105,7 +119,7 @@ function SettingsPanel(props: Props): JSX.Element {
         // onChangeNetworkDescriptionSettings
     } = props;
 
-    const {themeName: name, itheme, changeTheme: onChangeTheme} = useTheme()
+    const {themeName: name, itheme, changeTheme: onChangeTheme, palettes} = useTheme()
 
     // initially we start out with the current theme name to be an empty option. when
     // the user selects a theme, we update the current theme with the theme that
@@ -113,6 +127,17 @@ function SettingsPanel(props: Props): JSX.Element {
     // that there has been a change, and holds the theme to revert to if the user cancels
     // from the theme.
     const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
+    const [themes, setThemes] = useState<Array<IDropdownOption>>(dropDownOptionsFrom(palettes))
+
+    /*
+const themes: IDropdownOption[] = [
+    {key: "default", text: "Default Theme"},
+    {key: "light", text: "Light Theme"},
+    {key: "dark", text: "Dark Theme"},
+    {key: "darkGray", text: "Dark Gray Theme"},
+    {key: "darkSepia", text: "Dark Sepia Theme"}
+];
+     */
 
     // tracks the REST server settings so that changes can be reverted. unlike the theme,
     // changes to the server settings do not update the application state until the "Ok"

@@ -1,5 +1,6 @@
 import {IPartialTheme, ITheme, loadTheme} from '@fluentui/react';
 import {HashMap} from "prelude-ts";
+import {loadPalettes, ThemePalette} from "./components/repos/themeRepo";
 
 export interface Palette {
     themePrimary: string;
@@ -31,68 +32,6 @@ export interface Palette {
     greenDark: string;
     green: string;
 }
-
-const darkPalette: Palette = {
-    themePrimary: '#e08c00',
-    themeLighterAlt: '#090600',
-    themeLighter: '#241600',
-    themeLight: '#432a00',
-    themeTertiary: '#875400',
-    themeSecondary: '#c57b00',
-    themeDarkAlt: '#e39617',
-    themeDark: '#e8a538',
-    themeDarker: '#eebc69',
-    neutralLighterAlt: '#3f3c3c',
-    neutralLighter: '#474444',
-    neutralLight: '#535050',
-    neutralQuaternaryAlt: '#5b5858',
-    neutralQuaternary: '#625e5e',
-    neutralTertiaryAlt: '#7c7979',
-    neutralTertiary: '#fbf0e5',
-    neutralSecondary: '#fcf3ea',
-    neutralPrimaryAlt: '#fdf5ee',
-    neutralPrimary: '#fae9d9',
-    neutralDark: '#fefaf6',
-    black: '#fefcfa',
-    white: '#2b2b2b',
-    redLight: 'rgb(150,0,0)',
-    red: '#f00',
-    redDark: 'rgb(255,0,0)',
-    greenLight: 'rgb(0,150,0)',
-    green: '#3f3',
-    greenDark: 'rgb(0,255,0)',
-};
-
-const darkGrayPalette: Palette = {
-    themePrimary: '#969593',
-    themeLighterAlt: '#060606',
-    themeLighter: '#181818',
-    themeLight: '#2d2d2c',
-    themeTertiary: '#5a5a58',
-    themeSecondary: '#848382',
-    themeDarkAlt: '#a1a09e',
-    themeDark: '#b0afad',
-    themeDarker: '#c4c4c2',
-    neutralLighterAlt: '#343434',
-    neutralLighter: '#3d3d3d',
-    neutralLight: '#4a4a4a',
-    neutralQuaternaryAlt: '#525252',
-    neutralQuaternary: '#595959',
-    neutralTertiaryAlt: '#757575',
-    neutralTertiary: '#f1f1f1',
-    neutralSecondary: '#f4f4f4',
-    neutralPrimaryAlt: '#f6f6f6',
-    neutralPrimary: '#ebebeb',
-    neutralDark: '#fafafa',
-    black: '#fdfdfd',
-    white: '#2b2b2b',
-    redLight: 'rgb(150,0,0)',
-    red: '#f00',
-    redDark: 'rgb(255,0,0)',
-    greenLight: 'rgb(0,150,0)',
-    green: '#3f3',
-    greenDark: 'rgb(0,255,0)',
-};
 
 const darkSepiaPalette: Palette = {
     themePrimary: '#bdb3a2',
@@ -156,12 +95,16 @@ const lightPalette: Palette = {
     greenDark: 'rgb(0,150,0)',
 };
 
-export const defaultPalettes = HashMap.ofObjectDictionary<Palette>({
-    "light": lightPalette,
-    "dark": darkPalette,
-    "darkGray": darkGrayPalette,
-    "darkSepia": darkSepiaPalette
+const defaultPalettes = HashMap.ofObjectDictionary<ThemePalette>({
+    "light": {name: "light", label: "Light Theme", palette: lightPalette},
+    "darkSepia": {name: "darkSepia", label: "Dark Sepia Theme", palette: darkSepiaPalette}
 });
+
+
+export const THEME_DIRECTORY = '.themes'
+export function loadOrDefaultThemes(directory: string): HashMap<string, ThemePalette> {
+    return loadPalettes('.themes').getOrElse(defaultPalettes)
+}
 
 /**
  * Holds the current theme name and fabric-ui theme
@@ -177,7 +120,7 @@ export interface AppTheme {
  * @return The actual theme
  */
 export const createDefaultTheme = (name: string): AppTheme => {
-    return createTheme(name, defaultPalettes);
+    return createTheme(name, defaultPalettes)
 };
 
 
@@ -187,11 +130,11 @@ export const createDefaultTheme = (name: string): AppTheme => {
  * @param palettes A map(theme_name -> fabric_ui_color_palette) holding the available themes
  * @return The actual theme
  */
-export const createTheme = (name: string, palettes: HashMap<string, Palette>): AppTheme => {
+export const createTheme = (name: string, palettes: HashMap<string, ThemePalette>): AppTheme => {
     const palette: IPartialTheme = name === 'default' ? {
         defaultFontStyle: {fontFamily: '"Avenir Next", sans-serif', fontWeight: 400}
     } : {
-        palette: palettes.get(name).getOrElse(darkPalette),
+        palette: palettes.get(name).map(tp => tp.palette).getOrElse(darkSepiaPalette),
         defaultFontStyle: {fontFamily: '"Avenir Next", sans-serif', fontWeight: 400}
     };
     const theme = loadTheme(palette);

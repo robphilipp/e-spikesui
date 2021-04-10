@@ -1,9 +1,9 @@
 import * as React from 'react';
+import {createContext, useContext, useState} from 'react';
 import {ITheme} from "@fluentui/react";
-import {createContext, useContext, useState} from "react";
-import {createDefaultTheme, createTheme, defaultPalettes, Palette} from "../../theming";
+import {createDefaultTheme, createTheme, Palette} from "../../theming";
 import {HashMap} from "prelude-ts";
-import {readSettings} from "../repos/appSettingsRepo";
+import {ThemePalette} from "../repos/themeRepo";
 
 function noop() {
     /* empty */
@@ -13,27 +13,34 @@ interface UseThemeValues {
     themeName: string;
     itheme: ITheme;
     changeTheme: (themeName: string) => void;
-    palettes: HashMap<string, Palette>;
-    registerPalette: (name: string, palette: Palette) => void;
+    palettes: HashMap<string, ThemePalette>;
+    registerPalette: (name: string, label: string, palette: Palette) => void;
 }
-
-// todo this should be handled in the start-up so that we can throw up a loading model
-// get the current theme name from the user's settings
-const currentThemeName = readSettings().map(settings => settings.themeName).getOrElse('dark')
 
 // create the default theme values for the hook
 const defaultThemeValues: UseThemeValues = {
-    themeName: currentThemeName,
-    itheme: createDefaultTheme(currentThemeName).theme,
-    palettes: defaultPalettes,
+    themeName: null,
+    itheme: null,
+    // palettes: defaultPalettes,
+    palettes: HashMap.empty(),
     changeTheme: noop,
     registerPalette: noop,
 }
+// const defaultThemeValues: UseThemeValues = {
+//     themeName: 'dark',
+//     itheme: createDefaultTheme('dark').theme,
+//     // palettes: defaultPalettes,
+//     palettes: HashMap.empty(),
+//     changeTheme: noop,
+//     registerPalette: noop,
+// }
 
 const ThemeContext = createContext<UseThemeValues>(defaultThemeValues)
 
 interface Props {
-    children: JSX.Element | Array<JSX.Element>;
+    initialTheme: string
+    initialPalettes: HashMap<string, ThemePalette>
+    children: JSX.Element | Array<JSX.Element>
 }
 
 /**
@@ -43,18 +50,30 @@ interface Props {
  * @constructor
  */
 export default function ThemeProvider(props: Props): JSX.Element {
-    const [themeName, setThemeName] = useState<string>(defaultThemeValues.themeName)
-    const [itheme, setITheme] = useState<ITheme>(defaultThemeValues.itheme)
-    const [palettes, setPalettes] = useState<HashMap<string, Palette>>(defaultThemeValues.palettes)
+    const {initialTheme, initialPalettes} = props;
 
+    const [themeName, setThemeName] = useState<string>(initialTheme)
+    const [itheme, setITheme] = useState<ITheme>(() => createDefaultTheme(initialTheme).theme)
+    const [palettes, setPalettes] = useState<HashMap<string, ThemePalette>>(initialPalettes)
+    // const [palettes, setPalettes] = useState<HashMap<string, Palette>>(defaultPalettes)
+
+    /**
+     * Changes the theme to the one with the specified name
+     * @param themeName The name of the new theme
+     */
     function changeTheme(themeName: string): void {
         const {name, theme} = createTheme(themeName, palettes)
         setThemeName(name)
         setITheme(theme)
     }
 
-    function registerPalette(name: string, palette: Palette): void {
-        setPalettes(palettes.put(name, palette))
+    /**
+     * Register the new palette with the provider
+     * @param name The name of the palette
+     * @param palette The color palette
+     */
+    function registerPalette(name: string, label: string, palette: Palette): void {
+        setPalettes(palettes.put(name, {name, label, palette}))
     }
 
     const {children} = props;

@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import Main from './components/Main'
 import prepareIcons from "./icons";
-import {defaultPalettes} from "./theming";
+import {loadOrDefaultThemes, THEME_DIRECTORY} from "./theming";
 import {Provider} from "react-redux";
 import store from './components/redux/store';
 import {generateRemoteActionCreators} from './components/redux/actions/rootActions';
@@ -27,12 +27,15 @@ export const remoteActionCreators = generateRemoteActionCreators();
 // generator the closure on the server settings for the remote repositories
 export const remoteRepositories = createRemoteRepositories(applicationSettings.server);
 
+// loads the themes from the theme directory, or supplies the default themes in the theming.ts file
+const palettes = loadOrDefaultThemes(THEME_DIRECTORY)
+
 ReactDOM.render(
     <Provider store={store}>
         <Router>
-            <ThemeProvider>
+            <ThemeProvider initialTheme={applicationSettings.themeName} initialPalettes={palettes}>
                 <Main
-                    colorPalettes={defaultPalettes}
+                    // colorPalettes={palettes}
                 />
             </ThemeProvider>
         </Router>

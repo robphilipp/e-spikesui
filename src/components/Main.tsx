@@ -1,13 +1,13 @@
 import * as React from 'react'
 import {useEffect} from 'react'
-import {CommandBar, ContextualMenuItemType, ICommandBarItemProps, MessageBar, Stack, StackItem} from '@fluentui/react'
+import {CommandBar, ContextualMenuItemType, ICommandBarItemProps, Stack, StackItem} from '@fluentui/react'
 import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {hideSettingsPanel, showSettingsPanel} from "./redux/actions/settings";
-import {ApplicationAction, FeedbackMessage} from "./redux/actions/actions";
-import {HashMap, Option} from "prelude-ts";
+import {ApplicationAction} from "./redux/actions/actions";
+import {HashMap} from "prelude-ts";
 import SettingsPanel from "./settings/SettingsPanel";
 import {Route, RouteComponentProps, Switch, useHistory, useRouteMatch, withRouter} from 'react-router-dom';
 import NetworkEditor from "./editors/NetworkEditor";
@@ -50,7 +50,8 @@ enum AppPath {
 }
 
 interface OwnProps extends RouteComponentProps<never> {
-    colorPalettes: HashMap<string, Palette>
+    // colorPalettes: HashMap<string, Palette>
+    nothing?: string
 }
 
 interface StateProps {

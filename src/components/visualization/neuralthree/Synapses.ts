@@ -227,7 +227,6 @@ function Synapses(props: OwnProps): null {
                         if (context && conesRef.current) {
                             const spikingConnections = outgoingConnectionsFor((event.payload as Spike).neuronId, connectionsInfoRef.current)
                                 .map(([, info]) => info)
-                                // .map(([, info]) => connectionKeyFor(info))
 
                             // flash the connections
                             animateSpike(spikingConnections, true);

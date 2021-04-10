@@ -18,7 +18,6 @@ import {useThreeContext} from "../basethree/useThree";
 import {Option} from "prelude-ts";
 import {Coordinate, coordinateFrom} from "../basethree/Coordinate";
 import {BoundingSphere} from "../basethree/BoundingSphere";
-import {useEffect} from "react";
 
 interface OwnProps {
     visualizationId: string

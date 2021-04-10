@@ -19,12 +19,8 @@ import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import {Stack} from "@fluentui/react";
 import {BoundingSphere, boundSphereFrom} from "../basethree/BoundingSphere";
 import {
-    axesVisibilityChanged,
     cameraUpdated,
-    gridVisibilityChanged,
-    NetworkVisualizationAxesChangeAction,
     NetworkVisualizationCameraUpdateAction,
-    NetworkVisualizationGridChangeAction,
     NetworkVisualizationRendererUpdateAction,
     NetworkVisualizationScenesUpdateAction,
     rendererUpdated,
@@ -68,8 +64,6 @@ export interface StateProps {
 }
 
 export interface DispatchProps {
-    // onAxisVisibilityChange: (id: string, visible: boolean) => NetworkVisualizationAxesChangeAction;
-    // onGridVisibilityChange: (id: string, visible: boolean) => NetworkVisualizationGridChangeAction;
     onCameraUpdate: (id: string, camera: PerspectiveCamera) => NetworkVisualizationCameraUpdateAction;
     onRendererUpdate: (id: string, renderer: Renderer) => NetworkVisualizationRendererUpdateAction;
     onScenesUpdate: (id: string, scenes: Array<SceneInfo>) => NetworkVisualizationScenesUpdateAction;
@@ -128,8 +122,6 @@ function Network(props: Props): JSX.Element {
         networkObservable,
         onCameraUpdate,
         onScenesUpdate,
-        // onAxisVisibilityChange,
-        // onGridVisibilityChange,
         spikeDuration = 50
     } = props;
 
@@ -172,38 +164,6 @@ function Network(props: Props): JSX.Element {
         [connections]
     );
 
-    // useEffect(
-    //     () => {
-    //         setAxesVisibility(axesVisible);
-    //         setGridVisibility(gridVisible);
-    //     },
-    //     []
-    // )
-    //
-    // /**
-    //  * Sets the visibility of the three-js axes-scene, and then dispatches a message that the axes'
-    //  * visibility has changed.
-    //  * @param {boolean} visible Set to `true` for the axes to be visible; `false` for the
-    //  * axes to be invisible.
-    //  */
-    // function setAxesVisibility(visible: boolean): void {
-    //     // todo fix this
-    //     // scenesContext.visibility(AXES_SCENE_ID, visible);
-    //     onAxisVisibilityChange(visualizationId, visible)
-    // }
-    //
-    // /**
-    //  * Sets the visibility of the three-js grid-scene, and then dispatches a message that the grid's
-    //  * visibility has changed.
-    //  * @param {boolean} visible Set to `true` for the grid to be visible; `false` for the
-    //  * grid to be invisible.
-    //  */
-    // function setGridVisibility(visible: boolean): void {
-    //     // todo fix this
-    //     // scenesContext.visibility(GRID_SCENE_ID, visible);
-    //     onGridVisibilityChange(visualizationId, visible)
-    // }
-
     /**
      * Calculates the coordinates of the camera based on the bounding sphere for the spiking network.
      * @return {Coordinate} The camera's coordinates
@@ -232,19 +192,6 @@ function Network(props: Props): JSX.Element {
                 return camera;
             })
     }
-
-    // /**
-    //  * Resets the camera position to the original, and has the camera look at the origin
-    //  */
-    // function resetCameraPosition(): void {
-    //     camera.ifSome(cam => {
-    //         const position = cameraCoordinates();
-    //         cam.position.set(position.x, position.y, position.z);
-    //         cam.lookAt(new Vector3(boundingSphere.origin.x, boundingSphere.origin.y, boundingSphere.origin.z));
-    //         cam.updateProjectionMatrix();
-    //         onCameraUpdate(visualizationId, cam);
-    //     })
-    // }
 
     /**
      * Creates and returns a WebGL renderer
@@ -287,32 +234,8 @@ function Network(props: Props): JSX.Element {
         });
     }
 
-    // const stackTokens: IStackTokens = {childrenGap: 20};
-    // todo move the controls into a separate component that is then inside the ThreeProvider
-    //      and uses the useThreeContext to get axes to the scenes for the axis, grid, network
-    //      so that it manage their visibility
     return (
         <Stack>
-            {/*<Stack.Item>*/}
-            {/*    <Stack tokens={stackTokens} horizontal>*/}
-            {/*        <Toggle*/}
-            {/*            label="Axes"*/}
-            {/*            inlineLabel*/}
-            {/*            checked={axesVisible}*/}
-            {/*            onChange={() => setAxesVisibility(!axesVisible)}*/}
-            {/*        />*/}
-            {/*        <Toggle*/}
-            {/*            label="Grid"*/}
-            {/*            inlineLabel*/}
-            {/*            checked={gridVisible}*/}
-            {/*            onChange={() => setGridVisibility(!gridVisible)}*/}
-            {/*        />*/}
-            {/*        <IconButton*/}
-            {/*            iconProps={{iconName: "reset"}}*/}
-            {/*            onClick={resetCameraPosition}>*/}
-            {/*        </IconButton>*/}
-            {/*    </Stack>*/}
-            {/*</Stack.Item>*/}
             <Stack.Item>
                 <ThreeProvider
                     canvasId="network-canvas"
@@ -434,8 +357,6 @@ const mapStateToProps = (state: AppState, ownProps: OwnProps): StateProps => ({
  * @return {DispatchProps} The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<unknown, unknown, ApplicationAction>): DispatchProps => ({
-    // onAxisVisibilityChange: (id: string, visible: boolean) => dispatch(axesVisibilityChanged(id, visible)),
-    // onGridVisibilityChange: (id: string, visible: boolean) => dispatch(gridVisibilityChanged(id, visible)),
     onCameraUpdate: (id: string, camera: PerspectiveCamera) => dispatch(cameraUpdated(id, camera)),
     onRendererUpdate: (id: string, renderer: Renderer) => dispatch(rendererUpdated(id, renderer)),
     onScenesUpdate: (id: string, scenes: Array<SceneInfo>) => dispatch(scenesUpdated(id, scenes)),

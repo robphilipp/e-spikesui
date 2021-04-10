@@ -34,9 +34,7 @@ ReactDOM.render(
     <Provider store={store}>
         <Router>
             <ThemeProvider initialTheme={applicationSettings.themeName} initialPalettes={palettes}>
-                <Main
-                    // colorPalettes={palettes}
-                />
+                <Main/>
             </ThemeProvider>
         </Router>
     </Provider>,

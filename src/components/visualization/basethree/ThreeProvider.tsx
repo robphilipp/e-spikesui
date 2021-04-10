@@ -140,6 +140,7 @@ function ThreeProvider(props: OwnProps): JSX.Element {
         animate = false,
         width,
         height,
+        backgroundColor,
     } = props;
 
     const [threeIsReady, setThreeIsReady] = useState<boolean>(false);
@@ -160,11 +161,11 @@ function ThreeProvider(props: OwnProps): JSX.Element {
     function updateBackground(): void {
         scenes
             .filter(info => info.visible)
-            .forEach((scene, index) => {
+            .forEach((sceneInfo, index) => {
                 if (index === 0) {
-                    scene.scene.background = props.backgroundColor
+                    sceneInfo.scene.background = backgroundColor
                 }
-                scene.scene.background = null
+                sceneInfo.scene.background = null
             })
     }
 
@@ -198,7 +199,7 @@ function ThreeProvider(props: OwnProps): JSX.Element {
             updateBackground();
             setThreeIsReady(true);
         },
-        [props.backgroundColor]
+        [backgroundColor]
     );
 
     // update camera and renderer when dimensions change. importantly, this useEffect method
@@ -243,10 +244,11 @@ function ThreeProvider(props: OwnProps): JSX.Element {
     useEffect(
         () => {
             if (rendererRef.current && cameraRef.current) {
-                const renderer = rendererRef.current;
                 updateBackground();
 
-                // when there are no scenes, don't clear the background
+                const renderer = rendererRef.current;
+
+                // clear the background when there are scenes defined
                 if (scenes.length > 0) {
                     (renderer as WebGLRenderer).clear();
                 }

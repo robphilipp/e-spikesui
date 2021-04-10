@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useState} from "react";
+import {useRef, useState} from "react";
 
 import {
     DefaultButton,
@@ -59,10 +59,6 @@ function dropDownOptionsFrom(palettes: HashMap<string, ThemePalette>): Array<IDr
     return options.concat(userOptions)
 }
 
-interface OwnProps {
-    nothing?: string
-}
-
 interface StateProps {
     settingsPanelVisible: boolean;
     serverSettings: ServerSettings;
@@ -80,7 +76,7 @@ interface DispatchProps {
     onChangeTemplateSettings: (settings: TemplateSettings) => void;
 }
 
-type Props = StateProps & DispatchProps & OwnProps
+type Props = StateProps & DispatchProps
 
 /**
  * The settings panel for the application. Allows the user to set the theme, the
@@ -110,7 +106,7 @@ function SettingsPanel(props: Props): JSX.Element {
     // that there has been a change, and holds the theme to revert to if the user cancels
     // from the theme.
     const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
-    const [themes, ] = useState<Array<IDropdownOption>>(dropDownOptionsFrom(palettes))
+    const {current: themes} = useRef<Array<IDropdownOption>>(dropDownOptionsFrom(palettes))
 
     // tracks the REST server settings so that changes can be reverted. unlike the theme,
     // changes to the server settings do not update the application state until the "Ok"
@@ -334,15 +330,10 @@ function SettingsPanel(props: Props): JSX.Element {
 /**
  * react-redux function that maps the application state to the props used by the `App` component.
  * @param state The updated application state
- * @param ownProps The current properties of the `App` component
  */
-function mapStateToProps(state: AppState, ownProps: OwnProps): StateProps {
+function mapStateToProps(state: AppState): StateProps {
     return {
-        ...ownProps,
         settingsPanelVisible: state.application.settingsPanelVisible,
-        // itheme: state.settings.itheme,
-        // name: state.settings.name,
-        // palettes: state.settings.palettes,
         serverSettings: state.settings.server,
         kafkaSettings: state.settings.kafka,
         networkDescriptionSettings: state.settings.networkDescription,
@@ -365,7 +356,6 @@ function mapDispatchToProps(dispatch: ThunkDispatch<AppState, unknown, Applicati
     return {
         onShowSettingsPanel: () => dispatch(showSettingsPanel()),
         onHideSettingsPanel: () => dispatch(hideSettingsPanel()),
-        // onChangeTheme: (theme: string) => dispatch(changeTheme(theme)),
         onChangeServerSettings: (settings: ServerSettings) => dispatch(changeServerSettings(settings)),
         onChangeKafkaSettings: (settings: KafkaSettings) => dispatch(changeKafkaSettings(settings)),
         onChangeTemplateSettings: (settings: TemplateSettings) => {

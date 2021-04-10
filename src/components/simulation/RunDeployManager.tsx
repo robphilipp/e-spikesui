@@ -258,7 +258,7 @@ function RunDeployManager(props: Props): JSX.Element {
         // case it hasn't, attempt to create the network manager thread, and then call
         // this function once it has been built
         if (networkManagerThreadRef.current === undefined) {
-            setMessage(MessageBarType.error, <div>Cannot delete network {id} because tge network manager thread is undefined.</div>)
+            setMessage(MessageBarType.error, <div>Cannot delete network {id} because the network manager thread is undefined.</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;

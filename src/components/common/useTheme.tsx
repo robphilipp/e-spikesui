@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {createContext, useContext, useState} from 'react';
 import {ITheme} from "@fluentui/react";
-import {createDefaultTheme, createTheme, Palette} from "../../theming";
+import {createTheme, Palette} from "../../theming";
 import {HashMap} from "prelude-ts";
 import {ThemePalette} from "../repos/themeRepo";
 
@@ -53,9 +53,8 @@ export default function ThemeProvider(props: Props): JSX.Element {
     const {initialTheme, initialPalettes} = props;
 
     const [themeName, setThemeName] = useState<string>(initialTheme)
-    const [itheme, setITheme] = useState<ITheme>(() => createDefaultTheme(initialTheme).theme)
+    const [itheme, setITheme] = useState<ITheme>(() => createTheme(initialTheme, initialPalettes).theme)
     const [palettes, setPalettes] = useState<HashMap<string, ThemePalette>>(initialPalettes)
-    // const [palettes, setPalettes] = useState<HashMap<string, Palette>>(defaultPalettes)
 
     /**
      * Changes the theme to the one with the specified name
@@ -70,6 +69,7 @@ export default function ThemeProvider(props: Props): JSX.Element {
     /**
      * Register the new palette with the provider
      * @param name The name of the palette
+     * @param label The label describing the palette
      * @param palette The color palette
      */
     function registerPalette(name: string, label: string, palette: Palette): void {

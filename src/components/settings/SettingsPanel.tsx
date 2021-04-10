@@ -41,14 +41,11 @@ import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 import {useTheme} from "../common/useTheme";
 import {ThemePalette} from "../repos/themeRepo";
 
-// const themes: IDropdownOption[] = [
-//     {key: "default", text: "Default Theme"},
-//     {key: "light", text: "Light Theme"},
-//     {key: "dark", text: "Dark Theme"},
-//     {key: "darkGray", text: "Dark Gray Theme"},
-//     {key: "darkSepia", text: "Dark Sepia Theme"}
-// ];
-
+/**
+ * Calculates the options from the loaded palettes
+ * @param palettes The loaded palettes from which to create themes
+ * @return An array of drop-down options
+ */
 function dropDownOptionsFrom(palettes: HashMap<string, ThemePalette>): Array<IDropdownOption> {
     const options = [{key: "default", text: "Default Theme"}]
     const userOptions = Array
@@ -68,11 +65,6 @@ interface OwnProps {
 
 interface StateProps {
     settingsPanelVisible: boolean;
-    // // current theme
-    // itheme: ITheme;
-    // // current theme name
-    // name: string;
-    // palettes: HashMap<string, Palette>;
     serverSettings: ServerSettings;
     kafkaSettings: KafkaSettings;
     templateSettings: TemplateSettings;
@@ -83,10 +75,8 @@ interface StateProps {
 interface DispatchProps {
     onShowSettingsPanel: () => void;
     onHideSettingsPanel: () => void;
-    // onChangeTheme: (theme: string) => void;
     onChangeServerSettings: (settings: ServerSettings) => void;
     onChangeKafkaSettings: (settings: KafkaSettings) => void;
-    // onChangeNetworkDescriptionSettings: (settings: NetworkDescriptionSettings) => void;
     onChangeTemplateSettings: (settings: TemplateSettings) => void;
 }
 
@@ -101,22 +91,15 @@ type Props = StateProps & DispatchProps & OwnProps
  */
 function SettingsPanel(props: Props): JSX.Element {
     const {
-        // itheme,
-        // name,
         settingsPanelVisible,
-        // palettes,
         serverSettings,
         kafkaSettings,
         templateSettings,
         networkDescriptionSettings,
         environmentSettings,
-        // onShowSettingsPanel,
         onHideSettingsPanel,
-        // onChangeTheme,
         onChangeServerSettings,
-        // onChangeKafkaSettings,
         onChangeTemplateSettings
-        // onChangeNetworkDescriptionSettings
     } = props;
 
     const {themeName: name, itheme, changeTheme: onChangeTheme, palettes} = useTheme()
@@ -127,17 +110,7 @@ function SettingsPanel(props: Props): JSX.Element {
     // that there has been a change, and holds the theme to revert to if the user cancels
     // from the theme.
     const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
-    const [themes, setThemes] = useState<Array<IDropdownOption>>(dropDownOptionsFrom(palettes))
-
-    /*
-const themes: IDropdownOption[] = [
-    {key: "default", text: "Default Theme"},
-    {key: "light", text: "Light Theme"},
-    {key: "dark", text: "Dark Theme"},
-    {key: "darkGray", text: "Dark Gray Theme"},
-    {key: "darkSepia", text: "Dark Sepia Theme"}
-];
-     */
+    const [themes, ] = useState<Array<IDropdownOption>>(dropDownOptionsFrom(palettes))
 
     // tracks the REST server settings so that changes can be reverted. unlike the theme,
     // changes to the server settings do not update the application state until the "Ok"

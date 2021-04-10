@@ -103,7 +103,7 @@ const defaultPalettes = HashMap.ofObjectDictionary<ThemePalette>({
 
 export const THEME_DIRECTORY = '.themes'
 export function loadOrDefaultThemes(directory: string): HashMap<string, ThemePalette> {
-    return loadPalettes('.themes').getOrElse(defaultPalettes)
+    return loadPalettes(directory).getOrElse(defaultPalettes)
 }
 
 /**
@@ -113,16 +113,6 @@ export interface AppTheme {
     name: string;
     theme: ITheme;
 }
-
-/**
- * Loads the default theme and sets the background to the theme's `white` color
- * @param name The name of the theme
- * @return The actual theme
- */
-export const createDefaultTheme = (name: string): AppTheme => {
-    return createTheme(name, defaultPalettes)
-};
-
 
 /**
  * Loads the theme, sets the default font, and sets the background to the theme's `white` color

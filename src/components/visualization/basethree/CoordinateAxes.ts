@@ -10,7 +10,7 @@ import {
     Texture,
     TextureLoader
 } from "three";
-import {useThree, useThreeContext} from "./useThree";
+import {useThree} from "./useThree";
 import {Coordinate, origin} from "./Coordinate";
 import {useEffect, useRef} from "react";
 
@@ -98,12 +98,20 @@ function CoordinateAxes(props: OwnProps): null {
         }
     }
 
+    /**
+     * Returns an array of the start and end colors that are applied to the axis
+     * @param color The color for each axis
+     * @return an array of start and end colors
+     */
     function axesColor(color: AxesColors): Array<number> {
-        return [
-            color.x.r, color.x.g, color.x.b, color.x.r, color.x.g, color.x.b,
-        ];
+        return [color.x.r, color.x.g, color.x.b, color.x.r, color.x.g, color.x.b,];
     }
 
+    /**
+     * The material for the axes labels
+     * @param letter The letter image to which the texture is applied
+     * @return The points material
+     */
     function pointsMaterial(letter: Texture): PointsMaterial {
         return new PointsMaterial({
             vertexColors: true,
@@ -115,20 +123,41 @@ function CoordinateAxes(props: OwnProps): null {
         });
     }
 
+    /**
+     * Sets up the geometry for the axes and the labels
+     */
+    function updateAxesGeometry(): void {
+        axesGeometryRef.current.forEach((geometry, axis) => {
+            axesGeometryRef.current[axis].setAttribute(
+                'color',
+                new Float32BufferAttribute(axesColor(color), 3)
+            );
+            axesGeometryRef.current[axis].setDrawRange(0, 1);
+            axesGeometryRef.current[axis].setAttribute(
+                'position',
+                new Float32BufferAttribute(axesLabel(originOffset || origin(), axis), 3)
+            );
+        })
+    }
+
+    // sets up the "points" which have the image of the x, y, z letters
+    useThree<Array<Points>>(() => {
+        updateAxesGeometry()
+
+            const points = [
+                new Points(axesGeometryRef.current[0], pointsMaterial(x)),
+                new Points(axesGeometryRef.current[1], pointsMaterial(y)),
+                new Points(axesGeometryRef.current[2], pointsMaterial(z)),
+            ];
+
+            return [sceneId, points]
+        }
+    );
+
     // called when the neurons or the color ranges change so that we can recalculate the colors
     useEffect(
         () => {
-            axesGeometryRef.current.forEach((geometry, axis) => {
-                axesGeometryRef.current[axis].setAttribute(
-                    'color',
-                    new Float32BufferAttribute(axesColor(color), 3)
-                );
-                axesGeometryRef.current[axis].setDrawRange(0, 1);
-                axesGeometryRef.current[axis].setAttribute(
-                    'position',
-                    new Float32BufferAttribute(axesLabel(originOffset || origin(), axis), 3)
-                );
-            })
+            updateAxesGeometry()
 
             pointsRef.current = [
                 new Points(axesGeometryRef.current[0], pointsMaterial(x)),
@@ -138,9 +167,6 @@ function CoordinateAxes(props: OwnProps): null {
         },
         [color]
     );
-
-
-    const {context: {addToScene}} = useThreeContext();
 
     // sets up the coordinate axes as line segments, adds them to the scene, holds on
     // to the line segments
@@ -152,14 +178,12 @@ function CoordinateAxes(props: OwnProps): null {
         const material = new LineBasicMaterial({
             vertexColors: true,
             opacity: opacity,
+            transparent: true
         });
 
-        return addToScene(sceneId, new LineSegments(geometry, material));
+        const lines = new LineSegments(geometry, material)
+        return [sceneId, lines]
     });
-
-    // called when this component is mounted to create the neurons (geometry, material, and mesh) and
-    // adds them to the network scene
-    useThree<Array<Points>>(() => [sceneId, pointsRef.current]);
 
     // called when the axes colors change and need to be updated
     useEffect(

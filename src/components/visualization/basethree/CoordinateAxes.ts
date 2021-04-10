@@ -10,7 +10,7 @@ import {
     Texture,
     TextureLoader
 } from "three";
-import {useThree, useThreeContext} from "./useThree";
+import {useThree} from "./useThree";
 import {Coordinate, origin} from "./Coordinate";
 import {useEffect, useRef} from "react";
 
@@ -98,12 +98,20 @@ function CoordinateAxes(props: OwnProps): null {
         }
     }
 
+    /**
+     * Returns an array of the start and end colors that are applied to the axis
+     * @param color The color for each axis
+     * @return an array of start and end colors
+     */
     function axesColor(color: AxesColors): Array<number> {
-        return [
-            color.x.r, color.x.g, color.x.b, color.x.r, color.x.g, color.x.b,
-        ];
+        return [color.x.r, color.x.g, color.x.b, color.x.r, color.x.g, color.x.b,];
     }
 
+    /**
+     * The material for the axes labels
+     * @param letter The letter image to which the texture is applied
+     * @return The points material
+     */
     function pointsMaterial(letter: Texture): PointsMaterial {
         return new PointsMaterial({
             vertexColors: true,
@@ -115,19 +123,26 @@ function CoordinateAxes(props: OwnProps): null {
         });
     }
 
+    /**
+     * Sets up the geometry for the axes and the labels
+     */
+    function updateAxesGeometry(): void {
+        axesGeometryRef.current.forEach((geometry, axis) => {
+            axesGeometryRef.current[axis].setAttribute(
+                'color',
+                new Float32BufferAttribute(axesColor(color), 3)
+            );
+            axesGeometryRef.current[axis].setDrawRange(0, 1);
+            axesGeometryRef.current[axis].setAttribute(
+                'position',
+                new Float32BufferAttribute(axesLabel(originOffset || origin(), axis), 3)
+            );
+        })
+    }
+
     // sets up the "points" which have the image of the x, y, z letters
-    const {getEntity: labelEntity} = useThree<Array<Points>>(() => {
-            axesGeometryRef.current.forEach((geometry, axis) => {
-                axesGeometryRef.current[axis].setAttribute(
-                    'color',
-                    new Float32BufferAttribute(axesColor(color), 3)
-                );
-                axesGeometryRef.current[axis].setDrawRange(0, 1);
-                axesGeometryRef.current[axis].setAttribute(
-                    'position',
-                    new Float32BufferAttribute(axesLabel(originOffset || origin(), axis), 3)
-                );
-            })
+    useThree<Array<Points>>(() => {
+        updateAxesGeometry()
 
             const points = [
                 new Points(axesGeometryRef.current[0], pointsMaterial(x)),
@@ -142,30 +157,13 @@ function CoordinateAxes(props: OwnProps): null {
     // called when the neurons or the color ranges change so that we can recalculate the colors
     useEffect(
         () => {
-            colorsRef.current.set(vertexColors(color));
-            labelEntity().forEach(point => {
-                (point.geometry.getAttribute('color') as BufferAttribute).needsUpdate = true;
-            })
-            axesGeometryRef.current.forEach(geometry => {
-                geometry.getAttribute('color').needsUpdate = true
-            })
-            // axesGeometryRef.current.forEach((geometry, axis) => {
-            //     axesGeometryRef.current[axis].setAttribute(
-            //         'color',
-            //         new Float32BufferAttribute(axesColor(color), 3)
-            //     );
-            //     axesGeometryRef.current[axis].setDrawRange(0, 1);
-            //     axesGeometryRef.current[axis].setAttribute(
-            //         'position',
-            //         new Float32BufferAttribute(axesLabel(originOffset || origin(), axis), 3)
-            //     );
-            // })
-            //
-            // pointsRef.current = [
-            //     new Points(axesGeometryRef.current[0], pointsMaterial(x)),
-            //     new Points(axesGeometryRef.current[1], pointsMaterial(y)),
-            //     new Points(axesGeometryRef.current[2], pointsMaterial(z)),
-            // ];
+            updateAxesGeometry()
+
+            pointsRef.current = [
+                new Points(axesGeometryRef.current[0], pointsMaterial(x)),
+                new Points(axesGeometryRef.current[1], pointsMaterial(y)),
+                new Points(axesGeometryRef.current[2], pointsMaterial(z)),
+            ];
         },
         [color]
     );

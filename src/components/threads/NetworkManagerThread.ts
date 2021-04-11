@@ -63,6 +63,8 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
      * @param timeFactor The simulation time factor
      * @return A promise to an observable of network events
      */
+    // todo return an object that holds a subject for spike events, and a subject of learn (weight) events.
+    //      let the worker thread deal with filtering a splitting.
     async function start(sensorDescription: string, timeFactor: number): Promise<Subject<NetworkEvent>> {
         await worker.startNetwork(sensorDescription, timeFactor);
         const networkEvents: FnsObservable<NetworkEvent> = worker.networkObservable(SPIKE);

@@ -6,11 +6,16 @@ import {webSocket} from "rxjs/webSocket";
 export interface NetworkManagementRepo {
     buildNetwork: (networkDescription: string) => Promise<string>;
     deleteNetwork: (networkId: string) => Promise<string>;
-    rawWebSocketFor: (networkId: string) => WebSocket;
-    webSocketFor: (networkId: string) => Promise<WebSocket>;
+    webSocketFor: (networkId: string) => WebSocket;
     webSocketSubjectFor: (networkId: string) => WebSocketSubject<string>;
 }
 
+/**
+ * Creates a network management repository for building and deleting networks from the server, and retrieving
+ * the web-socket for simulation events. Forms a closure on the REST endpoint and the web-socket endpoint.
+ * @param serverSettings The server settings holding the server address
+ * @return A network management repository
+ */
 export function networkManagementRepo(serverSettings: ServerSettings): NetworkManagementRepo {
     const baseUrl = `http://${serverSettings.host}:${serverSettings.port}/network-management/network`;
     const baseWebSocketUrl = `ws://${serverSettings.host}:${serverSettings.port}/web-socket`
@@ -59,29 +64,18 @@ export function networkManagementRepo(serverSettings: ServerSettings): NetworkMa
         });
     }
 
-    function rawWebSocketFor(networkId: string): WebSocket {
+    /**
+     * Creates a web-socket and returns it
+     * @param networkId The Id of the network
+     * @return A web-socket connection to the server with the network ID
+     */
+    function webSocketFor(networkId: string): WebSocket {
         return new WebSocket(`${baseWebSocketUrl}/${networkId}`);
-    }
-
-    function webSocketFor(networkId: string): Promise<WebSocket> {
-        return new Promise<WebSocket>((resolve, reject) => {
-            try {
-                const webSocket = new WebSocket(`${baseWebSocketUrl}/${networkId}`);
-                webSocket.onopen = () => resolve(webSocket);
-                webSocket.onerror = (error) => {
-                    console.log(error);
-                    reject(error);
-                }
-            } catch(error) {
-                reject(error);
-            }
-        });
     }
 
     return {
         buildNetwork,
         deleteNetwork,
-        rawWebSocketFor,
         webSocketFor,
         webSocketSubjectFor,
     }

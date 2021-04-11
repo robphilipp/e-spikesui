@@ -1,4 +1,4 @@
-import {Observable, Subject, filter, Subscription} from 'observable-fns';
+import {filter, Observable, Subject} from 'observable-fns';
 import {Observable as RxjsObservable, Subject as RxjsSubject, Subscription as RxjsSubscription} from 'rxjs';
 import {expose} from 'threads/worker';
 import {WorkerModule} from "threads/dist/types/worker";
@@ -35,17 +35,29 @@ let rxjsObservable: RxjsObservable<SensorOutput>;
 let signalGeneratorSubscription: RxjsSubscription;
 
 interface CompiledResult {
-    sensorName: string;
-    neuronIds: Array<string>;
+    sensorName: string
+    neuronIds: Array<string>
+    rxjsObservable: RxjsObservable<SensorOutput>
 }
 
+/**
+ * Creates an empty sensor compiler result
+ * @return an empty sensor compiler result
+ */
 function emptyResult(): CompiledResult {
-    return {sensorName: '', neuronIds: []}
+    return {sensorName: '', neuronIds: [], rxjsObservable: null}
 }
 
+/**
+ * Creates the network management repository based on the server settings. The network management
+ * repo is used to make REST calls to the server to build the network, obtain the web socket, and
+ * delete the network from the server.
+ * @param serverSettings The server settings
+ * @return An empty promise (as is so often the case in life)
+ */
 async function configure(serverSettings: ServerSettings): Promise<void> {
-    repo = networkManagementRepo(serverSettings);
-    return;
+    repo = networkManagementRepo(serverSettings)
+    return
 }
 
 /**
@@ -76,7 +88,7 @@ function buildNetwork(): void {
     }
 
     // create the websocket and an observable that listens for websocket messages
-    websocket = repo.rawWebSocketFor(networkId);
+    websocket = repo.webSocketFor(networkId);
 
     const subject = new Subject<NetworkEvent>();
     networkEventObservable = Observable.from(subject);
@@ -98,7 +110,8 @@ function buildNetwork(): void {
  * @param codeSnippet The code snippet that returns an observable for generating a
  * stream of sensor signals.
  * @param timeFactor The simulation time-factor
- * @return An array of the neuron IDs to which the sensor signals are sent
+ * @return The compiler result, which holds the sensor name, the input neuron IDs to which the sensor signals will
+ * be sent, and the rxjsObservable defined in the code-snippet (which is the result of the compilation)
  */
 function compile(codeSnippet: string, timeFactor: number): CompiledResult {
     const result = compileSensorDescription(codeSnippet, timeFactor);
@@ -111,7 +124,7 @@ function compile(codeSnippet: string, timeFactor: number): CompiledResult {
             neuronIds = result.neuronIds;
             rxjsObservable = result.observable;
 
-            return {sensorName, neuronIds};
+            return {sensorName, neuronIds, rxjsObservable};
         })
         .getOrElse(emptyResult())
 }
@@ -144,7 +157,10 @@ function startNetwork(sensorDescription: string, timeFactor: number): void {
         throw new Error("Cannot start network because the websocket or network-events observable are undefined")
     }
 
-    const {sensorName, neuronIds} = compile(sensorDescription, timeFactor);
+    // compile the sensor code-snippet, which returns the sensor name, the IDs of the input neurons, and
+    // the rxjsObservable returned by the function defined in the code-snippet. The rxjsObservable is what
+    // emits the sensor signals.
+    const {sensorName, neuronIds, rxjsObservable} = compile(sensorDescription, timeFactor);
 
     // create the regex selector for determining the input neurons for the sensor,
     // required by the back-end
@@ -155,11 +171,15 @@ function startNetwork(sensorDescription: string, timeFactor: number): void {
     // (that will send signals to the network)
     websocket.send(JSON.stringify({name: sensorName, selector: selector}))
 
+    // subscribe to the sensor signal observable to get it to send the signals down the web socket, to the server
     signalGeneratorSubscription = rxjsObservable.subscribe(output => websocket.send(JSON.stringify(output)));
 
     return;
 }
 
+/**
+ * Sends a stop message down the web socket to the server, and cleans up.
+ */
 function stopNetwork(): void {
     websocket?.send(STOP_MESSAGE.command);
     signalGeneratorSubscription?.unsubscribe();
@@ -171,6 +191,10 @@ function stopNetwork(): void {
     signalGeneratorSubscription = undefined;
 }
 
+/**
+ * Attempts to delete the network from the server.
+ * @return A promise that the network was delete, holding the network ID of the deleted network
+ */
 async function deleteNetwork(): Promise<string> {
     await repo.deleteNetwork(networkId);
     const oldId = `${networkId}`;
@@ -190,17 +214,31 @@ function networkObservable(...eventType: Array<SimulationEvent>): Observable<Net
     )
 }
 
+/**
+ * Returns an observable that emits network-build events (i.e. neuron created, connection made, and network built)
+ * @return An obsevable that emits network-build events
+ */
 function buildObservable(): Observable<NetworkEvent> {
     return networkEventObservable.pipe(
         filter(message => message.type === NEURON || message.type === CONNECTION || message.type === NETWORK),
     )
 }
 
+/**
+ * @return The ID of the deployed network, which will be undefined if the network has is not built.
+ */
 function deployedNetworkId(): string | undefined {
     return networkId;
 }
 
+/**
+ * Defines the network manager
+ */
 export interface NetworkManager extends WorkerModule<string> {
+    /**
+     * Function to configure the network based on the server settings
+     * @param serverSettings
+     */
     configure: (serverSettings: ServerSettings) => Promise<void>;
     deployNetwork: (networkDescription: string) => Promise<string>;
     buildNetwork: () => void;
@@ -209,7 +247,6 @@ export interface NetworkManager extends WorkerModule<string> {
     deleteNetwork: () => Promise<string>;
 
     deployedNetworkId: () => string | undefined;
-    // networkObservable: (eventType: typeof SPIKE | typeof CONNECTION_WEIGHT) => Observable<NetworkEvent>;
     networkObservable: (...eventType: Array<SimulationEvent>) => Observable<NetworkEvent>;
     buildObservable: () => Observable<NetworkEvent>;
 }

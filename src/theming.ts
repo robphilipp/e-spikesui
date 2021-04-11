@@ -1,6 +1,7 @@
 import {IPartialTheme, ITheme, loadTheme} from '@fluentui/react';
 import {HashMap} from "prelude-ts";
-import {loadPalettes, ThemePalette} from "./components/repos/themeRepo";
+import {loadPalettes, ThemeInfo} from "./components/repos/themeRepo";
+import {defaultDarkTheme, defaultLightTheme} from "./components/editors/editorThemes";
 
 export interface Palette {
     themePrimary: string;
@@ -95,14 +96,14 @@ const lightPalette: Palette = {
     greenDark: 'rgb(0,150,0)',
 };
 
-const defaultPalettes = HashMap.ofObjectDictionary<ThemePalette>({
-    "light": {name: "light", label: "Light Theme", palette: lightPalette},
-    "darkSepia": {name: "darkSepia", label: "Dark Sepia Theme", palette: darkSepiaPalette}
+const defaultPalettes = HashMap.ofObjectDictionary<ThemeInfo>({
+    "light": {name: "light", label: "Light Theme", palette: lightPalette, editor: defaultLightTheme},
+    "darkSepia": {name: "darkSepia", label: "Dark Sepia Theme", palette: darkSepiaPalette, editor: defaultDarkTheme}
 });
 
 
 export const THEME_DIRECTORY = '.themes'
-export function loadOrDefaultThemes(directory: string): HashMap<string, ThemePalette> {
+export function loadOrDefaultThemes(directory: string): HashMap<string, ThemeInfo> {
     return loadPalettes(directory).getOrElse(defaultPalettes)
 }
 
@@ -120,7 +121,7 @@ export interface AppTheme {
  * @param palettes A map(theme_name -> fabric_ui_color_palette) holding the available themes
  * @return The actual theme
  */
-export const createTheme = (name: string, palettes: HashMap<string, ThemePalette>): AppTheme => {
+export const createTheme = (name: string, palettes: HashMap<string, ThemeInfo>): AppTheme => {
     const palette: IPartialTheme = name === 'default' ? {
         defaultFontStyle: {fontFamily: '"Avenir Next", sans-serif', fontWeight: 400}
     } : {

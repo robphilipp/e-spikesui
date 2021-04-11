@@ -1,4 +1,8 @@
+import * as React from 'react';
+
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
+import {createContext} from "react";
+import {ITheme} from "@uifabric/styling";
 
 /*
 // A list of color names:
@@ -125,10 +129,11 @@ export enum DefaultTheme {
     LIGHT_SPIKES_LANG = 'spikes-light',
     VS_DARK = 'vs-dark',
     VS_LIGHT = 'vs',
-    VS_HIGH_CONTRAST = 'hc-black'
+    VS_HIGH_CONTRAST = 'hc-black',
+    LIGHT_SEPIA = 'light-sepia'
 }
 
-const defaultDarkTheme: editor.IStandaloneThemeData = {
+export const defaultDarkTheme: editor.IStandaloneThemeData = {
     base: DefaultTheme.VS_DARK,
     inherit: true,
     rules: [
@@ -156,7 +161,7 @@ const defaultDarkTheme: editor.IStandaloneThemeData = {
     },
 };
 
-const defaultLightTheme: editor.IStandaloneThemeData = {
+export const defaultLightTheme: editor.IStandaloneThemeData = {
     base: DefaultTheme.VS_LIGHT,
     inherit: true,
     rules: [
@@ -180,37 +185,65 @@ const defaultLightTheme: editor.IStandaloneThemeData = {
     }
 };
 
-const spikesLangDarkTheme: editor.IStandaloneThemeData = {
-    base: DefaultTheme.VS_DARK,
+const defaultLightSepiaTheme: editor.IStandaloneThemeData = {
+    base: DefaultTheme.VS_LIGHT,
     inherit: true,
     rules: [
-        {token: 'sections', background: '#e08c00', foreground: '#e08c00'}
+        {token: 'comment', foreground: '#4b8c32', fontStyle: 'italic'},
+        {token: 'section', foreground: '#dd9826', fontStyle: 'bold'},
+        {token: 'function', foreground: '#e57735', fontStyle: 'bold'},
+        {token: 'function-name', foreground: '#29ada2', fontStyle: 'underline'},
+        {token: 'unit', foreground: '#9b9b9b', fontStyle: 'italic'},
+        {token: 'string-attribute', foreground: '#918341'},
+        {token: 'number-attribute', foreground: '#477794'},
+        {token: 'list-attribute', foreground: '#916fa2', fontStyle: 'bold italic'},
+        {token: 'property', foreground: '#bf882a'},
+        {token: 'property.neuron.function', foreground: '#c18200', fontStyle: 'bold'},
+        {token: 'coordinates', foreground: '#bf882a'},
+        {token: 'list', foreground: '#916fa2', fontStyle: 'bold italic'},
     ],
     colors: {
-        'editor.foreground': '#e08c00',
-        'editor.background': '#2b2b2b',
-        'editorCursor.foreground': '#e00061',
-        // 'editorCursor.foreground': '#e08c00',
-        'editor.lineHighlightBackground': '#535050',
+        'editor.background': '#fdf6e2',
+        'scrollbarSlider.background': '#dcd6c5',
+        'scrollbar.shadow': '#dcd6c5',
+        'editorCursor.foreground': '#e08c00',
+        'editor.lineHighlightBackground': '#d9d6d6',
         'editorLineNumber.foreground': '#707070',
-        'editor.selectionBackground': '#45677d',
-        'editor.inactiveSelectionBackground': '#88000015',
     }
-}
+};
+
+// const spikesLangDarkTheme: editor.IStandaloneThemeData = {
+//     base: DefaultTheme.VS_DARK,
+//     inherit: true,
+//     rules: [
+//         {token: 'sections', background: '#e08c00', foreground: '#e08c00'}
+//     ],
+//     colors: {
+//         'editor.foreground': '#e08c00',
+//         'editor.background': '#2b2b2b',
+//         'editorCursor.foreground': '#e00061',
+//         // 'editorCursor.foreground': '#e08c00',
+//         'editor.lineHighlightBackground': '#535050',
+//         'editorLineNumber.foreground': '#707070',
+//         'editor.selectionBackground': '#45677d',
+//         'editor.inactiveSelectionBackground': '#88000015',
+//     }
+// }
 
 export function defaultCustomThemes(): Map<string, editor.IStandaloneThemeData> {
     const themes = new Map();
     themes.set(DefaultTheme.DARK, defaultDarkTheme);
     themes.set(DefaultTheme.LIGHT, defaultLightTheme);
+    themes.set(DefaultTheme.LIGHT_SEPIA, defaultLightSepiaTheme)
     themes.set(DefaultTheme.DARK_SPIKES_LANG, defaultDarkTheme);
     return themes;
 }
 
-export function addTheme(name: string, themeData: editor.IStandaloneThemeData): Map<string, editor.IStandaloneThemeData> {
-    const themes = defaultCustomThemes();
-    themes.set(name, themeData);
-    return themes;
-}
+// export function addTheme(name: string, themeData: editor.IStandaloneThemeData): Map<string, editor.IStandaloneThemeData> {
+//     const themes = defaultCustomThemes();
+//     themes.set(name, themeData);
+//     return themes;
+// }
 
 /**
  * Returns the editor's theme that is mapped to the application's theme
@@ -228,8 +261,75 @@ export function editorThemeFrom(name: string): string {
         case 'darkSepia':
             return DefaultTheme.DARK;
 
+        case 'lightSepia':
+            return DefaultTheme.LIGHT_SEPIA;
+
         default:
             return DefaultTheme.LIGHT;
     }
 }
 
+
+/*
+ | NEW HOOK
+ */
+//
+// function createLightSepiaTheme(theme: ITheme): editor.IStandaloneThemeData {
+//     return {
+//         base: DefaultTheme.VS_LIGHT,
+//         inherit: true,
+//         rules: [
+//             {token: 'comment', foreground: '#4b8c32', fontStyle: 'italic'},
+//             {token: 'section', foreground: '#dd9826', fontStyle: 'bold'},
+//             {token: 'function', foreground: '#e57735', fontStyle: 'bold'},
+//             {token: 'function-name', foreground: '#29ada2', fontStyle: 'underline'},
+//             {token: 'unit', foreground: '#9b9b9b', fontStyle: 'italic'},
+//             {token: 'string-attribute', foreground: '#918341'},
+//             {token: 'number-attribute', foreground: '#477794'},
+//             {token: 'list-attribute', foreground: '#916fa2', fontStyle: 'bold italic'},
+//             {token: 'property', foreground: '#bf882a'},
+//             {token: 'property.neuron.function', foreground: '#c18200', fontStyle: 'bold'},
+//             {token: 'coordinates', foreground: '#bf882a'},
+//             {token: 'list', foreground: '#916fa2', fontStyle: 'bold italic'},
+//         ],
+//         colors: {
+//             'editor.background': theme.palette.white,
+//             'scrollbarSlider.background': '#dcd6c5',
+//             'scrollbar.shadow': '#dcd6c5',
+//             'editorCursor.foreground': '#e08c00',
+//             'editor.lineHighlightBackground': '#d9d6d6',
+//             'editorLineNumber.foreground': '#707070',
+//         }
+//     }
+// }
+//
+// interface UseEditorThemeValues {
+//     customThemes: Map<string, editor.IStandaloneThemeData>
+//     /**
+//      * Accepts the fluent-ui theme name and maps it to the monaco editor theme name
+//      * @param name The name of the fluent-ui theme
+//      * @return The monaco editor theme name
+//      */
+//     editorThemeFrom: (name: string) => string
+// }
+//
+// const defaultEditorThemeValues: UseEditorThemeValues = {
+//     customThemes: defaultCustomThemes(),
+//     editorThemeFrom
+// }
+//
+// const EditorThemeContext = createContext<UseEditorThemeValues>(defaultEditorThemeValues)
+//
+// interface Props {
+//     initialTheme: ITheme
+//     children: JSX.Element | Array<JSX.Element>
+// }
+//
+// export default function EditorThemeProvider(props: Props): JSX.Element {
+//
+//     const {children} = props;
+//     return <EditorThemeContext.Provider value={{}}>
+//         {children}
+//     </EditorThemeContext.Provider>
+//
+// }

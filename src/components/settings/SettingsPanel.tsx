@@ -39,14 +39,14 @@ import TemplateSettings from "./templateSettings";
 import {saveSettingsAsync} from "../repos/appSettingsRepo";
 import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 import {useTheme} from "../common/useTheme";
-import {ThemePalette} from "../repos/themeRepo";
+import {ThemeInfo} from "../repos/themeRepo";
 
 /**
  * Calculates the options from the loaded palettes
  * @param palettes The loaded palettes from which to create themes
  * @return An array of drop-down options
  */
-function dropDownOptionsFrom(palettes: HashMap<string, ThemePalette>): Array<IDropdownOption> {
+function dropDownOptionsFrom(palettes: HashMap<string, ThemeInfo>): Array<IDropdownOption> {
     const options = [{key: "default", text: "Default Theme"}]
     const userOptions = Array
         .from(palettes.valueIterable())
@@ -98,7 +98,7 @@ function SettingsPanel(props: Props): JSX.Element {
         onChangeTemplateSettings
     } = props;
 
-    const {themeName: name, itheme, changeTheme: onChangeTheme, palettes} = useTheme()
+    const {themeName: name, itheme, changeTheme: onChangeTheme, themes: themeInfoMap} = useTheme()
 
     // initially we start out with the current theme name to be an empty option. when
     // the user selects a theme, we update the current theme with the theme that
@@ -106,7 +106,7 @@ function SettingsPanel(props: Props): JSX.Element {
     // that there has been a change, and holds the theme to revert to if the user cancels
     // from the theme.
     const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
-    const {current: themes} = useRef<Array<IDropdownOption>>(dropDownOptionsFrom(palettes))
+    const {current: themes} = useRef<Array<IDropdownOption>>(dropDownOptionsFrom(themeInfoMap))
 
     // tracks the REST server settings so that changes can be reverted. unlike the theme,
     // changes to the server settings do not update the application state until the "Ok"

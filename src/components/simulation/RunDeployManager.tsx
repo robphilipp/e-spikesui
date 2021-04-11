@@ -604,7 +604,6 @@ function RunDeployManager(props: Props): JSX.Element {
                             networkObservable={networkSubject}
                             sceneHeight={dimension.height - 200}
                             sceneWidth={dimension.width - 50}
-                            // onClose={hideSimulationLayer}
                             {...props}
                         /> :
                         <div/>

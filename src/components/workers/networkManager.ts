@@ -21,6 +21,8 @@ const CONNECTION_WEIGHT = 'learn';
 const SPIKE = 'fire';
 const NETWORK = 'networkCreated';
 
+type SimulationEvent = typeof SPIKE | typeof CONNECTION_WEIGHT
+
 let repo: NetworkManagementRepo;
 let networkId: string | undefined;
 let websocket: WebSocket | undefined;
@@ -115,24 +117,6 @@ function compile(codeSnippet: string, timeFactor: number): CompiledResult {
 }
 
 /**
- * Attempts to connect to the websocket, subscribes to the RxJs observable returned
- * from the compiled code, then starts sending the sensor signals down the websocket,
- * and streams the sensor signals to the master thread (in case the master thread
- * needs the sensor signals).
- */
-// function sendSignals(): void {
-//     // TODO connect to the websocket
-//     console.log("starting to send signals")
-//     rxjsObservable?.subscribe(output => {
-//         // TODO send signal down the websocket
-//         // websocket.next(JSON.stringify(output));
-//         // console.log(output);
-//         // stream the signal back to the master thread
-//         rxjsSubject.next(output);
-//     })
-// }
-
-/**
  * Stops the subscription and sets the the subject to undefined
  */
 function stop(): void {
@@ -142,6 +126,16 @@ function stop(): void {
     }
 }
 
+/**
+ * When the network ID and the websocket used to communicate with the server are both defined, then
+ * attempts to compile the sensor code-snippet, creates the input neuron selector from the input neuron
+ * IDs returned from the compiler, and sets a message with the sensor name and selector down the
+ * websocket to the server, which starts the simulation. Then sets the signal generator subscription to the
+ * rx-js observable which sends the sensor signals down the web-socket to the server.
+ * @param sensorDescription The sensor code-snippet
+ * @param timeFactor The simulation time factor (i.e the number of real-time seconds it takes to simulate
+ * one second).
+ */
 function startNetwork(sensorDescription: string, timeFactor: number): void {
     if (networkId === undefined) {
         throw new Error("Cannot start network because network ID is undefined");
@@ -184,13 +178,17 @@ async function deleteNetwork(): Promise<string> {
     return oldId;
 }
 
-// todo change function to accept an array of values to filter on
-function networkObservable(eventType: typeof SPIKE | typeof CONNECTION_WEIGHT): Observable<NetworkEvent> {
-    return networkEventObservable.pipe(filter(event => event.type === eventType));
+/**
+ * Returns a network observable that emits the specified event type(s)
+ * @param eventType The type of simulation events to return
+ * @return a network observable that emits the specified event type(s)
+ */
+function networkObservable(...eventType: Array<SimulationEvent>): Observable<NetworkEvent> {
+    return networkEventObservable.pipe(
+        // allow those events through that are part of the specified event types list
+        filter(event => eventType.some(evt => evt === event.type))
+    )
 }
-// function networkObservable(): Observable<NetworkEvent> {
-//     return networkEventObservable.pipe(filter(event => event.type === SPIKE));
-// }
 
 function buildObservable(): Observable<NetworkEvent> {
     return networkEventObservable.pipe(
@@ -211,7 +209,8 @@ export interface NetworkManager extends WorkerModule<string> {
     deleteNetwork: () => Promise<string>;
 
     deployedNetworkId: () => string | undefined;
-    networkObservable: (eventType: typeof SPIKE | typeof CONNECTION_WEIGHT) => Observable<NetworkEvent>;
+    // networkObservable: (eventType: typeof SPIKE | typeof CONNECTION_WEIGHT) => Observable<NetworkEvent>;
+    networkObservable: (...eventType: Array<SimulationEvent>) => Observable<NetworkEvent>;
     buildObservable: () => Observable<NetworkEvent>;
 }
 

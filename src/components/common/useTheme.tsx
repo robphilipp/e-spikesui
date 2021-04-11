@@ -3,7 +3,8 @@ import {createContext, useContext, useState} from 'react';
 import {ITheme} from "@fluentui/react";
 import {createTheme, Palette} from "../../theming";
 import {HashMap} from "prelude-ts";
-import {ThemePalette} from "../repos/themeRepo";
+import {ThemeInfo} from "../repos/themeRepo";
+import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 
 function noop() {
     /* empty */
@@ -13,8 +14,8 @@ interface UseThemeValues {
     themeName: string;
     itheme: ITheme;
     changeTheme: (themeName: string) => void;
-    palettes: HashMap<string, ThemePalette>;
-    registerPalette: (name: string, label: string, palette: Palette) => void;
+    themes: HashMap<string, ThemeInfo>;
+    registerPalette: (name: string, label: string, palette: Palette, editor: editor.IStandaloneThemeData) => void;
 }
 
 // create the default theme values for the hook
@@ -22,24 +23,16 @@ const defaultThemeValues: UseThemeValues = {
     themeName: null,
     itheme: null,
     // palettes: defaultPalettes,
-    palettes: HashMap.empty(),
+    themes: HashMap.empty(),
     changeTheme: noop,
     registerPalette: noop,
 }
-// const defaultThemeValues: UseThemeValues = {
-//     themeName: 'dark',
-//     itheme: createDefaultTheme('dark').theme,
-//     // palettes: defaultPalettes,
-//     palettes: HashMap.empty(),
-//     changeTheme: noop,
-//     registerPalette: noop,
-// }
 
 const ThemeContext = createContext<UseThemeValues>(defaultThemeValues)
 
 interface Props {
     initialTheme: string
-    initialPalettes: HashMap<string, ThemePalette>
+    initialPalettes: HashMap<string, ThemeInfo>
     children: JSX.Element | Array<JSX.Element>
 }
 
@@ -54,7 +47,7 @@ export default function ThemeProvider(props: Props): JSX.Element {
 
     const [themeName, setThemeName] = useState<string>(initialTheme)
     const [itheme, setITheme] = useState<ITheme>(() => createTheme(initialTheme, initialPalettes).theme)
-    const [palettes, setPalettes] = useState<HashMap<string, ThemePalette>>(initialPalettes)
+    const [palettes, setPalettes] = useState<HashMap<string, ThemeInfo>>(initialPalettes)
 
     /**
      * Changes the theme to the one with the specified name
@@ -72,12 +65,12 @@ export default function ThemeProvider(props: Props): JSX.Element {
      * @param label The label describing the palette
      * @param palette The color palette
      */
-    function registerPalette(name: string, label: string, palette: Palette): void {
-        setPalettes(palettes.put(name, {name, label, palette}))
+    function registerPalette(name: string, label: string, palette: Palette, editor: editor.IStandaloneThemeData): void {
+        setPalettes(palettes.put(name, {name, label, palette, editor}))
     }
 
     const {children} = props;
-    return <ThemeContext.Provider value={{themeName, itheme, palettes, changeTheme, registerPalette}}>
+    return <ThemeContext.Provider value={{themeName, itheme, themes: palettes, changeTheme, registerPalette}}>
         {children}
     </ThemeContext.Provider>
 }

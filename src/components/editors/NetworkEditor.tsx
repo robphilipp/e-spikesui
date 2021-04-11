@@ -1,7 +1,6 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "./MonacoEditor";
-import {defaultCustomThemes, editorThemeFrom} from './themes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
 import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
@@ -33,10 +32,11 @@ import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
 import {useTheme} from "../common/useTheme";
+import {editor} from "monaco-editor";
 
 export const NEW_NETWORK_PATH = '**new**';
 
-const customThemes = defaultCustomThemes();
+// const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 
 const SIDEBAR_WIDTH = 32;
@@ -76,8 +76,6 @@ type Props = StateProps & DispatchProps //& OwnProps;
  */
 function NetworkEditor(props: Props): JSX.Element {
     const {
-        // itheme,
-        // theme = DefaultTheme.DARK,
         networkDescription,
         templatePath,
         onChanged,
@@ -88,7 +86,12 @@ function NetworkEditor(props: Props): JSX.Element {
         networkDescriptionPath,
     } = props;
 
-    const {itheme, themeName} = useTheme()
+    const {itheme, themeName, themes} = useTheme()
+
+    // creates the map holding the them names and their associated editor themes
+    const {current: editorThemes} = useRef<Map<string, editor.IStandaloneThemeData>>(
+        themes.mapValues(info => info.editor).toJsMap(key => key)
+    )
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path
@@ -442,8 +445,10 @@ function NetworkEditor(props: Props): JSX.Element {
                         width={dimension.width}
                         height={dimension.height}
                         language={SPIKES_LANGUAGE_ID}
-                        theme={editorThemeFrom(themeName)}
-                        customThemes={customThemes}
+                        // theme={editorThemeFrom(themeName)}
+                        // customThemes={customThemes}
+                        theme={themeName}
+                        customThemes={editorThemes}
                         value={networkDescription}
                         options={editorOptions}
                         onChange={(value: string) => onChanged(value)}

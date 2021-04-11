@@ -30,5 +30,32 @@
     "greenLight": "rgb(0,150,0)",
     "green": "#3f3",
     "greenDark": "rgb(0,255,0)"
+  },
+  "editor": {
+    "base": "vs-dark",
+    "inherit": true,
+    "rules": [
+      {"token": "comment", "foreground": "#7eac6d", "fontStyle": "italic"},
+      {"token": "section", "foreground": "#e08c00", "fontStyle": "bold"},
+      {"token": "function", "foreground": "#ad5a29", "fontStyle": "bold"},
+      {"token": "function-name", "foreground": "#29ada2", "fontStyle": "underline"},
+      {"token": "unit", "foreground": "#9b9b9b", "fontStyle": "italic"},
+      {"token": "string-attribute", "foreground": "#d6c261"},
+      {"token": "number-attribute", "foreground": "#5894b8"},
+      {"token": "list-attribute", "foreground": "#916fa2", "fontStyle": "bold italic"},
+      {"token": "property", "foreground": "#bf882a"},
+      {"token": "property.neuron.function", "foreground": "#c18200", "fontStyle": "bold"},
+      {"token": "coordinates", "foreground": "#bf882a"},
+      {"token": "list", "foreground": "#916fa2", "fontStyle": "bold italic"}
+    ],
+    "colors": {
+      "editor.foreground": "#e08c00",
+      "editor.background": "#2b2b2b",
+      "editorCursor.foreground": "#e08c00",
+      "editor.lineHighlightBackground": "#535050",
+      "editorLineNumber.foreground": "#707070",
+      "editor.selectionBackground": "#45677d",
+      "editor.inactiveSelectionBackground": "#88000015"
+    }
   }
 }

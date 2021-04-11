@@ -1,6 +1,5 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
-import {defaultCustomThemes, editorThemeFrom} from './themes';
 import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -22,6 +21,7 @@ import SensorSimulation from "../sensors/SensorSimulation";
 import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import {useTheme} from "../common/useTheme";
+import {editor} from "monaco-editor";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -31,7 +31,7 @@ export enum ExpressionState {
     RUNNING = 'running'
 }
 
-const customThemes = defaultCustomThemes();
+// const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 
 const SIDEBAR_WIDTH = 32;
@@ -78,7 +78,12 @@ function SensorsEditor(props: Props): JSX.Element {
         sensorDescriptionPath,
     } = props;
 
-    const {itheme, themeName: themeName} = useTheme()
+    const {itheme, themeName, themes} = useTheme()
+
+    // creates the map holding the them names and their associated editor themes
+    const {current: editorThemes} = useRef<Map<string, editor.IStandaloneThemeData>>(
+        themes.mapValues(info => info.editor).toJsMap(key => key)
+    )
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // sensor as before the refresh. to do this we use the path parameter holding the file path
@@ -419,8 +424,10 @@ function SensorsEditor(props: Props): JSX.Element {
                             width={dimension.width}
                             height={dimension.height}
                             language="javascript"
-                            theme={editorThemeFrom(themeName)}
-                            customThemes={customThemes}
+                            // theme={editorThemeFrom(themeName)}
+                            // customThemes={customThemes}
+                            theme={themeName}
+                            customThemes={editorThemes}
                             value={codeSnippet}
                             options={editorOptions}
                             onChange={onChanged}

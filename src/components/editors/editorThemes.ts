@@ -1,4 +1,8 @@
+import * as React from 'react';
+
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
+import {createContext} from "react";
+import {ITheme} from "@uifabric/styling";
 
 /*
 // A list of color names:
@@ -119,16 +123,11 @@ import {editor} from "monaco-editor/esm/vs/editor/editor.api";
  */
 
 export enum DefaultTheme {
-    DARK = 'default-dark',
-    LIGHT = 'default-light',
-    DARK_SPIKES_LANG = 'spikes-dark',
-    LIGHT_SPIKES_LANG = 'spikes-light',
     VS_DARK = 'vs-dark',
     VS_LIGHT = 'vs',
-    VS_HIGH_CONTRAST = 'hc-black'
 }
 
-const defaultDarkTheme: editor.IStandaloneThemeData = {
+export const defaultDarkTheme: editor.IStandaloneThemeData = {
     base: DefaultTheme.VS_DARK,
     inherit: true,
     rules: [
@@ -156,7 +155,7 @@ const defaultDarkTheme: editor.IStandaloneThemeData = {
     },
 };
 
-const defaultLightTheme: editor.IStandaloneThemeData = {
+export const defaultLightTheme: editor.IStandaloneThemeData = {
     base: DefaultTheme.VS_LIGHT,
     inherit: true,
     rules: [
@@ -179,57 +178,3 @@ const defaultLightTheme: editor.IStandaloneThemeData = {
         'editorLineNumber.foreground': '#707070',
     }
 };
-
-const spikesLangDarkTheme: editor.IStandaloneThemeData = {
-    base: DefaultTheme.VS_DARK,
-    inherit: true,
-    rules: [
-        {token: 'sections', background: '#e08c00', foreground: '#e08c00'}
-    ],
-    colors: {
-        'editor.foreground': '#e08c00',
-        'editor.background': '#2b2b2b',
-        'editorCursor.foreground': '#e00061',
-        // 'editorCursor.foreground': '#e08c00',
-        'editor.lineHighlightBackground': '#535050',
-        'editorLineNumber.foreground': '#707070',
-        'editor.selectionBackground': '#45677d',
-        'editor.inactiveSelectionBackground': '#88000015',
-    }
-}
-
-export function defaultCustomThemes(): Map<string, editor.IStandaloneThemeData> {
-    const themes = new Map();
-    themes.set(DefaultTheme.DARK, defaultDarkTheme);
-    themes.set(DefaultTheme.LIGHT, defaultLightTheme);
-    themes.set(DefaultTheme.DARK_SPIKES_LANG, defaultDarkTheme);
-    return themes;
-}
-
-export function addTheme(name: string, themeData: editor.IStandaloneThemeData): Map<string, editor.IStandaloneThemeData> {
-    const themes = defaultCustomThemes();
-    themes.set(name, themeData);
-    return themes;
-}
-
-/**
- * Returns the editor's theme that is mapped to the application's theme
- * @param name The name of the application's theme
- * @return The name of the editor's theme
- */
-export function editorThemeFrom(name: string): string {
-    switch (name) {
-        case 'default':
-        case 'light':
-            return DefaultTheme.LIGHT;
-
-        case 'dark':
-        case 'darkGray':
-        case 'darkSepia':
-            return DefaultTheme.DARK;
-
-        default:
-            return DefaultTheme.LIGHT;
-    }
-}
-

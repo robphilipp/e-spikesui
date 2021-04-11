@@ -49,7 +49,7 @@
       {"token": "list", "foreground": "#916fa2", "fontStyle": "bold italic"}
     ],
     "colors": {
-      "editor.background": "#fdf6e2",
+      "editor.background": "#f7f3e4",
       "scrollbarSlider.background": "#dcd6c5",
       "scrollbar.shadow": "#dcd6c5",
       "editorCursor.foreground": "#e08c00",

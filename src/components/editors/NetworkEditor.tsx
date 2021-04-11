@@ -1,7 +1,6 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import MonacoEditor from "./MonacoEditor";
-import {defaultCustomThemes, editorThemeFrom} from './editorThemes';
 import {SPIKES_LANGUAGE_ID} from '../language/spikes-language';
 import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
@@ -89,7 +88,10 @@ function NetworkEditor(props: Props): JSX.Element {
 
     const {itheme, themeName, themes} = useTheme()
 
-    const {current: editorThemes} = useRef<Map<string, editor.IStandaloneThemeData>>(themes.mapValues(info => info.editor).toJsMap(key => key))
+    // creates the map holding the them names and their associated editor themes
+    const {current: editorThemes} = useRef<Map<string, editor.IStandaloneThemeData>>(
+        themes.mapValues(info => info.editor).toJsMap(key => key)
+    )
 
     // when user refreshes when the router path is this editor, then we want to load the same
     // network as before the refresh. to do this we use the path parameter holding the file path

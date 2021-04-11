@@ -42,14 +42,15 @@ import {useTheme} from "../common/useTheme";
 import {ThemeInfo} from "../repos/themeRepo";
 
 /**
- * Calculates the options from the loaded palettes
- * @param palettes The loaded palettes from which to create themes
+ * Calculates the theme options from the specified themes map. Associates the theme name to the
+ * theme label for displaying to the user.
+ * @param themes A map associating a theme name to theme information
  * @return An array of drop-down options
  */
-function dropDownOptionsFrom(palettes: HashMap<string, ThemeInfo>): Array<IDropdownOption> {
+function dropDownOptionsFrom(themes: HashMap<string, ThemeInfo>): Array<IDropdownOption> {
     const options = [{key: "default", text: "Default Theme"}]
     const userOptions = Array
-        .from(palettes.valueIterable())
+        .from(themes.valueIterable())
         .map(tp => ({key: tp.name, text: tp.label}))
         .sort((a, b) => {
             if (a.text > b.text) return 1

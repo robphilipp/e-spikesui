@@ -116,7 +116,8 @@ function RunDeployManager(props: Props): JSX.Element {
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
-    const [networkSubject, setSubjectObservable] = useState<Subject<NetworkEvent>>(new Subject());
+    const [spikeSubject, setSpikeSubject] = useState<Subject<NetworkEvent>>(new Subject());
+    const [learnSubject, setLearnSubject] = useState<Subject<NetworkEvent>>(new Subject());
     const [running, setRunning] = useState(false);
     const [usedUp, setUsedUp] = useState(false);
 
@@ -330,16 +331,17 @@ function RunDeployManager(props: Props): JSX.Element {
 
         updateLoadingState(true, "Attempting to start neural network")
         try {
-            const networkEventSubject = await networkManager.start(sensorDescription, timeFactor);
-            setSubjectObservable(networkEventSubject);
-            setRunning(true);
+            const {spikeEventsSubject, learnEventSubject} = await networkManager.start(sensorDescription, timeFactor)
+            setSpikeSubject(spikeEventsSubject)
+            setLearnSubject(learnEventSubject)
+            setRunning(true)
 
             // start the simulation timer
-            startTimer(simulationDuration, timeFactor);
+            startTimer(simulationDuration, timeFactor)
         } catch (error) {
             setMessage(MessageBarType.error, <div>{error.toString()}</div>)
         } finally {
-            updateLoadingState(false);
+            updateLoadingState(false)
         }
     }
 
@@ -601,7 +603,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     {networkId.isSome() && networkBuilt ?
                         <NetworkVisualization
                             key="net-1"
-                            networkObservable={networkSubject}
+                            networkObservable={spikeSubject}
                             sceneHeight={dimension.height - 200}
                             sceneWidth={dimension.width - 50}
                             {...props}

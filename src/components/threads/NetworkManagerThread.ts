@@ -1,20 +1,26 @@
 import {Observable as FnsObservable} from 'observable-fns';
 import {Observable, Subject} from "rxjs";
-import {NetworkEvent, SPIKE} from "../redux/actions/networkEvent";
+import {CONNECTION_WEIGHT, NetworkEvent, SPIKE} from "../redux/actions/networkEvent";
 import {spawn, Thread, Worker} from "threads";
 import {ObservablePromise} from "threads/dist/observable-promise";
 import {ModuleMethods, ModuleProxy, PrivateThreadProps, StripAsync} from "threads/dist/types/master";
 import {remoteRepositories} from "../../app";
 
+interface NetworkEventSubjects {
+    spikeEventsSubject: Subject<NetworkEvent>
+    learnEventSubject: Subject<NetworkEvent>
+}
+
 type NetworkManagerWorker = ((() => ObservablePromise<StripAsync<NetworkEvent>>) & PrivateThreadProps & ModuleProxy<ModuleMethods>) ;
 
 export interface NetworkManagerThread {
-    deploy: (networkDescription: string) => Promise<string>;
-    build: (networkId: string) => Promise<Observable<NetworkEvent>>;
-    start: (sensorDescription: string, timeFactor: number) => Promise<Subject<NetworkEvent>>;
-    stop: () => Promise<void>;
-    remove: () => Promise<string>;
-    terminate: () => Promise<void>;
+    deploy: (networkDescription: string) => Promise<string>
+    build: (networkId: string) => Promise<Observable<NetworkEvent>>
+    start: (sensorDescription: string, timeFactor: number) => Promise<NetworkEventSubjects>
+    // start: (sensorDescription: string, timeFactor: number) => Promise<Subject<NetworkEvent>>;
+    stop: () => Promise<void>
+    remove: () => Promise<string>
+    terminate: () => Promise<void>
 }
 
 /**
@@ -25,7 +31,7 @@ export interface NetworkManagerThread {
 export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
 
     // spawn a new worker that handles all the websocket stuff
-    const worker: NetworkManagerWorker = await spawn(new Worker('../workers/networkManager'));
+    const worker: NetworkManagerWorker = await spawn(new Worker('../workers/networkManager'))
     await worker.configure(remoteRepositories.serverSettings)
 
     /**
@@ -65,15 +71,23 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
      */
     // todo return an object that holds a subject for spike events, and a subject of learn (weight) events.
     //      let the worker thread deal with filtering a splitting.
-    async function start(sensorDescription: string, timeFactor: number): Promise<Subject<NetworkEvent>> {
+    async function start(sensorDescription: string, timeFactor: number): Promise<NetworkEventSubjects> {
         await worker.startNetwork(sensorDescription, timeFactor);
         const networkEvents: FnsObservable<NetworkEvent> = worker.networkObservable(SPIKE);
+        const learnEvents: FnsObservable<NetworkEvent> = worker.networkObservable(CONNECTION_WEIGHT);
 
         // todo hold on to the subscription so that it can be cancelled
         // convert the fns-observable to an rxjs observable
-        const subject = new Subject<NetworkEvent>();
-        networkEvents.subscribe(event => subject.next(event))
-        return subject;
+        const spikesSubject = new Subject<NetworkEvent>()
+        networkEvents.subscribe(event => spikesSubject.next(event))
+
+        const learnSubject = new Subject<NetworkEvent>()
+        learnEvents.subscribe(event => spikesSubject.next(event))
+
+        return {
+            spikeEventsSubject: spikesSubject,
+            learnEventSubject: learnSubject
+        }
     }
 
     /**

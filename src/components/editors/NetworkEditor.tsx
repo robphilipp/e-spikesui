@@ -32,11 +32,10 @@ import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
 import {useTheme} from "../common/useTheme";
-import {editor} from "monaco-editor";
+import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 
 export const NEW_NETWORK_PATH = '**new**';
 
-// const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 
 const SIDEBAR_WIDTH = 32;
@@ -46,11 +45,6 @@ interface Dimension {
     height: number;
     width: number;
 }
-
-// interface OwnProps extends RouteComponentProps<never> {
-//     itheme: ITheme;
-//     theme?: string;
-// }
 
 interface StateProps {
     networkDescription: string;
@@ -66,7 +60,7 @@ interface DispatchProps {
     loadNetworkDescription: (path: string) => Promise<NetworkDescriptionLoadedAction>;
 }
 
-type Props = StateProps & DispatchProps //& OwnProps;
+type Props = StateProps & DispatchProps
 
 /**
  * Wrapper for the monaco editor that manages resizing and theme updates

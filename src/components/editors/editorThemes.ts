@@ -1,8 +1,4 @@
-import * as React from 'react';
-
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-import {createContext} from "react";
-import {ITheme} from "@uifabric/styling";
 
 /*
 // A list of color names:

@@ -22,7 +22,6 @@ interface UseThemeValues {
 const defaultThemeValues: UseThemeValues = {
     themeName: null,
     itheme: null,
-    // palettes: defaultPalettes,
     themes: HashMap.empty(),
     changeTheme: noop,
     registerPalette: noop,

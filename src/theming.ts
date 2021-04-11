@@ -1,6 +1,6 @@
 import {IPartialTheme, ITheme, loadTheme} from '@fluentui/react';
 import {HashMap} from "prelude-ts";
-import {loadPalettes, ThemeInfo} from "./components/repos/themeRepo";
+import {loadThemes, ThemeInfo} from "./components/repos/themeRepo";
 import {defaultDarkTheme, defaultLightTheme} from "./components/editors/editorThemes";
 
 export interface Palette {
@@ -104,7 +104,7 @@ const defaultPalettes = HashMap.ofObjectDictionary<ThemeInfo>({
 
 export const THEME_DIRECTORY = '.themes'
 export function loadOrDefaultThemes(directory: string): HashMap<string, ThemeInfo> {
-    return loadPalettes(directory).getOrElse(defaultPalettes)
+    return loadThemes(directory).getOrElse(defaultPalettes)
 }
 
 /**

@@ -21,7 +21,7 @@ import SensorSimulation from "../sensors/SensorSimulation";
 import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import {useTheme} from "../common/useTheme";
-import {editor} from "monaco-editor";
+import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -31,7 +31,6 @@ export enum ExpressionState {
     RUNNING = 'running'
 }
 
-// const customThemes = defaultCustomThemes();
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 
 const SIDEBAR_WIDTH = 32;
@@ -237,18 +236,21 @@ function SensorsEditor(props: Props): JSX.Element {
     /**
      * Handles saving the file when the path exists, otherwise opens a save-file dialog to allow
      * the user to set the path. Sends redux action when file has been saved.
+     * @param path The path to the sensor description file
+     * @param templatePath The path to the template for creating new sensor descriptions
+     * @param sensor The sensor description (code snippet)
      */
-    function handleSave(path: string, templatePath: string, network: string): void {
-        // if the state path is set and the path does not equal the template path, then the network
+    function handleSave(path: string, templatePath: string, sensor: string): void {
+        // if the state path is set and the path does not equal the template path, then the sensor
         // description is from an existing file, and we can just save it. otherwise, we need to up a
         // dialog so that the user can give the filename
         if (path && path !== templatePath) {
             // todo handle success and error
-            onSave(path, network).then(() => console.log('saved'));
+            onSave(path, sensor).then(() => console.log('saved'));
         } else {
             remote.dialog
                 .showSaveDialog(remote.getCurrentWindow(), {title: "Save As..."})
-                .then(response => onSave(response.filePath, network)
+                .then(response => onSave(response.filePath, sensor)
                     .then(() => history.push(`${baseRouterPath}/${encodeURIComponent(response.filePath)}`))
                 );
         }

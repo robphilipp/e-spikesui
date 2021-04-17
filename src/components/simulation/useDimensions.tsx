@@ -8,6 +8,8 @@ interface UseDimensionValues {
     width: number;
 }
 
+type Dimensions = UseDimensionValues
+
 const defaultDimensions: UseDimensionValues = {
     height: 10,
     width: 10
@@ -15,10 +17,17 @@ const defaultDimensions: UseDimensionValues = {
 
 const DimensionsContext = createContext<UseDimensionValues>(defaultDimensions)
 
+function dimensionChange(current: Dimensions, previous: Dimensions): number {
+    return Math.sqrt(
+        (current.width - previous.width) * (current.width - previous.width) +
+        (current.height - previous.height) * (current.height - previous.height)
+    )
+}
+
 interface Props {
-    heightFraction?: number;
-    widthFraction?: number;
-    children: JSX.Element | Array<JSX.Element>;
+    heightFraction?: number
+    widthFraction?: number
+    children: JSX.Element | Array<JSX.Element>
 }
 
 /**
@@ -34,10 +43,9 @@ export default function DimensionsProvider(props: Props): JSX.Element {
         children
     } = props;
 
-    const visContainerRef = useRef<HTMLDivElement>()
+    const containerRef = useRef<HTMLDivElement>()
 
-    const [height, setHeight] = useState<number>()
-    const [width, setWidth] = useState<number>()
+    const [dimensions, setDimensions] = useState<Dimensions>({height: 100, width: 100})
 
     useEffect(
         () => {
@@ -50,7 +58,6 @@ export default function DimensionsProvider(props: Props): JSX.Element {
             return () => {
                 // stop listening for window resizing events
                 window.removeEventListener('resize', handleWindowResize);
-
             }
         },
         []
@@ -60,19 +67,21 @@ export default function DimensionsProvider(props: Props): JSX.Element {
      * Update the dimensions based on the current the updated div size
      */
     function handleWindowResize(): void {
-        setHeight(visContainerRef.current.clientHeight)
-        setWidth(visContainerRef.current.clientWidth)
+        setDimensions({
+            height: containerRef.current.clientHeight,
+            width: containerRef.current.clientWidth
+        })
     }
 
     function asString(fraction: number): string {
-        return `${Math.max(0, Math.min(1, fraction)) * 100}%`
+        return `${(Math.max(0, Math.min(1, fraction)) * 100).toFixed(0)}%`
     }
 
     return <div
-        ref={visContainerRef}
+        ref={containerRef}
         style={{height: `${asString(heightFraction)}`, width: `${asString(widthFraction)}`}}
     >
-        <DimensionsContext.Provider value={{height, width}}>
+        <DimensionsContext.Provider value={{height: dimensions.height, width: dimensions.width}}>
             {children}
         </DimensionsContext.Provider>
     </div>

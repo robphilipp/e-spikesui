@@ -12,22 +12,24 @@ import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useTheme} from "../common/useTheme";
 import {useDimensions} from "./useDimensions";
 
-export interface OwnProps {
+interface OwnProps {
     // sceneHeight: number;
     // sceneWidth: number;
-    excitationColor?: Color;
-    inhibitionColor?: Color;
-    colorAttenuation?: number;
-    networkObservable: Observable<NetworkEvent>;
+    // height: number
+    // width: number
+    excitationColor?: Color
+    inhibitionColor?: Color
+    colorAttenuation?: number
+    networkObservable: Observable<NetworkEvent>
 }
 
-export interface StateProps {
-    networkId: Option<string>;
-    neurons: HashMap<string, NeuronInfo>;
-    connections: HashMap<string, ConnectionInfo>;
+interface StateProps {
+    networkId: Option<string>
+    neurons: HashMap<string, NeuronInfo>
+    connections: HashMap<string, ConnectionInfo>
 }
 
-type Props = StateProps & OwnProps;
+type Props = StateProps & OwnProps
 
 // todo get the scene width and height from the parent (stack?) and use that for the network vis
 
@@ -42,14 +44,18 @@ function NetworkVisualization(props: Props): JSX.Element {
     const {itheme} = useTheme()
 
     const {
+        // size,
         // sceneWidth, sceneHeight,
+        // height, width,
         excitationColor = new Color(itheme.palette.green),     // green
         inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color
         networkObservable
-    } = props;
+    } = props
 
-    const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation);
+    // const {width, height} = size
+
+    const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation)
     const {width, height} = useDimensions()
 
     return (

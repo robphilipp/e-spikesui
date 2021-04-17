@@ -169,8 +169,8 @@ function RunDeployManager(props: Props): JSX.Element {
     )
 
     /**
-     * calculates the editors dimensions based on the `<div>`'s width and height
-     * @return The dimension of the editor
+     * calculates the visualization's dimensions based on the `<div>`'s width and height
+     * @return The dimension of the visualization
      */
     function networkVisualizationDimensions(): Dimension {
         return {
@@ -180,7 +180,7 @@ function RunDeployManager(props: Props): JSX.Element {
     }
 
     /**
-     * updates the editor's width and height when the container's dimensions change
+     * updates the visualization's width and height when the container's dimensions change
      */
     function handleWindowResize(): void {
         if (visualizationRef.current) {

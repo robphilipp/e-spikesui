@@ -10,10 +10,11 @@ import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useTheme} from "../common/useTheme";
+import {useDimensions} from "./useDimensions";
 
 export interface OwnProps {
-    sceneHeight: number;
-    sceneWidth: number;
+    // sceneHeight: number;
+    // sceneWidth: number;
     excitationColor?: Color;
     inhibitionColor?: Color;
     colorAttenuation?: number;
@@ -41,7 +42,7 @@ function NetworkVisualization(props: Props): JSX.Element {
     const {itheme} = useTheme()
 
     const {
-        sceneWidth, sceneHeight,
+        // sceneWidth, sceneHeight,
         excitationColor = new Color(itheme.palette.green),     // green
         inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color
@@ -49,12 +50,15 @@ function NetworkVisualization(props: Props): JSX.Element {
     } = props;
 
     const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation);
+    const {width, height} = useDimensions()
 
     return (
         <Network
             visualizationId="live-visualization"
-            sceneHeight={sceneHeight}
-            sceneWidth={sceneWidth}
+            sceneHeight={height}
+            sceneWidth={width}
+            // sceneHeight={sceneHeight}
+            // sceneWidth={sceneWidth}
             excitationColor={excitationColor}
             inhibitionColor={inhibitionColor}
             colorAttenuation={colorAttenuation}

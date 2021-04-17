@@ -30,13 +30,7 @@ import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkM
 import useSimulationTimer from "./useSimulationTimer";
 import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
-
-const headerOffset = 200;
-
-interface Dimension {
-    height: number;
-    width: number;
-}
+import DimensionsProvider from "./useDimensions";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -124,12 +118,6 @@ function RunDeployManager(props: Props): JSX.Element {
     const networkManagerThreadRef = useRef<NetworkManagerThread>();
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
 
-    const visualizationRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({
-        height: window.innerHeight - headerOffset,
-        width: window.innerWidth - 50
-    });
-
     // simulation time
     const {simulationTime, startTimer, cancelTimer} = useSimulationTimer(handleStop)
 
@@ -139,12 +127,12 @@ function RunDeployManager(props: Props): JSX.Element {
             // set up the network manager thread for managing the network and the sensor
             newNetworkManagerThread().then(managerThread => networkManagerThreadRef.current = managerThread);
 
-            // listen to resize events so that the visualization size can be updated
-            window.addEventListener('resize', handleWindowResize);
+            // // listen to resize events so that the visualization size can be updated
+            // window.addEventListener('resize', handleWindowResize);
 
             return () => {
-                // stop listening to resize events
-                window.removeEventListener('resize', handleWindowResize);
+                // // stop listening to resize events
+                // window.removeEventListener('resize', handleWindowResize);
 
                 networkManagerThreadRef.current?.stop()
                     .then(() => networkManagerThreadRef.current?.remove()
@@ -167,31 +155,6 @@ function RunDeployManager(props: Props): JSX.Element {
         },
         [networkBuilt]
     )
-
-    /**
-     * calculates the visualization's dimensions based on the `<div>`'s width and height
-     * @return The dimension of the visualization
-     */
-    function networkVisualizationDimensions(): Dimension {
-        return {
-            width: visualizationRef.current.offsetWidth,
-            height: visualizationRef.current.offsetHeight - headerOffset
-        };
-    }
-
-    /**
-     * updates the visualization's width and height when the container's dimensions change
-     */
-    function handleWindowResize(): void {
-        if (visualizationRef.current) {
-            const nextDimension = networkVisualizationDimensions()
-            const minDiff = 2;
-            if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
-                Math.abs(nextDimension.width - dimension.width) > minDiff) {
-                setDimension(nextDimension);
-            }
-        }
-    }
 
     /**
      * Attempts to build the network on the server.
@@ -553,14 +516,14 @@ function RunDeployManager(props: Props): JSX.Element {
         </TooltipHost>
     }
 
-    return <div ref={visualizationRef} style={{height: window.innerHeight, width: '100%'}}>
-        <Stack>
+    return <>
+        <Stack verticalFill={true}>
             <Stack horizontal>
                 <Stack.Item>
                     {networkManagementButton()}
                 </Stack.Item>
             </Stack>
-            <Stack>
+            <Stack grow>
                 <Stack.Item>
                     {networkId.map(id => (
                         <Card key={1} tokens={{childrenMargin: 12, boxShadow: "none", maxWidth: 'unset'}}>
@@ -597,23 +560,21 @@ function RunDeployManager(props: Props): JSX.Element {
                         </Card>
                     )).getOrElse(<span/>)}
                 </Stack.Item>
-            </Stack>
-            <Stack>
                 <Stack.Item grow>
+                    <DimensionsProvider widthFraction={0.95}>
                     {networkId.isSome() && networkBuilt ?
                         <NetworkVisualization
                             key="net-1"
                             networkObservable={spikeSubject}
-                            sceneHeight={dimension.height - 200}
-                            sceneWidth={dimension.width - 50}
                             {...props}
                         /> :
                         <div/>
                     }
+                    </DimensionsProvider>
                 </Stack.Item>
             </Stack>
         </Stack>
-    </div>;
+    </>;
 }
 
 

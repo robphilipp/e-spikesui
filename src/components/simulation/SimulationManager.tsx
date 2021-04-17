@@ -336,7 +336,7 @@ function SimulationManager(props: Props): JSX.Element {
     }
 
     return (
-        <div onKeyDown={handleKeyboardShortcut}>
+        <div onKeyDown={handleKeyboardShortcut} style={{height: '100%'}}>
             {/* {message || <span />} */}
             <div
                 style={{
@@ -348,8 +348,8 @@ function SimulationManager(props: Props): JSX.Element {
             >
                 {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
             </div>
-            <div>
-                <Stack horizontal>
+            {/*<div>*/}
+                <Stack horizontal verticalFill={true}>
                     <StackItem>
                         {newButton()}
                         {loadButton()}
@@ -361,11 +361,13 @@ function SimulationManager(props: Props): JSX.Element {
                         {/*{stopSensorSimulationButton()}*/}
                         {/*{showSimulation && hideSimulationButton()}*/}
                     </StackItem>
-                    <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow>
+                    <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
                         <Pivot
                             aria-label="simulation-tabs"
                             selectedKey={selectedTab}
                             onLinkClick={item => setSelectedTab(item.props.itemKey)}
+                            style={{height: '100%'}}
+                            styles={{itemContainer: {height: '100%'}}}
                         >
                             <PivotItem
                                 headerText="Project Config"
@@ -380,6 +382,7 @@ function SimulationManager(props: Props): JSX.Element {
                             <PivotItem
                                 headerText="Deploy and Run"
                                 itemKey={TabName.DEPLOY_EXECUTE}
+                                style={{height: '100%'}}
                             >
                                 <RunDeployManager
                                     itheme={itheme}
@@ -388,7 +391,7 @@ function SimulationManager(props: Props): JSX.Element {
                         </Pivot>
                     </Stack>
                 </Stack>
-            </div>
+            {/*</div>*/}
         </div>
     );
 }

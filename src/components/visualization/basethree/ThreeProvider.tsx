@@ -103,7 +103,7 @@ export interface OwnProps {
  *    const [color, changeColor] = useState<string>('744902');
  *
  *    return (
- *        <SceneManager
+ *        <ThreeProvider
  *            getCamera={getCamera}
  *            getRenderer={getRenderer}
  *            getScene={getScene}

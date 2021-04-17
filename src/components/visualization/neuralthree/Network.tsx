@@ -74,6 +74,7 @@ type Props = StateProps & DispatchProps & OwnProps
 export const AXES_SCENE_ID = "axes";
 export const GRID_SCENE_ID = "grid";
 export const NETWORK_SCENE_ID = "network";
+const CONTROLS_HEIGHT = 150;
 
 /**
  * Calculates the color range for connections given the connection weight
@@ -234,6 +235,7 @@ function Network(props: Props): JSX.Element {
         });
     }
 
+    const height = Math.max(0, sceneHeight - CONTROLS_HEIGHT)
     return (
         <Stack>
             <Stack.Item>
@@ -243,11 +245,11 @@ function Network(props: Props): JSX.Element {
                     getRenderer={getRenderer}
                     scenesSupplier={getScenes}
                     width={sceneWidth}
-                    height={sceneHeight}
+                    height={height}
                     backgroundColor={new Color(itheme.palette.white)}
                     canvasStyle={{
                         position: 'floating',
-                        height: `${sceneHeight}px`,
+                        height: `${height}px`,
                         width: `${sceneWidth}px`,
                         border: `1px solid ${itheme.palette.neutralLighterAlt}`
                     }}

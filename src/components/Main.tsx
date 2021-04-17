@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {useEffect} from 'react'
+import {useEffect, useRef} from 'react'
 import {CommandBar, ContextualMenuItemType, ICommandBarItemProps, Stack, StackItem} from '@fluentui/react'
 import {Palette} from "../theming";
 import {connect} from 'react-redux';
@@ -492,12 +492,14 @@ function Main(props: Props): JSX.Element {
                 history.push(`${AppPath.SIMULATION}/${encodeURIComponent(response.filePaths[0])}`);
             })
     }
+    // const visualizationRef = useRef<HTMLDivElement>();
 
     return (
+        <div style={{height: '100%', width: '100%'}}>
         <LoadingProvider>
             <LoadingModal/>
             <MessageProvider>
-            <Stack>
+            <Stack grow verticalFill={true}>
                 <StackItem>
                     <CommandBar
                         items={menuItems()}
@@ -510,7 +512,7 @@ function Main(props: Props): JSX.Element {
                 <StackItem grow>
                     <SettingsPanel/>
                 </StackItem>
-                <StackItem>
+                <StackItem grow verticalFill={true}>
                     <Switch>
                         <Route
                             path={`${AppPath.SIMULATION}/:simulationProjectPath`}
@@ -535,6 +537,7 @@ function Main(props: Props): JSX.Element {
             </Stack>
             </MessageProvider>
         </LoadingProvider>
+        </div>
     )
 }
 

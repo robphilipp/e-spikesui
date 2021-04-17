@@ -30,7 +30,7 @@ import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkM
 import useSimulationTimer from "./useSimulationTimer";
 import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
-import DimensionsProvider from "./useDimensions";
+import DimensionsProvider from "../common/useDimensions";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;

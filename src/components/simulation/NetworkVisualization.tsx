@@ -10,7 +10,7 @@ import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useTheme} from "../common/useTheme";
-import {useDimensions} from "./useDimensions";
+import {useDimensions} from "../common/useDimensions";
 
 interface OwnProps {
     // sceneHeight: number;

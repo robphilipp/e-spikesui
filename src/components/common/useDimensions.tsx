@@ -1,7 +1,6 @@
 import * as React from 'react';
-import {createContext, useContext, useEffect, useRef, useState} from "react";
-import {fromEvent} from "rxjs";
-import {throttleTime} from 'rxjs/operators'
+import {createContext, useContext, useEffect, useRef, useState} from 'react';
+import {fromEvent} from 'rxjs';
 
 interface UseDimensionValues {
     height: number;
@@ -17,13 +16,6 @@ const defaultDimensions: UseDimensionValues = {
 
 const DimensionsContext = createContext<UseDimensionValues>(defaultDimensions)
 
-function dimensionChange(current: Dimensions, previous: Dimensions): number {
-    return Math.sqrt(
-        (current.width - previous.width) * (current.width - previous.width) +
-        (current.height - previous.height) * (current.height - previous.height)
-    )
-}
-
 interface Props {
     heightFraction?: number
     widthFraction?: number
@@ -33,6 +25,8 @@ interface Props {
 /**
  * Provides the dimensions of a the container <div> to the children. Listens to
  * window resize events and updates the height and width state and re-renders.
+ * The re-render causes the context-provider's values to change. Any provided,
+ * optional, width and height fractions, are maintained during resize.
  * @param props The height and width fraction, and the children
  * @constructor
  */
@@ -52,12 +46,12 @@ export default function DimensionsProvider(props: Props): JSX.Element {
             // set the initial dimensions
             handleWindowResize()
 
-            // listen for window resizing events
-            window.addEventListener('resize', handleWindowResize);
+            // handle window resized events
+            const subscription = fromEvent(window, 'resize').subscribe(handleWindowResize)
 
             return () => {
                 // stop listening for window resizing events
-                window.removeEventListener('resize', handleWindowResize);
+                subscription.unsubscribe()
             }
         },
         []
@@ -73,6 +67,11 @@ export default function DimensionsProvider(props: Props): JSX.Element {
         })
     }
 
+    /**
+     * Renders the fractional width to a fixed percentage
+     * @param fraction The fraction, which must be in the interval `[0, 1]`
+     * @return The fraction as a string formatted `xxx%`.
+     */
     function asString(fraction: number): string {
         return `${(Math.max(0, Math.min(1, fraction)) * 100).toFixed(0)}%`
     }
@@ -87,6 +86,10 @@ export default function DimensionsProvider(props: Props): JSX.Element {
     </div>
 }
 
+/**
+ * React hook that must be used within a {@link DimensionsProvider}
+ * @return The dimensions values of the element
+ */
 export function useDimensions(): UseDimensionValues {
     const context = useContext<UseDimensionValues>(DimensionsContext)
     const {width, height} = context

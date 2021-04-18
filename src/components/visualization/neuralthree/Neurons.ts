@@ -1,4 +1,4 @@
-import {BufferAttribute, BufferGeometry, Color, Points, PointsMaterial, TextureLoader} from "three";
+import {BufferAttribute, BufferGeometry, Color, LinearFilter, Points, PointsMaterial, TextureLoader} from "three";
 import {useThree} from "../basethree/useThree";
 import {Coordinate} from "../basethree/Coordinate";
 import {useEffect, useRef} from "react";
@@ -129,6 +129,7 @@ function updateNeuronColor(neuronIndex: number, neuronColors: Float32Array, colo
 
 // holds the image of the ball used to represent the neuron
 const sprite = new TextureLoader().load( '/resources/ball.png');
+sprite.minFilter = LinearFilter
 
 /**
  * Visualization of the neurons, as points, with the point colors representing an excitatory or inhibitory

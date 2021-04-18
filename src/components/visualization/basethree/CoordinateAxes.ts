@@ -2,7 +2,7 @@ import {
     BufferAttribute,
     BufferGeometry,
     Color,
-    Float32BufferAttribute,
+    Float32BufferAttribute, LinearFilter,
     LineBasicMaterial,
     LineSegments,
     Points,
@@ -23,6 +23,9 @@ export interface AxesColors {
 const x = new TextureLoader().load('/resources/x.png');
 const y = new TextureLoader().load('/resources/y.png');
 const z = new TextureLoader().load('/resources/z.png');
+x.minFilter = LinearFilter
+y.minFilter = LinearFilter
+z.minFilter = LinearFilter
 
 /**
  * The coordinate axes properties

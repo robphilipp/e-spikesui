@@ -1,4 +1,4 @@
-import {useRef, useLayoutEffect} from 'react';
+import {useEffect, useLayoutEffect, useRef} from 'react';
 
 /**
  * Custom react hook for dealing with the animation frame. Calls `requestAnimationFrame` after the

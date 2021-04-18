@@ -11,6 +11,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 }
 
 function createWindow(): BrowserWindow {
+
     // const sessionState = loadSessionState();
     const {bounds, background} = loadSessionData()
     const {x, y, width, height} = bounds
@@ -23,6 +24,7 @@ function createWindow(): BrowserWindow {
         width: width,
         backgroundColor: background,
         useContentSize: true,
+        show: false,
 
         webPreferences: {
             // addition of `prelude-ts` caused "Uncaught ReferenceError: require is not defined"
@@ -36,19 +38,40 @@ function createWindow(): BrowserWindow {
             // removes web-security features (in particular, this is needed to get rid of the
             // CORS error when attempting to make REST calls)
             webSecurity : false,
+            //
+            contextIsolation: false,
         }
     });
 
+    // create a splash window
+    const splash = new BrowserWindow({
+        width: 500,
+        height: 350,
+        transparent: true,
+        frame: false,
+        // alwaysOnTop: true,
+        backgroundColor: background,
+        resizable: false,
+        movable: true,
+
+        webPreferences: {
+            contextIsolation: false,
+        }
+    })
+    splash
+        .loadFile(path.join('splash.html'))
+        .catch(reason => console.log(`unable to load splash screen; ${reason}`))
+
     // load the dev tool extensions for debugging (react, redux)
     session.defaultSession.loadExtension(
-        path.join(os.homedir(), '/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.8.2_0')
+        path.join(os.homedir(), '/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.10.1_0/')
     ).then(ext => {
         console.log(`Loaded extension; name: ${ext.name}; id: ${ext.id}; path: ${ext.path}`)
     }).catch(reason => {
         console.log(`Failed to load React devtools extension; error: ${reason.toString()}`)
     })
     session.defaultSession.loadExtension(
-        path.join(os.homedir(), '/Library/Application Support/Google/Chrome/Default/Extensions/lmhkpmbekcpmknklioeibfkpmmfibljd/2.17.0_0')
+        path.join(os.homedir(), '/Library/Application Support/Google/Chrome/Default/Extensions/lmhkpmbekcpmknklioeibfkpmmfibljd/2.17.0_0/')
     ).then(ext => {
         console.log(`Loaded extension; name: ${ext.name}; id: ${ext.id}; path: ${ext.path}`)
     }).catch(reason => {
@@ -63,7 +86,11 @@ function createWindow(): BrowserWindow {
         })
         .catch(reason => {
             console.log(`Failed to load main html page; path: ${MAIN_WINDOW_WEBPACK_ENTRY}; error: ${reason.toString()}`)
-        });
+        })
+        .finally(() => {
+            splash.destroy()
+            mainWindow.show()
+        })
 
     // open dev tools initially when in development mode
     if (process.env.NODE_ENV === "development") {

@@ -14,5 +14,5 @@ module.exports = [
         patterns: [
             {from: path.resolve(__dirname, 'src', 'resources'), to: 'resources'}
         ]
-    })
+    }),
 ];

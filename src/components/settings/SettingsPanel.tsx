@@ -40,6 +40,8 @@ import {saveSettingsAsync} from "../repos/appSettingsRepo";
 import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 import {useTheme} from "../common/useTheme";
 import {ThemeInfo} from "../repos/themeRepo";
+import {ipcRenderer} from "electron";
+import {useMessage} from "../common/useMessage";
 
 /**
  * Calculates the theme options from the specified themes map. Associates the theme name to the
@@ -108,6 +110,8 @@ function SettingsPanel(props: Props): JSX.Element {
     // from the theme.
     const [originalThemeName, setOriginalThemeName] = useState(Option.none<string>());
     const {current: themes} = useRef<Array<IDropdownOption>>(dropDownOptionsFrom(themeInfoMap))
+
+    const {setMessage} = useMessage()
 
     // tracks the REST server settings so that changes can be reverted. unlike the theme,
     // changes to the server settings do not update the application state until the "Ok"
@@ -217,6 +221,15 @@ function SettingsPanel(props: Props): JSX.Element {
                 // original theme name back to an empty optional to signify that there have been no
                 // changes.
                 onHideSettingsPanel();
+
+                // if the theme name has changed, then we need to send the background color
+                // to the main process so that it can store it
+                if (originalThemeName.map(theme => theme !== newSettings.themeName).getOrElse(true)) {
+                    ipcRenderer
+                        .invoke('background-color-change', itheme.palette.white)
+                        .then(() => console.log("sent new background color to main process"))
+                        .catch(reason => setMessage(MessageBarType.error, reason.message))
+                }
                 setOriginalThemeName(Option.none());
 
                 // accept any changes to the server settings, if there were any, otherwise, do nothing.

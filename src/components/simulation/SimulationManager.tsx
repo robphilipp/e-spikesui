@@ -335,8 +335,9 @@ function SimulationManager(props: Props): JSX.Element {
         </div>
     }
 
-    // todo sizing issue has to do with the pivot. setting the height to 100% uses the height of
-    // the surrounding div, which has other elements
+    // todo sizing issue has to do with the pivot. setting the height of content to 100% uses the height of
+    //      the surrounding div, which also has the pivot tabs, and so the somehow need to subtract the height
+    //      of the tabs from the content
     return (
         <Stack onKeyDown={handleKeyboardShortcut} verticalFill={true}>
             <StackItem>

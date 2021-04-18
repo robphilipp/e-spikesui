@@ -8,6 +8,7 @@ export interface SessionState {
     windowWidth: number;
     topLeftX: number;
     topLeftY: number;
+    backgroundColor: string
 }
 
 export const defaultSessionState: SessionState = {
@@ -15,4 +16,5 @@ export const defaultSessionState: SessionState = {
     windowHeight: 800,
     topLeftX: 100,
     topLeftY: 100,
+    backgroundColor: '#fff'
 }

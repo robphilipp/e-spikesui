@@ -7,12 +7,12 @@ const SESSION_STATE_PATH = '.spikes-session'
 /**
  * Saves the session state to file
  * @param {SessionState} session The session state
- * @see saveWindowDimensions
+ * @see saveSessionData
  */
 export function saveSessionState(session: SessionState): void {
     try {
         fs.writeFileSync(SESSION_STATE_PATH, JSON.stringify(session));
-    } catch(err) {
+    } catch (err) {
         console.log(err)
     }
 }
@@ -33,7 +33,7 @@ function readSessionState(): Either<string, SessionState> {
     try {
         const buffer = fs.readFileSync(SESSION_STATE_PATH);
         return Either.right(JSON.parse(buffer.toString()));
-    } catch(err) {
+    } catch (err) {
         return Either.left(err);
     }
 }
@@ -41,8 +41,9 @@ function readSessionState(): Either<string, SessionState> {
 /**
  * Saves the window size (width, height) to the session state file
  * @param bounds The rectangle bounds of the window
+ * @param background The background color
  */
-export function saveWindowDimensions(bounds: Electron.Rectangle): void {
+export function saveSessionData(bounds: Electron.Rectangle, background: string): void {
     readSessionState()
         .ifRight(savedSession => saveSessionState({
             ...savedSession,
@@ -50,6 +51,7 @@ export function saveWindowDimensions(bounds: Electron.Rectangle): void {
             windowHeight: bounds.height,
             topLeftX: bounds.x,
             topLeftY: bounds.y,
+            backgroundColor: background
         }));
 }
 
@@ -57,18 +59,24 @@ export function saveWindowDimensions(bounds: Electron.Rectangle): void {
  * Loads the window size from the session state file
  * @return The bounds of the window (x, y, width, height)
  */
-export function loadWindowDimensions(): Electron.Rectangle {
+export function loadSessionData(): { bounds: Electron.Rectangle, background: string } {
     return readSessionState()
         .map(state => ({
-            x: state.topLeftX,
-            y: state.topLeftY,
-            width: state.windowWidth,
-            height: state.windowHeight
+            bounds: {
+                x: state.topLeftX,
+                y: state.topLeftY,
+                width: state.windowWidth,
+                height: state.windowHeight
+            },
+            background: state.backgroundColor
         }))
         .getOrElse({
-            x: defaultSessionState.topLeftX,
-            y: defaultSessionState.topLeftY,
-            width: defaultSessionState.windowWidth,
-            height: defaultSessionState.windowHeight
+            bounds: {
+                x: defaultSessionState.topLeftX,
+                y: defaultSessionState.topLeftY,
+                width: defaultSessionState.windowWidth,
+                height: defaultSessionState.windowHeight
+            },
+            background: defaultSessionState.backgroundColor
         });
 }

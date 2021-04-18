@@ -1,7 +1,7 @@
-import {app, BrowserWindow, session} from 'electron';
+import {app, BrowserWindow, ipcMain, session} from 'electron';
 import path from 'path'
 import os from 'os'
-import {loadWindowDimensions, saveWindowDimensions} from "./components/repos/sessionRepo";
+import {loadSessionData, saveSessionData} from "./components/repos/sessionRepo";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 
@@ -12,7 +12,8 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 
 function createWindow(): BrowserWindow {
     // const sessionState = loadSessionState();
-    const {x, y, width, height} = loadWindowDimensions();
+    const {bounds, background} = loadSessionData()
+    const {x, y, width, height} = bounds
 
     // create the browser window.
     const mainWindow = new BrowserWindow({
@@ -20,6 +21,7 @@ function createWindow(): BrowserWindow {
         y: y,
         height: height,
         width: width,
+        backgroundColor: background,
         useContentSize: true,
 
         webPreferences: {
@@ -33,7 +35,7 @@ function createWindow(): BrowserWindow {
             enableRemoteModule: true,
             // removes web-security features (in particular, this is needed to get rid of the
             // CORS error when attempting to make REST calls)
-            webSecurity : false
+            webSecurity : false,
         }
     });
 
@@ -98,14 +100,14 @@ app.on('ready', () => {
 });
 
 app.on('will-quit', () => {
-    handleSaveWindowDimensions();
+    handleSaveSessionData();
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-    handleSaveWindowDimensions();
+    handleSaveSessionData();
 
     if (process.platform !== 'darwin') {
         app.quit();
@@ -125,7 +127,7 @@ app.on('activate', () => {
 app.on('child-process-gone', (event, details) => {
     console.log('Child process is gone');
     if (details.type === "GPU") {
-
+        console.log(event)
     }
     console.log(`GPU Process has stopped; reason: ${details.reason}`);
     if (details.reason !== "clean-exit") {
@@ -137,6 +139,21 @@ app.on('gpu-info-update', () => {
     app.getGPUInfo('basic').then(info => console.dir(info))
 })
 
+// when the background color changes in the (render part of the) application, then
+// we want to save the session data with that color
+ipcMain.handle(
+    'background-color-change',
+    (event, ...args) => {
+        const color = args[0]
+
+        // update the background
+        BrowserWindow.getAllWindows().forEach(browser => browser.setBackgroundColor(color))
+
+        // save the background color in the session state
+        handleSaveSessionData(color)
+    }
+)
+
 // if upgrading electron breaks because of `webSecurity: false` then try with the
 // line below uncommented
 // app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
@@ -146,9 +163,12 @@ app.on('gpu-info-update', () => {
 /**
  * Attempts to save the window dimensions (x, y, width, height) when the window is closed
  */
-function handleSaveWindowDimensions(): void {
-    const browserWindows = BrowserWindow.getAllWindows();
+function handleSaveSessionData(backgroundColor?: string): void {
+    const browserWindows = BrowserWindow.getAllWindows()
     if (browserWindows.length > 0) {
-        saveWindowDimensions(browserWindows[0].getBounds());
+        saveSessionData(
+            browserWindows[0].getBounds(),
+            backgroundColor || browserWindows[0].getBackgroundColor()
+        );
     }
 }

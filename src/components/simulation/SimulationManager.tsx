@@ -121,7 +121,7 @@ function SimulationManager(props: Props): JSX.Element {
                         ]).catch(reason => setMessage(MessageBarType.error, <div>{reason.message}</div>))
                     })
                     .catch(reason => setMessage(MessageBarType.error, <div>{reason.message}</div>))
-                    // .finally(() => updateLoadingState(false))
+                // .finally(() => updateLoadingState(false))
             }
         },
         [simulationProjectPath]
@@ -335,9 +335,11 @@ function SimulationManager(props: Props): JSX.Element {
         </div>
     }
 
+    // todo sizing issue has to do with the pivot. setting the height to 100% uses the height of
+    // the surrounding div, which has other elements
     return (
-        <div onKeyDown={handleKeyboardShortcut} style={{height: '100%'}}>
-            {/* {message || <span />} */}
+        <Stack onKeyDown={handleKeyboardShortcut} verticalFill={true}>
+            <StackItem>
             <div
                 style={{
                     marginLeft: 30,
@@ -348,51 +350,68 @@ function SimulationManager(props: Props): JSX.Element {
             >
                 {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
             </div>
-            {/*<div>*/}
-                <Stack horizontal verticalFill={true}>
-                    <StackItem>
-                        {newButton()}
-                        {loadButton()}
-                        {saveButton()}
-                        {saveAsButton()}
-                        <Separator/>
-                        {/*{compileButton()}*/}
-                        {/*{runSensorSimulationButton()}*/}
-                        {/*{stopSensorSimulationButton()}*/}
-                        {/*{showSimulation && hideSimulationButton()}*/}
-                    </StackItem>
-                    <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
-                        <Pivot
-                            aria-label="simulation-tabs"
-                            selectedKey={selectedTab}
-                            onLinkClick={item => setSelectedTab(item.props.itemKey)}
-                            style={{height: '100%'}}
-                            styles={{itemContainer: {height: '100%'}}}
-                        >
-                            <PivotItem
-                                headerText="Project Config"
-                                itemKey={TabName.PROJECT_CONFIG}
-                            >
-                                <ProjectConfig
-                                    itheme={itheme}
-                                    networkRouterPath={networkRouterPath}
-                                    sensorRouterPath={sensorRouterPath}
-                                />
-                            </PivotItem>
-                            <PivotItem
-                                headerText="Deploy and Run"
-                                itemKey={TabName.DEPLOY_EXECUTE}
-                                style={{height: '100%'}}
-                            >
-                                <RunDeployManager
-                                    itheme={itheme}
-                                />
-                            </PivotItem>
-                        </Pivot>
+            </StackItem>
+            <StackItem grow>
+            <Stack horizontal verticalFill={true}>
+                <StackItem>
+                    <Stack>
+                        <StackItem>
+                            {newButton()}
+                        </StackItem>
+                        <StackItem>
+                            {loadButton()}
+                        </StackItem>
+                        <StackItem>
+                            {saveButton()}
+                        </StackItem>
+                        <StackItem>
+                            {saveAsButton()}
+                        </StackItem>
+                        <StackItem>
+                            <Separator/>
+                            {/*{compileButton()}*/}
+                            {/*{runSensorSimulationButton()}*/}
+                            {/*{stopSensorSimulationButton()}*/}
+                            {/*{showSimulation && hideSimulationButton()}*/}
+                        </StackItem>
                     </Stack>
-                </Stack>
-            {/*</div>*/}
-        </div>
+                </StackItem>
+                <StackItem grow>
+                    <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
+                        <StackItem grow>
+                            <Pivot
+                                aria-label="simulation-tabs"
+                                selectedKey={selectedTab}
+                                onLinkClick={item => setSelectedTab(item.props.itemKey)}
+                                style={{height: '100%'}}
+                                styles={{itemContainer: {height: '100%'}}}
+                            >
+                                <PivotItem
+                                    headerText="Project Config"
+                                    itemKey={TabName.PROJECT_CONFIG}
+                                >
+                                    <ProjectConfig
+                                        itheme={itheme}
+                                        networkRouterPath={networkRouterPath}
+                                        sensorRouterPath={sensorRouterPath}
+                                    />
+                                </PivotItem>
+                                <PivotItem
+                                    headerText="Deploy and Run"
+                                    itemKey={TabName.DEPLOY_EXECUTE}
+                                    style={{height: '100%'}}
+                                >
+                                    <RunDeployManager
+                                        itheme={itheme}
+                                    />
+                                </PivotItem>
+                            </Pivot>
+                        </StackItem>
+                    </Stack>
+                </StackItem>
+            </Stack>
+            </StackItem>
+        </Stack>
     );
 }
 

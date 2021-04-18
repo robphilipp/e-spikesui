@@ -258,14 +258,14 @@ function Main(props: Props): JSX.Element {
                         {
                             key: 'saveSensor',
                             text: 'Save',
-                            iconProps: {iconName: 'upload'},
+                            iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network Sensor',
                             onClick: handleSaveSensor
                         },
                         {
                             key: 'saveSensorAs',
                             text: 'Save As...',
-                            iconProps: {iconName: 'upload'},
+                            iconProps: {iconName: 'save'},
                             ariaLabel: 'Save Network Sensor As',
                             onClick: handleSaveSensorAs
                         },

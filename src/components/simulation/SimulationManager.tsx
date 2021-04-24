@@ -25,6 +25,8 @@ import {useLoading} from "../common/useLoading";
 import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
 import {useMessage} from "../common/useMessage";
+import DimensionsProvider, {useDimensions} from "../common/useDimensions";
+import {ITheme} from "@uifabric/styling";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -335,6 +337,10 @@ function SimulationManager(props: Props): JSX.Element {
         </div>
     }
 
+    function getTabId(itemKey: string): string {
+        return `network_management_pivot_${itemKey}`
+    }
+
     // todo sizing issue has to do with the pivot. setting the height of content to 100% uses the height of
     //      the surrounding div, which also has the pivot tabs, and so the somehow need to subtract the height
     //      of the tabs from the content
@@ -379,34 +385,39 @@ function SimulationManager(props: Props): JSX.Element {
                 </StackItem>
                 <StackItem grow>
                     <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
-                        <StackItem grow>
+                        <StackItem>
                             <Pivot
                                 aria-label="simulation-tabs"
                                 selectedKey={selectedTab}
                                 onLinkClick={item => setSelectedTab(item.props.itemKey)}
-                                style={{height: '100%'}}
-                                styles={{itemContainer: {height: '100%'}}}
+                                // style={{height: '100%'}}
+                                // styles={{itemContainer: {height: '100%'}}}
                             >
                                 <PivotItem
                                     headerText="Project Config"
                                     itemKey={TabName.PROJECT_CONFIG}
-                                >
+                                />
+                                <PivotItem
+                                    headerText="Deploy and Run"
+                                    itemKey={TabName.DEPLOY_EXECUTE}
+                                    // style={{height: '100%'}}
+                                />
+                            </Pivot>
+                        </StackItem>
+                        <StackItem grow>
+                            <div
+                                aria-labelledby={getTabId(selectedTab)}
+                                style={{height: '100%'}}
+                            >
+                                {selectedTab === TabName.PROJECT_CONFIG ?
                                     <ProjectConfig
                                         itheme={itheme}
                                         networkRouterPath={networkRouterPath}
                                         sensorRouterPath={sensorRouterPath}
-                                    />
-                                </PivotItem>
-                                <PivotItem
-                                    headerText="Deploy and Run"
-                                    itemKey={TabName.DEPLOY_EXECUTE}
-                                    style={{height: '100%'}}
-                                >
-                                    <RunDeployManager
-                                        itheme={itheme}
-                                    />
-                                </PivotItem>
-                            </Pivot>
+                                    /> :
+                                    <RunDeployManager itheme={itheme}/>
+                                }
+                            </div>
                         </StackItem>
                     </Stack>
                 </StackItem>
@@ -414,6 +425,12 @@ function SimulationManager(props: Props): JSX.Element {
             </StackItem>
         </Stack>
     );
+}
+
+interface WrapperProps {
+    itheme: ITheme
+    networkRouterPath: string
+    sensorRouterPath: string
 }
 
 /*

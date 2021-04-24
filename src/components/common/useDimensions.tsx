@@ -50,7 +50,8 @@ export default function DimensionsProvider(props: Props): JSX.Element {
     // through its properties
     const containerRef = useRef<HTMLDivElement>()
 
-    const [dimensions, setDimensions] = useState<Dimensions>({height: 100, width: 100})
+    // really only used to rerender when the window size has changed
+    const [, setDimensions] = useState<Dimensions>({height: 100, width: 100})
 
     useEffect(
         () => {
@@ -59,6 +60,7 @@ export default function DimensionsProvider(props: Props): JSX.Element {
 
             // handle window resized events
             const subscription = fromEvent(window, 'resize').subscribe(handleWindowResize)
+            // window.addEventListener('resize', event => handleWindowResize(event))
 
             return () => {
                 // stop listening for window resizing events
@@ -91,7 +93,11 @@ export default function DimensionsProvider(props: Props): JSX.Element {
         ref={containerRef}
         style={{height: `${asString(heightFraction)}`, width: `${asString(widthFraction)}`}}
     >
-        <DimensionsContext.Provider value={{height: dimensions.height, width: dimensions.width}}>
+        <DimensionsContext.Provider value={{
+            height: containerRef.current?.clientHeight,
+            width: containerRef.current?.clientWidth
+        }}
+        >
             {children}
         </DimensionsContext.Provider>
     </div>

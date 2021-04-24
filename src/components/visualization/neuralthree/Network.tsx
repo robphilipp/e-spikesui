@@ -74,7 +74,7 @@ type Props = StateProps & DispatchProps & OwnProps
 export const AXES_SCENE_ID = "axes";
 export const GRID_SCENE_ID = "grid";
 export const NETWORK_SCENE_ID = "network";
-const CONTROLS_HEIGHT = 150;
+const CONTROLS_HEIGHT = 50;
 
 /**
  * Calculates the color range for connections given the connection weight

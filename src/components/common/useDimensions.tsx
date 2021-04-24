@@ -17,8 +17,14 @@ const defaultDimensions: UseDimensionValues = {
 const DimensionsContext = createContext<UseDimensionValues>(defaultDimensions)
 
 interface Props {
+    // the height and width fractions are used in the container div
+    // to set the height and width as fractions, which then in turn,
+    // provide the actual height and width through the containerRef
     heightFraction?: number
     widthFraction?: number
+    //
+    heightAdjustment?: number
+    widthAdjustment?: number
     children: JSX.Element | Array<JSX.Element>
 }
 
@@ -34,9 +40,14 @@ export default function DimensionsProvider(props: Props): JSX.Element {
     const {
         heightFraction = 1,
         widthFraction = 1,
+        heightAdjustment = 0,
+        widthAdjustment = 0,
         children
     } = props;
 
+    // the div element acting as a container whose dimensions are set as the height
+    // and width fractions in its style tag so that it can provide a width and height
+    // through its properties
     const containerRef = useRef<HTMLDivElement>()
 
     const [dimensions, setDimensions] = useState<Dimensions>({height: 100, width: 100})
@@ -62,8 +73,8 @@ export default function DimensionsProvider(props: Props): JSX.Element {
      */
     function handleWindowResize(): void {
         setDimensions({
-            height: containerRef.current.clientHeight,
-            width: containerRef.current.clientWidth
+            height: containerRef.current.clientHeight + heightAdjustment,
+            width: containerRef.current.clientWidth + widthAdjustment
         })
     }
 

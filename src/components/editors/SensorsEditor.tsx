@@ -180,7 +180,7 @@ function SensorsEditor(props: Props): JSX.Element {
      */
     function editorDimensions(): Dimension {
         return {
-            width: editorRef.current.offsetWidth,
+            width: editorRef.current.offsetWidth - 25,
             height: editorRef.current.clientHeight * heightFractionRef.current
         };
     }
@@ -426,8 +426,6 @@ function SensorsEditor(props: Props): JSX.Element {
                             width={dimension.width}
                             height={dimension.height}
                             language="javascript"
-                            // theme={editorThemeFrom(themeName)}
-                            // customThemes={customThemes}
                             theme={themeName}
                             customThemes={editorThemes}
                             value={codeSnippet}

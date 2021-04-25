@@ -389,8 +389,6 @@ function SimulationManager(props: Props): JSX.Element {
                                 aria-label="simulation-tabs"
                                 selectedKey={selectedTab}
                                 onLinkClick={item => setSelectedTab(item.props.itemKey)}
-                                // style={{height: '100%'}}
-                                // styles={{itemContainer: {height: '100%'}}}
                             >
                                 <PivotItem
                                     headerText="Project Config"
@@ -399,7 +397,6 @@ function SimulationManager(props: Props): JSX.Element {
                                 <PivotItem
                                     headerText="Deploy and Run"
                                     itemKey={TabName.DEPLOY_EXECUTE}
-                                    // style={{height: '100%'}}
                                 />
                             </Pivot>
                         </StackItem>

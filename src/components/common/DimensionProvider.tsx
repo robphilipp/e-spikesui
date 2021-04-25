@@ -13,6 +13,10 @@ interface Props {
  * `height` and `width` props. This is really only needed when a child component
  * needs to know its (width, height) in pixels. For example, a canvas, or a three-js
  * scene or renderer.
+ *
+ * When the window size changes, recalculates the width and height of the child
+ * and passes the new width and height props to the child.
+ *
  * @param props Holds the width and height fractions which are used to size the
  * child within the parent. The fractions must be in (0, 1]. If not specified, then
  * the width or height fraction will default to 1.

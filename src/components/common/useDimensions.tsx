@@ -70,6 +70,7 @@ export default function DimensionsProvider(props: Props): JSX.Element {
         []
     )
 
+
     /**
      * Update the dimensions based on the current the updated div size
      */

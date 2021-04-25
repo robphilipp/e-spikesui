@@ -25,7 +25,6 @@ import {useLoading} from "../common/useLoading";
 import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
 import {useMessage} from "../common/useMessage";
-import DimensionsProvider, {useDimensions} from "../common/useDimensions";
 import {ITheme} from "@uifabric/styling";
 
 export const NEW_PROJECT_PATH = '**new**';

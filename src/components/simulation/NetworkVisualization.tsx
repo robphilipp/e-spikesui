@@ -10,13 +10,10 @@ import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useTheme} from "../common/useTheme";
-import {useDimensions} from "../common/useDimensions";
 
 interface OwnProps {
-    // sceneHeight: number;
-    // sceneWidth: number;
-    // height: number
-    // width: number
+    height?: number
+    width?: number
     excitationColor?: Color
     inhibitionColor?: Color
     colorAttenuation?: number
@@ -31,8 +28,6 @@ interface StateProps {
 
 type Props = StateProps & OwnProps
 
-// todo get the scene width and height from the parent (stack?) and use that for the network vis
-
 /**
  * Network visualization for network events coming from server
  * @param props The properties defining the visualization and the observable holding the
@@ -44,27 +39,21 @@ function NetworkVisualization(props: Props): JSX.Element {
     const {itheme} = useTheme()
 
     const {
-        // size,
-        // sceneWidth, sceneHeight,
-        // height, width,
+        height = 400,
+        width = 600,
         excitationColor = new Color(itheme.palette.green),     // green
         inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color
         networkObservable
     } = props
 
-    // const {width, height} = size
-
     const colors = useNeuronColors(itheme, excitationColor, inhibitionColor, colorAttenuation)
-    const {width, height} = useDimensions()
 
     return (
         <Network
             visualizationId="live-visualization"
             sceneHeight={height}
             sceneWidth={width}
-            // sceneHeight={sceneHeight}
-            // sceneWidth={sceneWidth}
             excitationColor={excitationColor}
             inhibitionColor={inhibitionColor}
             colorAttenuation={colorAttenuation}

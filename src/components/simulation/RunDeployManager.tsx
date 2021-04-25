@@ -1,7 +1,16 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
 import {RouteComponentProps, withRouter} from "react-router-dom";
-import {IconButton, ITheme, MessageBarType, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
+import {
+    IconButton,
+    IStackItemProps,
+    ITheme,
+    MessageBarType,
+    Separator,
+    Stack,
+    Text,
+    TooltipHost
+} from "@fluentui/react";
 import {ApplicationAction,} from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -30,7 +39,7 @@ import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkM
 import useSimulationTimer from "./useSimulationTimer";
 import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
-import DimensionsProvider from "../common/useDimensions";
+import {DimensionProvider} from "../common/DimensionProvider";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -222,7 +231,8 @@ function RunDeployManager(props: Props): JSX.Element {
         // case it hasn't, attempt to create the network manager thread, and then call
         // this function once it has been built
         if (networkManagerThreadRef.current === undefined) {
-            setMessage(MessageBarType.error, <div>Cannot delete network {id} because the network manager thread is undefined.</div>)
+            setMessage(MessageBarType.error, <div>Cannot delete network {id} because the network manager thread is
+                undefined.</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -287,7 +297,8 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     async function handleStart(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
-            setMessage(MessageBarType.error, <div>Cannot start the network because the network manager thread is undefined</div>)
+            setMessage(MessageBarType.error, <div>Cannot start the network because the network manager thread is
+                undefined</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -314,7 +325,8 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     async function handleStop(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
-            setMessage(MessageBarType.error, <div>Cannot stop the network because the network manager thread is undefined</div>)
+            setMessage(MessageBarType.error, <div>Cannot stop the network because the network manager thread is
+                undefined</div>)
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -561,16 +573,16 @@ function RunDeployManager(props: Props): JSX.Element {
                     )).getOrElse(<span/>)}
                 </Stack.Item>
                 <Stack.Item grow>
-                    <DimensionsProvider widthFraction={0.95}>
-                    {networkId.isSome() && networkBuilt ?
-                        <NetworkVisualization
-                            key="net-1"
-                            networkObservable={spikeSubject}
-                            {...props}
-                        /> :
-                        <div/>
-                    }
-                    </DimensionsProvider>
+                    <DimensionProvider widthFraction={0.95}>
+                        {networkId.isSome() && networkBuilt ?
+                            <NetworkVisualization
+                                key="net-1"
+                                networkObservable={spikeSubject}
+                                {...props}
+                            /> :
+                            <div/>
+                        }
+                    </DimensionProvider>
                 </Stack.Item>
             </Stack>
         </Stack>

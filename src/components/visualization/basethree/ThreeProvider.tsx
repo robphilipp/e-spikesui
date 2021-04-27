@@ -11,6 +11,11 @@ function noop(): void {
     /* empty */
 }
 
+export interface Dimensions {
+    width: number
+    height: number
+}
+
 /**
  * The scene information.
  */
@@ -333,7 +338,7 @@ function ThreeProvider(props: OwnProps): JSX.Element {
             <Canvas
                 canvasId={canvasId}
                 ref={canvasRef}
-                style={canvasStyle}
+                style={{...canvasStyle, width, height}}
             />
             {threeIsReady && (
                 <ThreeContext.Provider value={threeContext}>

@@ -573,16 +573,28 @@ function RunDeployManager(props: Props): JSX.Element {
                     )).getOrElse(<span/>)}
                 </Stack.Item>
                 <Stack.Item grow>
-                    <DimensionProvider widthFraction={0.95}>
-                        {networkId.isSome() && networkBuilt ?
-                            <NetworkVisualization
-                                key="net-1"
-                                networkObservable={spikeSubject}
-                                {...props}
-                            /> :
-                            <div/>
-                        }
-                    </DimensionProvider>
+                    <Stack horizontal verticalFill>
+                        <Stack.Item grow verticalFill>
+                            <DimensionProvider widthFraction={0.95}>
+                                {networkId.isSome() && networkBuilt ?
+                                    <NetworkVisualization
+                                        key="net-1"
+                                        networkObservable={spikeSubject}
+                                        {...props}
+                                    /> :
+                                    <div/>
+                                }
+                            </DimensionProvider>
+                        </Stack.Item>
+                        <Stack.Item grow verticalFill>
+                            <DimensionProvider widthFraction={1}>
+                                {networkId.isSome() && networkBuilt ?
+                                    <div style={{minWidth: 300}}>this is a test</div> :
+                                    <div/>
+                                }
+                            </DimensionProvider>
+                        </Stack.Item>
+                    </Stack>
                 </Stack.Item>
             </Stack>
         </Stack>

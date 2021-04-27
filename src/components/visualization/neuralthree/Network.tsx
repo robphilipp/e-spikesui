@@ -249,8 +249,6 @@ function Network(props: Props): JSX.Element {
                     backgroundColor={new Color(itheme.palette.white)}
                     canvasStyle={{
                         position: 'floating',
-                        height: `${height}px`,
-                        width: `${sceneWidth}px`,
                         border: `1px solid ${itheme.palette.neutralLighterAlt}`
                     }}
                 >

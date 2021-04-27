@@ -51,7 +51,7 @@ export function DimensionProvider(props: Props): JSX.Element {
  * @return The fraction as a string formatted `xxx%`.
  */
 function asString(fraction: number): string {
-    return `${(Math.max(0, Math.min(1, fraction)) * 100).toFixed(0)}%`
+    return `${Math.floor((Math.max(0, Math.min(0.99, fraction)) * 100)).toFixed(0)}%`
 }
 
 /**

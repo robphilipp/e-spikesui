@@ -577,7 +577,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     <Stack horizontal verticalFill>
                         <Stack.Item grow verticalFill>
                             <DimensionProvider widthFraction={0.95}>
-                                <Grid numRows={2} numColumns={2}>
+                                <Grid numRows={2} numColumns={2} rowGap={10} columnGap={10}>
                                     <GridCell row={1} rowsSpanned={2} column={1}>
                                         {networkId.isSome() && networkBuilt ?
                                             <NetworkVisualization

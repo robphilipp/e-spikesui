@@ -10,6 +10,10 @@ interface Props {
     width?: number
     // the height (in pixels) of the grid
     height?: number
+    // the number pixels between rows in the grid
+    rowGap?: number
+    // the number pixels between columns in the grid
+    columnGap?: number
     // additional styles
     styles?: CSSProperties
     // the children grid-cells
@@ -36,6 +40,8 @@ export function Grid(props: Props): JSX.Element {
         numColumns,
         width,
         height,
+        rowGap = 0,
+        columnGap = 0,
         styles,
         children
     } = props
@@ -69,8 +75,8 @@ export function Grid(props: Props): JSX.Element {
             child,
             {
                 key: `grid-cell-${child.props.row}-${child.props.column}`,
-                height,
-                width,
+                height: height - rowGap,
+                width: width - columnGap,
                 numRows,
                 numColumns
             }
@@ -80,8 +86,10 @@ export function Grid(props: Props): JSX.Element {
     return (
         <div style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${numColumns}, ${width / numColumns})`,
-            gridTemplateRows: `repeat(${numRows}, ${height / numRows})`,
+            gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
+            gridTemplateRows: `repeat(${numRows}, 1fr)`,
+            rowGap,
+            columnGap,
             ...styles
         }}>
             {enrich(children)}

@@ -237,8 +237,8 @@ function Network(props: Props): JSX.Element {
 
     const height = Math.max(0, sceneHeight - CONTROLS_HEIGHT)
     return (
-        <Stack>
-            <Stack.Item>
+        // <Stack>
+        //     <Stack.Item shrink>
                 <ThreeProvider
                     canvasId="network-canvas"
                     getCamera={getCamera}
@@ -304,8 +304,8 @@ function Network(props: Props): JSX.Element {
                         spikeColor={spikeColor}
                     />
                 </ThreeProvider>
-            </Stack.Item>
-        </Stack>
+        //     </Stack.Item>
+        // </Stack>
     );
 }
 

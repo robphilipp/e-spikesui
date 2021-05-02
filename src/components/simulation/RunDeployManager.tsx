@@ -579,25 +579,27 @@ function RunDeployManager(props: Props): JSX.Element {
                             <DimensionProvider widthFraction={0.95}>
                                 <Grid numRows={2} numColumns={2}>
                                     <GridCell row={1} rowsSpanned={2} column={1}>
-                                {networkId.isSome() && networkBuilt ?
-                                    <NetworkVisualization
-                                        key="net-1"
-                                        networkObservable={spikeSubject}
-                                        {...props}
-                                    /> :
-                                    <div/>
-                                }
+                                        {networkId.isSome() && networkBuilt ?
+                                            <NetworkVisualization
+                                                key="net-1"
+                                                networkObservable={spikeSubject}
+                                                {...props}
+                                            /> :
+                                            <div/>
+                                        }
                                     </GridCell>
-                        {/*    </DimensionProvider>*/}
-                        {/*</Stack.Item>*/}
-                        {/*<Stack.Item grow verticalFill>*/}
-                        {/*    <DimensionProvider widthFraction={1}>*/}
-                                <GridCell row={1} column={2}>
-                                {networkId.isSome() && networkBuilt ?
-                                    <div style={{minWidth: 300, color: itheme.palette.themePrimary}}>this is a test</div> :
-                                    <div/>
-                                }
-                                </GridCell>
+                                    <GridCell row={1} column={2}>
+                                        {networkId.isSome() && networkBuilt ?
+                                            <div style={{minWidth: 500, color: itheme.palette.themePrimary}}>spikes chart</div> :
+                                            <div/>
+                                        }
+                                    </GridCell>
+                                    <GridCell row={2} column={2}>
+                                        {networkId.isSome() && networkBuilt ?
+                                            <div style={{color: itheme.palette.themePrimary}}>weights chart</div> :
+                                            <div/>
+                                        }
+                                    </GridCell>
                                 </Grid>
                             </DimensionProvider>
                         </Stack.Item>

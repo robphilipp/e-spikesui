@@ -108,22 +108,28 @@ function Controls(props: Props): JSX.Element {
     const stackTokens: IStackTokens = {childrenGap: 20};
     return (
         <Stack tokens={stackTokens} horizontal>
+            <Stack.Item shrink>
             <Toggle
                 label="Axes"
                 inlineLabel
                 checked={axesVisible}
                 onChange={() => setAxesVisibility(!axesVisible)}
             />
+            </Stack.Item>
+            <Stack.Item shrink>
             <Toggle
                 label="Grid"
                 inlineLabel
                 checked={gridVisible}
                 onChange={() => setGridVisibility(!gridVisible)}
             />
+            </Stack.Item>
+            <Stack.Item shrink>
             <IconButton
                 iconProps={{iconName: "reset"}}
                 onClick={resetCameraPosition}>
             </IconButton>
+            </Stack.Item>
         </Stack>
     )
 }

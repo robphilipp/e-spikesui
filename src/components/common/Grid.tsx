@@ -2,16 +2,35 @@ import * as React from 'react'
 import {cloneElement, CSSProperties} from "react";
 
 interface Props {
+    // the number of rows in the grid
     numRows: number
+    // the number of columns in the grid
     numColumns: number
+    // the width (in pixels) of the grid
     width?: number
+    // the height (in pixels) of the grid
     height?: number
+    // additional styles
     styles?: CSSProperties
+    // the children grid-cells
     children: JSX.Element | Array<JSX.Element>
 }
 
+/**
+ * Grid layout for use when the grid cells need to pass one their size (in pixels) to their
+ * children. This is useful when the child uses a canvas or svg element that needs to have its
+ * explicit size set.
+ *
+ * The grid expects a size (width, height) in pixels, which may be supplied by the `DimensionProvider`,
+ * and the number rows and columns that comprise the grid. The children of the <Grid/> must be
+ * <GridCell/> elements.
+ *
+ * For single elements requiring a size in pixels, use the raw `DimensionProvider`.
+ * @param props The properties defining the grid's dimensions and children
+ * @return A JSX element representing the grid
+ * @constructor
+ */
 export function Grid(props: Props): JSX.Element {
-
     const {
         numRows,
         numColumns,
@@ -32,7 +51,7 @@ export function Grid(props: Props): JSX.Element {
     }
 
     /**
-     * Clones the children (or child) and adds the height and width props.
+     * Clones the children (or child) and adds the height, width, numRows, and numColumns props.
      * @param children An array of `GridCell` or a single JSX element
      * @return The enriched children
      */
@@ -63,8 +82,7 @@ export function Grid(props: Props): JSX.Element {
             display: "grid",
             gridTemplateColumns: `repeat(${numColumns}, ${width / numColumns})`,
             gridTemplateRows: `repeat(${numRows}, ${height / numRows})`,
-            // width: width,
-            // height: height
+            ...styles
         }}>
             {enrich(children)}
         </div>
@@ -80,10 +98,16 @@ interface CellProps {
     columnsSpanned?: number
     row: number
     rowsSpanned?: number
+    // additional styles
+    styles?: CSSProperties
     children: JSX.Element
-
 }
 
+/**
+ * A cell in the <Grid/> whose
+ * @param props
+ * @constructor
+ */
 export function GridCell(props: CellProps): JSX.Element {
     const {
         width,
@@ -94,7 +118,8 @@ export function GridCell(props: CellProps): JSX.Element {
         columnsSpanned = 1,
         row,
         rowsSpanned = 1,
-        children
+        styles,
+        children,
     } = props
 
     if (row < 1 || row > numRows) {
@@ -124,11 +149,12 @@ export function GridCell(props: CellProps): JSX.Element {
         <div
             style={{
                 gridColumnStart: column,
-                gridColumnEnd: Math.min(column + columnsSpanned-1, numColumns),
+                gridColumnEnd: Math.min(column + columnsSpanned, numColumns+1),
                 gridRowStart: row,
-                gridRowEnd: Math.min(row + rowsSpanned-1, numRows),
+                gridRowEnd: Math.min(row + rowsSpanned, numRows+1),
                 // width: cellWidth,
-                // height: cellHeight
+                // height: cellHeight,
+                ...styles
             }}
         >
             {cloneElement(children, {width: cellWidth, height: cellHeight})}

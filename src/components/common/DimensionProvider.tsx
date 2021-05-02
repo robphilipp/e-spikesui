@@ -55,11 +55,14 @@ export function DimensionProvider(props: Props): JSX.Element {
         return cloneElement(children, {height: divRef.current?.clientHeight, width: divRef.current?.clientWidth})
     }
 
-    return <div ref={divRef} style={{
-        width: asString(widthFraction),
-        height: asString(heightFraction),
-        ...styles
-    }}>
+    return <div
+        ref={divRef}
+        style={{
+            width: asString(widthFraction),
+            height: asString(heightFraction),
+            ...styles
+        }}
+    >
         {enrich(children)}
     </div>
 }

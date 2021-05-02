@@ -11,11 +11,6 @@ function noop(): void {
     /* empty */
 }
 
-export interface Dimensions {
-    width: number
-    height: number
-}
-
 /**
  * The scene information.
  */

@@ -1,11 +1,11 @@
 import * as React from "react";
-import {CSSProperties, useEffect, useRef, useState} from "react";
+import {cloneElement, CSSProperties, useEffect, useRef, useState} from "react";
 
 interface Props {
     widthFraction?: number
     heightFraction?: number
     styles?: CSSProperties
-    children: JSX.Element
+    children: JSX.Element | Array<JSX.Element>
 }
 
 /**
@@ -33,15 +33,34 @@ export function DimensionProvider(props: Props): JSX.Element {
     } = props
     const divRef = useResizeListener()
 
+    /**
+     * Clones the children (or child) and adds the height and width props.
+     * @param children An array of `ApportionProviders` or a single JSX element
+     * @return The enriched children
+     */
+    function enrich(children: JSX.Element | Array<JSX.Element>): JSX.Element | Array<JSX.Element> {
+        if (Array.isArray(children)) {
+            const invalidChildren = children.filter(child => !(child.type.name === "ApportionProvider"));
+            if (invalidChildren.length > 0) {
+                throw new Error(
+                    "<DimensionProvider/> allows multiple children only when all those children are <ApportionProviders/>; " +
+                    `invalid children: ${invalidChildren.map(child => typeof child.type).join(", ")}`
+                )
+            }
+            return children.map(child => cloneElement(
+                child,
+                {height: divRef.current?.clientHeight, width: divRef.current?.clientWidth}
+            ))
+        }
+        return cloneElement(children, {height: divRef.current?.clientHeight, width: divRef.current?.clientWidth})
+    }
+
     return <div ref={divRef} style={{
         width: asString(widthFraction),
         height: asString(heightFraction),
         ...styles
     }}>
-        {React.cloneElement(
-            children,
-            {height: divRef.current?.clientHeight, width: divRef.current?.clientWidth}
-        )}
+        {enrich(children)}
     </div>
 }
 
@@ -77,5 +96,34 @@ function useResizeListener(): React.MutableRefObject<HTMLDivElement | undefined>
     )
 
     return divRef
+}
+
+interface ApportionProps {
+    height?: number
+    width?: number
+    heightFraction?: number
+    widthFraction?: number
+    children: JSX.Element
+}
+
+export function ApportionProvider(props: ApportionProps): JSX.Element {
+    const {
+        heightFraction = 1,
+        widthFraction = 1,
+        height = 100,
+        width = 100,
+        children,
+    } = props
+
+    function boundToUnit(value: number): number {
+        return Math.max(0, Math.min(value, 0.99))
+    }
+
+    return <>
+        {cloneElement(
+            children,
+            {width: width * boundToUnit(widthFraction), height: height * boundToUnit(heightFraction)}
+        )}
+    </>
 }
 

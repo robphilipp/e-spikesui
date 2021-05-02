@@ -39,7 +39,7 @@ import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkM
 import useSimulationTimer from "./useSimulationTimer";
 import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
-import {DimensionProvider} from "../common/DimensionProvider";
+import {ApportionProvider, DimensionProvider} from "../common/DimensionProvider";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -576,6 +576,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     <Stack horizontal verticalFill>
                         <Stack.Item grow verticalFill>
                             <DimensionProvider widthFraction={0.95}>
+                                <ApportionProvider heightFraction={0.95} widthFraction={0.75}>
                                 {networkId.isSome() && networkBuilt ?
                                     <NetworkVisualization
                                         key="net-1"
@@ -584,16 +585,39 @@ function RunDeployManager(props: Props): JSX.Element {
                                     /> :
                                     <div/>
                                 }
-                            </DimensionProvider>
-                        </Stack.Item>
-                        <Stack.Item grow verticalFill>
-                            <DimensionProvider widthFraction={1}>
+                                </ApportionProvider>
+                        {/*    </DimensionProvider>*/}
+                        {/*</Stack.Item>*/}
+                        {/*<Stack.Item grow verticalFill>*/}
+                        {/*    <DimensionProvider widthFraction={1}>*/}
+                                <ApportionProvider heightFraction={0.95} widthFraction={0.25}>
                                 {networkId.isSome() && networkBuilt ?
-                                    <div style={{minWidth: 300}}>this is a test</div> :
+                                    <div style={{minWidth: 300, color: itheme.palette.themePrimary}}>this is a test</div> :
                                     <div/>
                                 }
+                                </ApportionProvider>
                             </DimensionProvider>
                         </Stack.Item>
+                        {/*<Stack.Item grow verticalFill>*/}
+                        {/*    <DimensionProvider widthFraction={0.95}>*/}
+                        {/*        {networkId.isSome() && networkBuilt ?*/}
+                        {/*            <NetworkVisualization*/}
+                        {/*                key="net-1"*/}
+                        {/*                networkObservable={spikeSubject}*/}
+                        {/*                {...props}*/}
+                        {/*            /> :*/}
+                        {/*            <div/>*/}
+                        {/*        }*/}
+                        {/*    </DimensionProvider>*/}
+                        {/*</Stack.Item>*/}
+                        {/*<Stack.Item grow verticalFill>*/}
+                        {/*    <DimensionProvider widthFraction={1}>*/}
+                        {/*        {networkId.isSome() && networkBuilt ?*/}
+                        {/*            <div style={{minWidth: 300}}>this is a test</div> :*/}
+                        {/*            <div/>*/}
+                        {/*        }*/}
+                        {/*    </DimensionProvider>*/}
+                        {/*</Stack.Item>*/}
                     </Stack>
                 </Stack.Item>
             </Stack>

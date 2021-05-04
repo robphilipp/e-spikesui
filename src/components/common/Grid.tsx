@@ -71,7 +71,7 @@ export function Grid(props: Props): JSX.Element {
                 `invalid children: ${invalidChildren.map(child => typeof child.type).join(", ")}`
             )
         }
-        return childElements.map((child, index) => cloneElement(
+        return childElements.map(child => cloneElement(
             child,
             {
                 key: `grid-cell-${child.props.row}-${child.props.column}`,
@@ -88,6 +88,8 @@ export function Grid(props: Props): JSX.Element {
             display: "grid",
             gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
             gridTemplateRows: `repeat(${numRows}, 1fr)`,
+            minWidth: width / numColumns,
+            minHeight: height / numRows,
             rowGap,
             columnGap,
             ...styles

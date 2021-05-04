@@ -590,7 +590,7 @@ function RunDeployManager(props: Props): JSX.Element {
                                     </GridCell>
                                     <GridCell row={1} column={2}>
                                         {networkId.isSome() && networkBuilt ?
-                                            <div style={{minWidth: 500, color: itheme.palette.themePrimary}}>spikes chart</div> :
+                                            <div style={{color: itheme.palette.themePrimary}}>spikes chart</div> :
                                             <div/>
                                         }
                                     </GridCell>

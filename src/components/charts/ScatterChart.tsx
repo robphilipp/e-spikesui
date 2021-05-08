@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { Axis, ScaleLinear, Selection, ZoomTransform } from "d3";
 import { adjustedDimensions, Margin, PlotDimensions } from "./margins";
 import { Datum, emptySeries, Series } from "./datumSeries";
-import { TimeRange, TimeRangeType } from "./timeRange";
+import { timeRangeFor, TimeRange } from "./timeRange";
 import { defaultTooltipStyle, TooltipStyle } from "./TooltipStyle";
 import { fromEvent, Observable, Subscription } from "rxjs";
 import { ChartData } from "./chartData";
@@ -205,7 +205,7 @@ export function ScatterChart(props: Props): JSX.Element {
     const tooltipRef = useRef<TooltipStyle>(tooltip);
 
     // calculates to the time-range based on the (min, max)-time from the props
-    const timeRangeRef = useRef<TimeRangeType>(TimeRange(0, timeWindow));
+    const timeRangeRef = useRef<TimeRange>(timeRangeFor(0, timeWindow));
 
     const seriesFilterRef = useRef<RegExp>(filter);
 
@@ -993,10 +993,10 @@ export function ScatterChart(props: Props): JSX.Element {
 
     /**
      * Updates the plot data for the specified time-range, which may have changed due to zoom or pan
-     * @param {TimeRange} timeRange The current time range
+     * @param {timeRangeFor} timeRange The current time range
      * @param {PlotDimensions} plotDimensions The dimensions of the plot
      */
-    function updatePlot(timeRange: TimeRangeType, plotDimensions: PlotDimensions): void {
+    function updatePlot(timeRange: TimeRange, plotDimensions: PlotDimensions): void {
         // tooltipRef.current = tooltip;
         timeRangeRef.current = timeRange;
 
@@ -1185,7 +1185,7 @@ export function ScatterChart(props: Props): JSX.Element {
                     // update the data
                     // liveDataRef.current = Array.from(seriesRef.current.values());
                     liveDataRef.current = seriesRef.current;
-                    timeRangeRef.current = TimeRange(
+                    timeRangeRef.current = timeRangeFor(
                         Math.max(0, currentTimeRef.current - timeWindow),
                         Math.max(currentTimeRef.current, timeWindow)
                     )

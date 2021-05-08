@@ -42,7 +42,7 @@ export interface UseThreeValues {
 }
 
 /**
- * Three react context holding the three-js context
+ * Three react context holding and managing information about the three-js canvas, scenes, visibility.
  */
 export const ThreeContext: React.Context<UseThreeValues> = createContext<UseThreeValues>({
     canvas: null,

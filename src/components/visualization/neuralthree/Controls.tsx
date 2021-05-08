@@ -40,6 +40,12 @@ export interface DispatchProps {
 
 type Props = StateProps & DispatchProps & OwnProps
 
+/**
+ * Shows the axes, grid, and recenter controls for the visualization.
+ * @param props The properties for managing the axes, grid, and camera
+ * @return A visualization control component
+ * @constructor
+ */
 function Controls(props: Props): JSX.Element {
     const {
         visualizationId,

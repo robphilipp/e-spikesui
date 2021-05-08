@@ -41,6 +41,7 @@ import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
 import {ApportionProvider, DimensionProvider} from "../common/DimensionProvider";
 import {Grid, GridCell} from "../common/Grid";
+import SpikesChart from "./SpikesChart";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -590,7 +591,12 @@ function RunDeployManager(props: Props): JSX.Element {
                                     </GridCell>
                                     <GridCell row={1} column={2}>
                                         {networkId.isSome() && networkBuilt ?
-                                            <div style={{color: itheme.palette.themePrimary}}>spikes chart</div> :
+                                            // <div style={{color: itheme.palette.themePrimary}}>spikes chart</div> :
+                                            <SpikesChart
+                                                networkObservable={spikeSubject}
+                                                shouldSubscribe={running}
+                                                {...props}
+                                            /> :
                                             <div/>
                                         }
                                     </GridCell>

@@ -42,35 +42,7 @@ export const initialCanvasProps = {
  * @constructor
  */
 function Canvas(props: CanvasProps = initialCanvasProps, ref: MutableRefObject<HTMLCanvasElement>): JSX.Element {
-    const {
-        canvasId,
-        style,
-    } = props;
-
-    /**
-     * Updates the size of the canvas when the window is resized
-     * @callback
-     */
-    function onWindowResize(): void {
-        if (ref.current !== undefined) {
-            ref.current.style.height = style.height.toString();
-            ref.current.style.width = style.width.toString();
-        }
-    }
-
-    // called when the component has mounted, just after the first render (note the deps
-    // are an empty array).
-    useEffect(
-        (): () => void => {
-            window.addEventListener('resize', onWindowResize);
-
-            // clean-up method
-            return () => {
-                window.removeEventListener('resize', onWindowResize);
-            };
-        },
-        []
-    );
+    const {canvasId, style,} = props;
 
     return (
         <canvas

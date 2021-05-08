@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {FormEvent, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
-import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
+// import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
 import {
     Checkbox,
     IconButton,
@@ -18,6 +18,10 @@ import moment from "moment";
 import {map} from "rxjs/operators";
 import {ExpressionState} from '../editors/SensorsEditor';
 import {newSensorThread, SensorThread} from "../threads/SensorThread";
+import {Datum, Series, seriesFrom} from "../charts/datumSeries";
+import {ChartData} from "../charts/chartData";
+import {regexFilter} from "../charts/regexFilter";
+import {RasterChart} from "../charts/RasterChart";
 
 enum Control {
     TRACKER = 'tracker',

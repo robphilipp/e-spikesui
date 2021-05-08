@@ -30,6 +30,8 @@ interface Props {
  * <GridCell/> elements.
  *
  * For single elements requiring a size in pixels, use the raw `DimensionProvider`.
+ *
+ * Uses CSS grid underneath.
  * @param props The properties defining the grid's dimensions and children
  * @return A JSX element representing the grid
  * @constructor
@@ -114,8 +116,15 @@ interface CellProps {
 }
 
 /**
- * A cell in the <Grid/> whose
- * @param props
+ * A cell in the <Grid/> whose location and size are controlled by the <Grid/> parent. The parent <Grid/>
+ * component provides the width and height of the entire area it manages. The <GridCell/> uses the width
+ * and height from the parent, its grid location and the row and column spans, to determine the width and
+ * height of the <GridCell/>. It passes the calculated width and height to it child.
+ *
+ * Uses CSS grid underneath.
+ * @param props The properties defining the location and row and column spans and the width and height
+ * managed by the parent <Grid/>
+ * @return A sized <GridCell/>
  * @constructor
  */
 export function GridCell(props: CellProps): JSX.Element {
@@ -162,8 +171,6 @@ export function GridCell(props: CellProps): JSX.Element {
                 gridColumnEnd: Math.min(column + columnsSpanned, numColumns+1),
                 gridRowStart: row,
                 gridRowEnd: Math.min(row + rowsSpanned, numRows+1),
-                // width: cellWidth,
-                // height: cellHeight,
                 ...styles
             }}
         >

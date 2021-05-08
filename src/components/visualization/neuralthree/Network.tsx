@@ -16,7 +16,6 @@ import Neurons, {NeuronInfo} from "./Neurons";
 import Connections, {ConnectionInfo} from "./Connections";
 import Synapses from "./Synapses";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-import {Stack} from "@fluentui/react";
 import {BoundingSphere, boundSphereFrom} from "../basethree/BoundingSphere";
 import {
     cameraUpdated,
@@ -182,9 +181,11 @@ function Network(props: Props): JSX.Element {
      * @param position The initial camera position
      * @return The perspective camera
      */
-    function getCamera(offsetWidth: number,
-                       offsetHeight: number,
-                       position: Coordinate = cameraPositionRef.current): PerspectiveCamera {
+    function getCamera(
+        offsetWidth: number,
+        offsetHeight: number,
+        position: Coordinate = cameraPositionRef.current
+    ): PerspectiveCamera {
         return camera
             .getOrCall(() => {
                 const camera = new PerspectiveCamera(45, offsetWidth / offsetHeight, 0.1, 10000,);
@@ -237,75 +238,71 @@ function Network(props: Props): JSX.Element {
 
     const height = Math.max(0, sceneHeight - CONTROLS_HEIGHT)
     return (
-        // <Stack>
-        //     <Stack.Item shrink>
-                <ThreeProvider
-                    canvasId="network-canvas"
-                    getCamera={getCamera}
-                    getRenderer={getRenderer}
-                    scenesSupplier={getScenes}
-                    width={sceneWidth}
-                    height={height}
-                    backgroundColor={new Color(itheme.palette.white)}
-                    canvasStyle={{
-                        position: 'floating',
-                        border: `1px solid ${itheme.palette.neutralLighterAlt}`
-                    }}
-                >
-                    <Controls
-                        visualizationId={visualizationId}
-                        gridSceneId={GRID_SCENE_ID}
-                        axisSceneId={AXES_SCENE_ID}
-                        boundingSphere={boundingSphere}
-                    />
-                    <CameraOrbitControls
-                        ref={controls}
-                        target={boundingSphere.origin}
-                    />
-                    <Grid
-                        sceneId={GRID_SCENE_ID}
-                        size={5000}
-                        divisions={100}
-                        centerColor={new Color(itheme.palette.neutralTertiaryAlt)}
-                        gridColor={new Color(itheme.palette.neutralLight)}
-                        opacity={1}
-                    />
-                    <CoordinateAxes
-                        sceneId={AXES_SCENE_ID}
-                        length={100}
-                        color={{x: axesColor, y: axesColor, z: axesColor}}
-                        originOffset={axesOffset}
-                        opacity={1}
-                    />
-                    <Neurons
-                        sceneId={NETWORK_SCENE_ID}
-                        neurons={neuronInfo.toArray()}
-                        excitatoryNeuronColor={excitationColor}
-                        inhibitoryNeuronColor={inhibitionColor}
-                        colorRange={colors}
-                        spikeColor={spikeColor}
-                        networkObservable={networkObservable}
-                        spikeDuration={spikeDuration}
-                    />
-                    <Connections
-                        sceneId={NETWORK_SCENE_ID}
-                        connections={connectionInfo}
-                        colorRange={colors}
-                        spikeColor={spikeColor}
-                        networkObservable={networkObservable}
-                        spikeDuration={spikeDuration}
-                    />
-                    <Synapses
-                        sceneId={NETWORK_SCENE_ID}
-                        connections={connectionInfo}
-                        colorRange={colors}
-                        networkObservable={networkObservable}
-                        spikeDuration={spikeDuration}
-                        spikeColor={spikeColor}
-                    />
-                </ThreeProvider>
-        //     </Stack.Item>
-        // </Stack>
+        <ThreeProvider
+            canvasId="network-canvas"
+            getCamera={getCamera}
+            getRenderer={getRenderer}
+            scenesSupplier={getScenes}
+            width={sceneWidth}
+            height={height}
+            backgroundColor={new Color(itheme.palette.white)}
+            canvasStyle={{
+                position: 'floating',
+                border: `1px solid ${itheme.palette.neutralLighterAlt}`
+            }}
+        >
+            <Controls
+                visualizationId={visualizationId}
+                gridSceneId={GRID_SCENE_ID}
+                axisSceneId={AXES_SCENE_ID}
+                boundingSphere={boundingSphere}
+            />
+            <CameraOrbitControls
+                ref={controls}
+                target={boundingSphere.origin}
+            />
+            <Grid
+                sceneId={GRID_SCENE_ID}
+                size={5000}
+                divisions={100}
+                centerColor={new Color(itheme.palette.neutralTertiaryAlt)}
+                gridColor={new Color(itheme.palette.neutralLight)}
+                opacity={1}
+            />
+            <CoordinateAxes
+                sceneId={AXES_SCENE_ID}
+                length={100}
+                color={{x: axesColor, y: axesColor, z: axesColor}}
+                originOffset={axesOffset}
+                opacity={1}
+            />
+            <Neurons
+                sceneId={NETWORK_SCENE_ID}
+                neurons={neuronInfo.toArray()}
+                excitatoryNeuronColor={excitationColor}
+                inhibitoryNeuronColor={inhibitionColor}
+                colorRange={colors}
+                spikeColor={spikeColor}
+                networkObservable={networkObservable}
+                spikeDuration={spikeDuration}
+            />
+            <Connections
+                sceneId={NETWORK_SCENE_ID}
+                connections={connectionInfo}
+                colorRange={colors}
+                spikeColor={spikeColor}
+                networkObservable={networkObservable}
+                spikeDuration={spikeDuration}
+            />
+            <Synapses
+                sceneId={NETWORK_SCENE_ID}
+                connections={connectionInfo}
+                colorRange={colors}
+                networkObservable={networkObservable}
+                spikeDuration={spikeDuration}
+                spikeColor={spikeColor}
+            />
+        </ThreeProvider>
     );
 }
 

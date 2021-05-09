@@ -287,7 +287,8 @@ export function RasterChart(props: Props): JSX.Element {
     );
 
     const updatePlot = useCallback(
-        (timeRange: TimeRange, plotDimensions: PlotDimensions) => {
+        // (timeRange: TimeRange, plotDimensions: PlotDimensions) => {
+        () => {
             /**
              * Calculates whether the mouse is in the plot-area
              * @param x The x-coordinate of the mouse's position
@@ -309,7 +310,7 @@ export function RasterChart(props: Props): JSX.Element {
                 const time = axesRef.current?.xAxisGenerator.scale<ScaleLinear<number, number>>().invert(x);
                 timeRangeRef.current = timeRangeRef.current?.scale(transform.k, time);
                 zoomFactorRef.current = transform.k;
-                updatePlot(timeRangeRef.current, plotDimensions)
+                updatePlot()
             }
 
             /**
@@ -323,7 +324,7 @@ export function RasterChart(props: Props): JSX.Element {
                 const x = scale(currentTime);
                 const deltaTime = scale.invert(x + deltaX) - currentTime;
                 timeRangeRef.current = timeRangeRef.current?.translate(-deltaTime);
-                updatePlot(timeRangeRef.current, plotDimensions);
+                updatePlot()
             }
 
             /**
@@ -817,13 +818,13 @@ export function RasterChart(props: Props): JSX.Element {
                 // create or update the x-axis (user filters change the location of x-axis)
                 axesRef.current.xScale
                     .domain([timeRangeRef.current.start, timeRangeRef.current.end])
-                    .range([0, plotDimensions.width]);
+                    .range([0, plotDimRef.current.width]);
                 axesRef.current.xAxisSelection
                     .attr('transform', `translate(${margin.left}, ${axesRef.current.lineHeight * filteredData.length + margin.top})`)
                     .call(axesRef.current.xAxisGenerator);
                 svg
                     .select(`#raster-chart-x-axis-label-${chartId.current}`)
-                    .attr('transform', `translate(${margin.left + plotDimensions.width / 2}, ${axesRef.current.lineHeight * filteredData.length + 2 * margin.top + (margin.bottom / 3)})`)
+                    .attr('transform', `translate(${margin.left + plotDimRef.current.width / 2}, ${axesRef.current.lineHeight * filteredData.length + 2 * margin.top + (margin.bottom / 3)})`)
                     .attr('fill', axisLabelFont.color)
 
                 // create or update the y-axis (user filters change the scale of the y-axis)
@@ -849,7 +850,7 @@ export function RasterChart(props: Props): JSX.Element {
                     // set up panning
                     const drag = d3.drag<SVGSVGElement, Datum>()
                         .on("start", () => d3.select(containerRef.current).style("cursor", "move"))
-                        .on("drag", () => onPan(d3.event.dx, plotDimensions))
+                        .on("drag", () => onPan(d3.event.dx, plotDimRef.current))
                         .on("end", () => d3.select(containerRef.current).style("cursor", "auto"))
                     svg.call(drag)
 
@@ -858,7 +859,7 @@ export function RasterChart(props: Props): JSX.Element {
                         .scaleExtent([0, 10])
                         // .translateExtent([[margin.left, margin.top], [widthRef.current - margin.right, height - margin.bottom]])
                         .translateExtent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]])
-                        .on("zoom", () => onZoom(d3.event.transform, d3.event.sourceEvent.offsetX - margin.left, plotDimensions))
+                        .on("zoom", () => onZoom(d3.event.transform, d3.event.sourceEvent.offsetX - margin.left, plotDimRef.current))
                     svg.call(zoom);
                 } else {
                     // in case the axis color has changed
@@ -875,7 +876,7 @@ export function RasterChart(props: Props): JSX.Element {
 
                 // add the grid-lines is they are visible
                 if (plotGridLines.visible) {
-                    addGridLines(svg, plotDimensions);
+                    addGridLines(svg, plotDimRef.current);
                 }
 
                 // remove the old clipping region and add a new one with the updated plot dimensions
@@ -885,8 +886,8 @@ export function RasterChart(props: Props): JSX.Element {
                     .append("clipPath")
                     .attr("id", `clip-spikes-${chartId.current}`)
                     .append("rect")
-                    .attr("width", plotDimensions.width)
-                    .attr("height", plotDimensions.height - margin.top)
+                    .attr("width", plotDimRef.current.width)
+                    .attr("height", plotDimRef.current.height - margin.top)
                 ;
 
                 liveDataRef.current.forEach(series => {
@@ -957,7 +958,7 @@ export function RasterChart(props: Props): JSX.Element {
     useEffect(
         () => {
             plotDimRef.current = adjustedDimensions(width, height, margin);
-            updatePlot(timeRangeRef.current, plotDimRef.current)
+            updatePlot()
         },
         [width, height, margin, updatePlot]
     )
@@ -1009,7 +1010,7 @@ export function RasterChart(props: Props): JSX.Element {
                                 // updates the caller with the current time
                                 onUpdateTime(currentTimeRef.current);
 
-                                updatePlot(timeRangeRef.current, plotDimRef.current);
+                                updatePlot();
                             })
                     });
 
@@ -1084,7 +1085,7 @@ export function RasterChart(props: Props): JSX.Element {
 
     useEffect(
         () => {
-            updatePlot(timeRangeRef.current, plotDimRef.current)
+            updatePlot()
         },
         [updatePlot]
     )

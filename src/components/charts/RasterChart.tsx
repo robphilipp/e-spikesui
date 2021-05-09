@@ -189,13 +189,6 @@ export function RasterChart(props: Props): JSX.Element {
 
     const subscriptionRef = useRef<Subscription>();
 
-    useEffect(
-        () => {
-            plotDimRef.current = adjustedDimensions(width, height, margin);
-        },
-        [width, height, margin]
-    )
-
     const resetPlot = useCallback(
         () => {
             liveDataRef.current = new Map<string, Series>(seriesList.map(series => [series.name, series]));
@@ -214,84 +207,83 @@ export function RasterChart(props: Props): JSX.Element {
         [resetPlot, seriesList]
     )
 
-    const initializeAxes = useCallback(
-        (svg: SvgSelection, plotDimensions: PlotDimensions) => {
-            // calculate the mapping between the times in the data (domain) and the display
-            // location on the screen (range)
-            const xScale = d3.scaleLinear()
-                .domain([timeRangeRef.current.start, timeRangeRef.current.end])
-                .range([0, plotDimensions.width]);
+    // called on mount to set up the <g> element into which to render
+    useEffect(
+        () => {
+            /**
+             *
+             * @param svg
+             * @param plotDimensions
+             */
+            function initializeAxes(svg: SvgSelection, plotDimensions: PlotDimensions): Axes {
+                // calculate the mapping between the times in the data (domain) and the display
+                // location on the screen (range)
+                const xScale = d3.scaleLinear()
+                    .domain([timeRangeRef.current.start, timeRangeRef.current.end])
+                    .range([0, plotDimensions.width]);
 
-            const lineHeight = (plotDimensions.height - margin.top) / liveDataRef.current.size;
-            const yScale = d3.scaleBand()
-                .domain(Array.from(liveDataRef.current.keys()))
-                .range([0, lineHeight * liveDataRef.current.size]);
+                const lineHeight = (plotDimensions.height - margin.top) / liveDataRef.current.size;
+                // const lineHeight = plotDimensions.height / liveDataRef.current.size
+                const yScale = d3.scaleBand()
+                    .domain(Array.from(liveDataRef.current.keys()))
+                    // .range([0, lineHeight * liveDataRef.current.size])
+                    .range([0, plotDimensions.height])
 
-            // create and add the axes
-            const xAxisGenerator = d3.axisBottom(xScale);
-            const yAxisGenerator = d3.axisLeft(yScale);
-            const xAxisSelection = svg
-                .append<SVGGElement>('g')
-                .attr('id', `x-axis-selection-${chartId.current}`)
-                .attr('class', 'x-axis')
-                .attr('transform', `translate(${margin.left}, ${lineHeight * liveDataRef.current.size + margin.top})`)
-                .call(xAxisGenerator);
+                // create and add the axes
+                const xAxisGenerator = d3.axisBottom(xScale);
+                const yAxisGenerator = d3.axisLeft(yScale);
+                const xAxisSelection = svg
+                    .append<SVGGElement>('g')
+                    .attr('id', `x-axis-selection-${chartId.current}`)
+                    .attr('class', 'x-axis')
+                    // .attr('transform', `translate(${margin.left}, ${plotDimensions.height})`)
+                    .attr('transform', `translate(${margin.left}, ${plotDimensions.height + margin.top})`)
+                    .call(xAxisGenerator)
 
-            const yAxisSelection = svg
-                .append<SVGGElement>('g')
-                .attr('id', `y-axis-selection-${chartId.current}`)
-                .attr('class', 'y-axis')
-                .attr('transform', `translate(${margin.left}, ${margin.top})`)
-                .call(yAxisGenerator);
+                const yAxisSelection = svg
+                    .append<SVGGElement>('g')
+                    .attr('id', `y-axis-selection-${chartId.current}`)
+                    .attr('class', 'y-axis')
+                    .attr('transform', `translate(${margin.left}, ${margin.top})`)
+                    .call(yAxisGenerator);
 
-            svg
-                .append<SVGTextElement>('text')
-                .attr('id', `raster-chart-x-axis-label-${chartId.current}`)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', axisLabelFont.size)
-                .attr('fill', axisLabelFont.color)
-                .attr('font-family', axisLabelFont.family)
-                .attr('font-weight', axisLabelFont.weight)
-                .attr('transform', `translate(${margin.left + plotDimensions.width / 2}, ${lineHeight + 2 * margin.top + (margin.bottom / 3)})`)
-                .text("t (ms)");
+                svg
+                    .append<SVGTextElement>('text')
+                    .attr('id', `raster-chart-x-axis-label-${chartId.current}`)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', axisLabelFont.size)
+                    .attr('fill', axisLabelFont.color)
+                    .attr('font-family', axisLabelFont.family)
+                    .attr('font-weight', axisLabelFont.weight)
+                    .attr('transform', `translate(${margin.left + plotDimensions.width / 2}, ${lineHeight + 2 * margin.top + (margin.bottom / 3)})`)
+                    .text("t (ms)");
 
-            // create the clipping region so that the lines are clipped at the y-axis
-            svg
-                .append("defs")
-                .append("clipPath")
-                .attr("id", `clip-spikes-${chartId.current}`)
-                .append("rect")
-                .attr("width", plotDimensions.width)
-                .attr("height", plotDimensions.height - margin.top)
-            ;
+                // create the clipping region so that the lines are clipped at the y-axis
+                svg
+                    .append("defs")
+                    .append("clipPath")
+                    .attr("id", `clip-spikes-${chartId.current}`)
+                    .append("rect")
+                    .attr("width", plotDimensions.width)
+                    .attr("height", plotDimensions.height - margin.top)
 
-            return {
-                xAxisGenerator, yAxisGenerator,
-                xAxisSelection, yAxisSelection,
-                xScale, yScale,
-                lineHeight
+                return {
+                    xAxisGenerator, yAxisGenerator,
+                    xAxisSelection, yAxisSelection,
+                    xScale, yScale,
+                    lineHeight
+                }
+            }
+
+            if (containerRef.current) {
+                const svg = d3.select<SVGSVGElement, SVGSVGElement>(containerRef.current)
+                axesRef.current = initializeAxes(svg, plotDimRef.current)
             }
         },
         [
             axisLabelFont.color, axisLabelFont.family, axisLabelFont.size, axisLabelFont.weight,
             margin.bottom, margin.left, margin.top
         ]
-    )
-
-    // called on mount to set up the <g> element into which to render
-    useEffect(
-        () => {
-            if (containerRef.current) {
-                const svg = d3.select<SVGSVGElement, SVGSVGElement>(containerRef.current)
-                axesRef.current = initializeAxes(svg, plotDimRef.current)
-            }
-        },
-        // currentTimeRef, seriesRef, initializeAxes, onSubscribe, onUpdateData, etc are not included
-        // in the dependency list because we only want this to run when the component mounts. The
-        // lambda handed to the subscribe function gets called and updates many of these refs, and
-        // ultimately the SVG plot and we don't want react involved in these updates
-        //
-        [initializeAxes]
     );
 
     const updatePlot = useCallback(
@@ -437,37 +429,34 @@ export function RasterChart(props: Props): JSX.Element {
                     header
                         .attr('x', () => tooltipX(datum.time, tooltipWidth) + tooltipRef.current.paddingLeft)
                         .attr('y', () => tooltipY(seriesName, textHeight) - idHeight + textHeight + tooltipRef.current.paddingTop)
-                    ;
 
                     // set the tooltip text (i.e. neuron ID) location
                     text
                         .attr('x', () => tooltipX(datum.time, tooltipWidth) + tooltipRef.current.paddingLeft)
                         .attr('y', () => tooltipY(seriesName, textHeight) + textHeight + tooltipRef.current.paddingTop)
-                    ;
 
                     // set the position, width, and height of the tooltip rect based on the text height and width and the padding
                     rect.attr('x', () => tooltipX(datum.time, tooltipWidth))
                         .attr('y', () => tooltipY(seriesName, textHeight))
                         .attr('width', tooltipWidth + tooltipRef.current.paddingLeft + tooltipRef.current.paddingRight)
                         .attr('height', textHeight + tooltipRef.current.paddingTop + tooltipRef.current.paddingBottom)
-                    ;
                 }
             }
 
             /**
              * Removes the tooltip when the mouse has moved away from the spike
-             * @param {Datum} datum The spike datum (t ms, s mV)
-             * @param {string} seriesName The name of the series (i.e. the neuron ID)
-             * @param {SVGLineElement} spike The SVG line element representing the spike, over which the mouse is hovering.
+             * @param datum The spike datum (t ms, s mV)
+             * @param seriesName The name of the series (i.e. the neuron ID)
+             * @param spike The SVG line element representing the spike, over which the mouse is hovering.
              */
             function handleHideTooltip(datum: Datum, seriesName: string, spike: SVGLineElement) {
-                // Use D3 to select element, change color and size
+                // use D3 to select element, change color and size
                 d3.select<SVGLineElement, Datum>(spike)
                     .attr('stroke', spikesStyle.color)
-                    .attr('stroke-width', spikesStyle.lineWidth);
+                    .attr('stroke-width', spikesStyle.lineWidth)
 
                 if (tooltipRef.current.visible) {
-                    d3.selectAll<SVGLineElement, Datum>('.tooltip').remove();
+                    d3.selectAll<SVGLineElement, Datum>('.tooltip').remove()
                 }
             }
 
@@ -836,13 +825,12 @@ export function RasterChart(props: Props): JSX.Element {
                     .select(`#raster-chart-x-axis-label-${chartId.current}`)
                     .attr('transform', `translate(${margin.left + plotDimensions.width / 2}, ${axesRef.current.lineHeight * filteredData.length + 2 * margin.top + (margin.bottom / 3)})`)
                     .attr('fill', axisLabelFont.color)
-                ;
 
                 // create or update the y-axis (user filters change the scale of the y-axis)
                 axesRef.current.yScale
                     .domain(filteredData.map(series => series.name))
-                    .range([0, axesRef.current.lineHeight * filteredData.length]);
-                axesRef.current.yAxisSelection.call(axesRef.current.yAxisGenerator);
+                    .range([0, axesRef.current.lineHeight * filteredData.length])
+                axesRef.current.yAxisSelection.call(axesRef.current.yAxisGenerator)
 
                 // create/update the magnifier lens if needed
                 magnifierRef.current = magnifierLens(svg, magnifier.visible, filteredData.length * axesRef.current.lineHeight);
@@ -850,15 +838,28 @@ export function RasterChart(props: Props): JSX.Element {
                 // create/update the tracker line if needed
                 trackerRef.current = trackerControl(svg, tracker.visible, filteredData.length * axesRef.current.lineHeight);
 
-                // set up the main <g> container for svg and translate it based on the margins, but do it only
-                // once
+                // set up the main <g> container for svg and translate it based on the margins, but do it only once
                 if (mainGRef.current === undefined) {
                     mainGRef.current = svg
-                        .attr('width', width)
-                        .attr('height', height)
+                        .attr('width', `${width}px`)
+                        .attr('height', `${height}px`)
                         .attr('color', axisStyle.color)
                         .append<SVGGElement>('g')
-                    ;
+
+                    // set up panning
+                    const drag = d3.drag<SVGSVGElement, Datum>()
+                        .on("start", () => d3.select(containerRef.current).style("cursor", "move"))
+                        .on("drag", () => onPan(d3.event.dx, plotDimensions))
+                        .on("end", () => d3.select(containerRef.current).style("cursor", "auto"))
+                    svg.call(drag)
+
+                    // set up for zooming
+                    const zoom = d3.zoom<SVGSVGElement, Datum>()
+                        .scaleExtent([0, 10])
+                        // .translateExtent([[margin.left, margin.top], [widthRef.current - margin.right, height - margin.bottom]])
+                        .translateExtent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]])
+                        .on("zoom", () => onZoom(d3.event.transform, d3.event.sourceEvent.offsetX - margin.left, plotDimensions))
+                    svg.call(zoom);
                 } else {
                     // in case the axis color has changed
                     svg.attr('color', axisStyle.color);
@@ -870,27 +871,7 @@ export function RasterChart(props: Props): JSX.Element {
                         .attr('class', 'spikes-series')
                         .attr('id', series => `${series.name}-${chartId.current}`)
                         .attr('transform', `translate(${margin.left}, ${margin.top})`)
-                    ;
                 }
-
-                // set up panning
-                const drag = d3.drag<SVGSVGElement, Datum>()
-                    .on("start", () => d3.select(containerRef.current).style("cursor", "move"))
-                    .on("drag", () => onPan(d3.event.dx, plotDimensions))
-                    .on("end", () => d3.select(containerRef.current).style("cursor", "auto"))
-                ;
-
-                svg.call(drag);
-
-                // set up for zooming
-                const zoom = d3.zoom<SVGSVGElement, Datum>()
-                    .scaleExtent([0, 10])
-                    // .translateExtent([[margin.left, margin.top], [widthRef.current - margin.right, height - margin.bottom]])
-                    .translateExtent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]])
-                    .on("zoom", () => onZoom(d3.event.transform, d3.event.sourceEvent.offsetX - margin.left, plotDimensions))
-                ;
-
-                svg.call(zoom);
 
                 // add the grid-lines is they are visible
                 if (plotGridLines.visible) {
@@ -971,6 +952,14 @@ export function RasterChart(props: Props): JSX.Element {
             tracker.visible, tracker.color, tracker.lineWidth,
             tooltip.paddingBottom, tooltip.paddingLeft, tooltip.paddingTop, tooltip.borderWidth,
         ]
+    )
+
+    useEffect(
+        () => {
+            plotDimRef.current = adjustedDimensions(width, height, margin);
+            updatePlot(timeRangeRef.current, plotDimRef.current)
+        },
+        [width, height, margin, updatePlot]
     )
 
     // called on mount, dismount and when shouldSubscribe changes
@@ -1126,8 +1115,8 @@ export function RasterChart(props: Props): JSX.Element {
             style={{
                 ...svgStyle,
                 backgroundColor: backgroundColor,
-                height: plotDimRef.current.height,
-                width: plotDimRef.current.width,
+                // height: plotDimRef.current.height,
+                // width: plotDimRef.current.width,
             }}
             ref={containerRef}
         />

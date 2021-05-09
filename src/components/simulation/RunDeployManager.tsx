@@ -591,7 +591,6 @@ function RunDeployManager(props: Props): JSX.Element {
                                     </GridCell>
                                     <GridCell row={1} column={2}>
                                         {networkId.isSome() && networkBuilt ?
-                                            // <div style={{color: itheme.palette.themePrimary}}>spikes chart</div> :
                                             <SpikesChart
                                                 networkObservable={spikeSubject}
                                                 shouldSubscribe={running}

@@ -94,7 +94,7 @@ function SpikesChart(props: Props): JSX.Element {
             windowingTime={100}
             // dropDataAfter={dropDataAfter}
             dropDataAfter={5000}
-            margin={{top: 15, right: 20, bottom: 35, left: 30}}
+            margin={{top: 15, right: 20, bottom: 35, left: 40}}
             // margin={{top: 0, right: 0, bottom: 0, left: 0}}
             tooltip={{
                 // visible: selectedControl === Control.TOOLTIP,

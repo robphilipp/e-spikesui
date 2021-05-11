@@ -158,7 +158,7 @@ export function RasterChart(props: Props): JSX.Element {
 
     // the container that holds the d3 svg element
     const containerRef = useRef<SVGSVGElement>(null);
-    const mainGRef = useRef<Selection<SVGGElement, any, null, undefined>>();
+    const mainGRef = useRef<Selection<SVGGElement, SVGGElement, null, SVGGElement>>();
     const spikesRef = useRef<Selection<SVGGElement, Series, SVGGElement, any>>();
 
     const magnifierRef = useRef<Selection<SVGRectElement, Datum, null, undefined>>();
@@ -272,7 +272,7 @@ export function RasterChart(props: Props): JSX.Element {
                 }
             }
 
-            if (containerRef.current) {
+            if (containerRef.current && axesRef.current === undefined) {
                 const svg = d3.select<SVGSVGElement, SVGSVGElement>(containerRef.current)
                 axesRef.current = initializeAxes(svg, plotDimRef.current)
             }
@@ -832,6 +832,11 @@ export function RasterChart(props: Props): JSX.Element {
                 // create/update the tracker line if needed
                 trackerRef.current = trackerControl(svg, tracker.visible, filteredData.length * axesRef.current.lineHeight);
 
+                // add the grid-lines is they are visible
+                if (plotGridLines.visible) {
+                    addGridLines(svg, plotDimRef.current);
+                }
+
                 // set up the main <g> container for svg and translate it based on the margins, but do it only once
                 if (mainGRef.current === undefined) {
                     mainGRef.current = svg
@@ -857,7 +862,7 @@ export function RasterChart(props: Props): JSX.Element {
                     // in case the axis color has changed or the height
                     svg
                         // todo the "-10" in the height is ad-hoc, and needed to prevent continual growth, though not sure where it comes from
-                        .attr('height', `${height-10}px`)
+                        .attr('height', `${height - 10}px`)
                         .attr('color', axisStyle.color)
                     spikesRef.current = mainGRef.current
                         ?.selectAll<SVGGElement, Series>('g')
@@ -867,11 +872,6 @@ export function RasterChart(props: Props): JSX.Element {
                         .attr('class', 'spikes-series')
                         .attr('id', series => `${series.name}-${chartId.current}`)
                         .attr('transform', `translate(${margin.left}, ${margin.top})`)
-                }
-
-                // add the grid-lines is they are visible
-                if (plotGridLines.visible) {
-                    addGridLines(svg, plotDimRef.current);
                 }
 
                 // remove the old clipping region and add a new one with the updated plot dimensions

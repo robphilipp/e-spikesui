@@ -25,7 +25,9 @@ import {
     gridTrackTemplateBuilder,
     useGridCell,
     withFraction,
-    withPixels
+    withPixels,
+    useGridCellHeight,
+    useGridCellWidth
 } from 'react-resizable-grid-layout';
 
 export interface OwnProps extends RouteComponentProps<never> {
@@ -160,11 +162,11 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                     visualizationId="editor-visualization"
                     sceneHeight={
                         // eslint-disable-next-line react-hooks/rules-of-hooks
-                        useGridCell().height
+                        useGridCellHeight()
                     }
                     sceneWidth={
                         // eslint-disable-next-line react-hooks/rules-of-hooks
-                        useGridCell().width
+                        useGridCellWidth()
                     }
                     excitationColor={excitationColor}
                     inhibitionColor={inhibitionColor}

@@ -32,7 +32,9 @@ import {
     useGridCell,
     withFraction,
     withGridTrack,
-    withPixels
+    withPixels,
+    useGridCellHeight,
+    useGridCellWidth
 } from 'react-resizable-grid-layout';
 
 export const NEW_NETWORK_PATH = '**new**';
@@ -41,11 +43,6 @@ const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
-
-// interface Dimension {
-//     height: number;
-//     width: number;
-// }
 
 interface StateProps {
     networkDescription: string;
@@ -408,8 +405,8 @@ function NetworkEditor(props: Props): JSX.Element {
             <GridCell gridAreaName='networkEditor'>
                 <MonacoEditor
                     editorId='spikes-lang'
-                    width={useGridCell().width}
-                    height={useGridCell().height}
+                    width={useGridCellWidth()}
+                    height={useGridCellHeight()}
                     language={SPIKES_LANGUAGE_ID}
                     theme={themeName}
                     customThemes={editorThemes}
@@ -422,8 +419,8 @@ function NetworkEditor(props: Props): JSX.Element {
             <GridCell gridAreaName='networkSimulation' isVisible={showSimulation}>
                 <NetworkTopologyVisualization
                     itheme={itheme}
-                    sceneWidth={useGridCell().width}
-                    sceneHeight={useGridCell().height}
+                    sceneWidth={useGridCellWidth()}
+                    sceneHeight={useGridCellHeight()}
                     onClose={hideSimulationLayer}
                 />
             </GridCell>

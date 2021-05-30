@@ -22,7 +22,7 @@ import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import {useTheme} from "../common/useTheme";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-import {useGridCell} from "react-resizable-grid-layout";
+import {useGridCellHeight, useGridCellWidth} from "react-resizable-grid-layout";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -393,7 +393,6 @@ function SensorsEditor(props: Props): JSX.Element {
         )
     }
 
-    const dims = useGridCell()
     return (
         <div
             ref={editorRef}
@@ -427,20 +426,20 @@ function SensorsEditor(props: Props): JSX.Element {
                 </Stack.Item>
                 <Stack.Item grow verticalFill>
                     {/*<DimensionProvider>*/}
-                        <MonacoEditor
-                            editorId='spikes-env'
-                            // width={dimension.width}
-                            // height={dimension.height}
-                            width={dims.width}
-                            height={dims.height}
-                            language="javascript"
-                            theme={themeName}
-                            customThemes={editorThemes}
-                            value={codeSnippet}
-                            options={editorOptions}
-                            onChange={onChanged}
-                            editorDidMount={noop}
-                        />
+                    <MonacoEditor
+                        editorId='spikes-env'
+                        // width={dimension.width}
+                        // height={dimension.height}
+                        width={useGridCellWidth()}
+                        height={useGridCellHeight()}
+                        language="javascript"
+                        theme={themeName}
+                        customThemes={editorThemes}
+                        value={codeSnippet}
+                        options={editorOptions}
+                        onChange={onChanged}
+                        editorDidMount={noop}
+                    />
                     {/*</DimensionProvider>*/}
                     {showSimulation && <LayerHost id='chart-layer'/>}
                 </Stack.Item>

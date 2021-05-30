@@ -42,10 +42,10 @@ const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
 
-interface Dimension {
-    height: number;
-    width: number;
-}
+// interface Dimension {
+//     height: number;
+//     width: number;
+// }
 
 interface StateProps {
     networkDescription: string;
@@ -137,18 +137,6 @@ function NetworkEditor(props: Props): JSX.Element {
             if (networkDescription === undefined || networkDescription === '') {
                 loadNetworkDescriptionOrTemplate(decodeURIComponent(networkPath));
             }
-
-            // if (editorRef.current) {
-            //     setDimension(editorDimensions());
-            // }
-            //
-            // // listen to resize events so that the editor width and height can be updated
-            // window.addEventListener('resize', handleWindowResize);
-            //
-            // return () => {
-            //     // stop listening to resize events
-            //     window.removeEventListener('resize', handleWindowResize);
-            // }
         },
         []
     )
@@ -178,31 +166,6 @@ function NetworkEditor(props: Props): JSX.Element {
         },
         [path]
     )
-
-    // /**
-    //  * calculates the editors dimensions based on the `<div>`'s width and height
-    //  * @return The dimension of the editor
-    //  */
-    // function editorDimensions(): Dimension {
-    //     return {
-    //         width: editorRef.current.offsetWidth - 25,
-    //         height: editorRef.current.clientHeight * heightFractionRef.current
-    //     };
-    // }
-    //
-    // /**
-    //  * updates the editor's width and height when the container's dimensions change
-    //  */
-    // function handleWindowResize(): void {
-    //     if (editorRef.current) {
-    //         const nextDimension = editorDimensions()
-    //         const minDiff = 2;
-    //         if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
-    //             Math.abs(nextDimension.width - dimension.width) > minDiff) {
-    //             setDimension(nextDimension);
-    //         }
-    //     }
-    // }
 
     /**
      * Handles keyboard events when the editor is focused
@@ -399,20 +362,6 @@ function NetworkEditor(props: Props): JSX.Element {
         )
     }
 
-    // function createGridTemplateRows(showSimulation: boolean): GridTrackTemplate {
-    //     if (showSimulation) {
-    //         return gridTrackTemplateBuilder()
-    //             .addTrack(withPixels(30))
-    //             .addTrack(withFraction(1))
-    //             .addTrack(withFraction(1))
-    //             .build()
-    //     }
-    //     return gridTrackTemplateBuilder()
-    //         .addTrack(withPixels(30))
-    //         .repeatFor(showSimulation ? 2 : 1, withGridTrack(withFraction(1)))
-    //         .build()
-    // }
-
     return (
         <div onKeyDown={handleKeyboardShortcut}>
         <Grid
@@ -481,67 +430,6 @@ function NetworkEditor(props: Props): JSX.Element {
         </Grid>
         </div>
     )
-    // return (
-    //     <div
-    //         ref={editorRef}
-    //         // can't just set a fraction for the height because the parent height may not be
-    //         // set...but if it is, then you can use that.
-    //         style={{height: window.innerHeight * 0.9, width: '100%'}}
-    //         onKeyDown={handleKeyboardShortcut}
-    //     >
-    //         {message || <span/>}
-    //         <div
-    //             style={{
-    //                 marginLeft: 30,
-    //                 marginBottom: 8,
-    //                 height: 15,
-    //                 color: itheme.palette.themeSecondary
-    //             }}
-    //         >
-    //             {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?
-    //                 '[new file]' :
-    //                 networkDescriptionPath
-    //             }{modified ? '*' : ''}
-    //         </div>
-    //         <Stack horizontal>
-    //             <StackItem>
-    //                 {newButton()}
-    //                 {saveButton()}
-    //                 {loadButton()}
-    //                 {buildButton()}
-    //                 <Separator/>
-    //                 {showSimulationButton()}
-    //             </StackItem>
-    //             <StackItem>
-    //                 <MonacoEditor
-    //                     editorId='spikes-lang'
-    //                     width={dimension.width}
-    //                     height={dimension.height}
-    //                     language={SPIKES_LANGUAGE_ID}
-    //                     // theme={editorThemeFrom(themeName)}
-    //                     // customThemes={customThemes}
-    //                     theme={themeName}
-    //                     customThemes={editorThemes}
-    //                     value={networkDescription}
-    //                     options={editorOptions}
-    //                     onChange={(value: string) => onChanged(value)}
-    //                     editorDidMount={noop}
-    //                 />
-    //                 {showSimulation && <LayerHost id='chart-layer'/>}
-    //             </StackItem>
-    //             {showSimulation &&
-    //             <Layer hostId="chart-layer" style={{width: '100%'}}>
-    //                 <Separator>Network Topology</Separator>
-    //                 <NetworkTopologyVisualization
-    //                     itheme={itheme}
-    //                     sceneHeight={window.innerHeight * 0.9 - dimension.height - 75}
-    //                     sceneWidth={window.innerWidth - 100}
-    //                     onClose={hideSimulationLayer}
-    //                 />
-    //             </Layer>}
-    //         </Stack>
-    //     </div>
-    // )
 }
 
 /*

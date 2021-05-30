@@ -61,8 +61,8 @@ type Props = StateProps & DispatchProps & OwnProps;
 function NetworkTopologyVisualization(props: Props): JSX.Element {
     const {
         itheme,
-        sceneWidth,
-        sceneHeight,
+        // sceneWidth,
+        // sceneHeight,
         excitationColor = new Color(itheme.palette.green),     // green
         inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color
@@ -85,7 +85,7 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                 .ifRight(topology => onCompiled(topology))
                 .ifLeft(error => console.error(error));
         },
-        [network]
+        [network, onCompiled]
     )
 
     useEffect(

@@ -22,7 +22,17 @@ import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import {useTheme} from "../common/useTheme";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-import {useGridCellHeight, useGridCellWidth} from "react-resizable-grid-layout";
+import {
+    Grid,
+    gridArea,
+    GridCell,
+    gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder,
+    useGridCell,
+    useGridCellHeight,
+    useGridCellWidth, withFraction, withGridTrack,
+    withPixels
+} from "react-resizable-grid-layout";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -94,9 +104,9 @@ function SensorsEditor(props: Props): JSX.Element {
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
-    const editorRef = useRef<HTMLDivElement>();
-    // const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
-    const heightFractionRef = useRef(1.0);
+    // const editorRef = useRef<HTMLDivElement>();
+    // // const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
+    // const heightFractionRef = useRef(1.0);
 
     // whether to show the simulation panel
     const [showSimulation, setShowSimulation] = useState(false);
@@ -294,7 +304,7 @@ function SensorsEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is visible
      */
     function showSimulationLayer(): void {
-        heightFractionRef.current = 0.5;
+        // heightFractionRef.current = 0.5;
         // setDimension(editorDimensions());
         setShowSimulation(true);
     }
@@ -303,7 +313,7 @@ function SensorsEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is hidden
      */
     function hideSimulationLayer(): void {
-        heightFractionRef.current = 1.0;
+        // heightFractionRef.current = 1.0;
         // setDimension(editorDimensions());
         setShowSimulation(false);
     }
@@ -394,42 +404,51 @@ function SensorsEditor(props: Props): JSX.Element {
     }
 
     return (
-        <div
-            ref={editorRef}
-            // can't just set a fraction for the height because the parent height may not be
-            // set...but if it is, then you can use that.
-            // style={{height: window.innerHeight * 0.9, width: '100%'}}
-            style={{height: '100%', width: '100%'}}
-            onKeyDown={handleKeyboardShortcut}
-        >
+        <div onKeyDown={handleKeyboardShortcut}>
             {message || <span/>}
-            <div
-                style={{
-                    marginLeft: 30,
-                    marginBottom: 8,
-                    height: 15,
-                    color: itheme.palette.themeSecondary
-                }}
+            <Grid
+                dimensionsSupplier={useGridCell}
+                gridTemplateRows={gridTrackTemplateBuilder()
+                    .addTrack(withPixels(30))
+                    .repeatFor(showSimulation ? 2 : 1, withGridTrack(withFraction(1)))
+                    .build()
+                }
+                gridTemplateColumns={gridTrackTemplateBuilder()
+                    .addTrack(withPixels(SIDEBAR_WIDTH))
+                    .addTrack(withFraction(1))
+                    .build()
+                }
+                gridTemplateAreas={gridTemplateAreasBuilder()
+                    .addArea('sensorPath', gridArea(1, 2))
+                    .addArea('sensorEditorSidebar', gridArea(1, 1, 2, 1))
+                    .addArea('sensorEditor', gridArea(2, 2))
+                    .addArea('sensorSimulation', gridArea(3, 2))
+                    .build()
+                }
             >
-                {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
-                    '[new file]' :
-                    sensorDescriptionPath
-                }{modified ? '*' : ''}
-            </div>
-            <Stack horizontal verticalFill>
-                <Stack.Item>
-                    {newButton()}
-                    {saveButton()}
-                    {loadButton()}
-                    <Separator/>
-                    {showSimulationButton()}
-                </Stack.Item>
-                <Stack.Item grow verticalFill>
-                    {/*<DimensionProvider>*/}
+                <GridCell
+                    gridAreaName='sensorPath'
+                    styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
+                >
+                    <span style={{color: itheme.palette.themeSecondary}}>
+                    {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
+                        '[new file]' :
+                        sensorDescriptionPath
+                    }{modified ? '*' : ''}
+                    </span>
+                </GridCell>
+                <GridCell gridAreaName='sensorEditorSidebar'>
+                    <div>
+                        {newButton()}
+                        {saveButton()}
+                        {loadButton()}
+                        <Separator/>
+                        {showSimulationButton()}
+                    </div>
+                </GridCell>
+                <GridCell gridAreaName='sensorEditor'>
                     <MonacoEditor
                         editorId='spikes-env'
-                        // width={dimension.width}
-                        // height={dimension.height}
                         width={useGridCellWidth()}
                         height={useGridCellHeight()}
                         language="javascript"
@@ -440,22 +459,81 @@ function SensorsEditor(props: Props): JSX.Element {
                         onChange={onChanged}
                         editorDidMount={noop}
                     />
-                    {/*</DimensionProvider>*/}
-                    {showSimulation && <LayerHost id='chart-layer'/>}
-                </Stack.Item>
-            </Stack>
-            {showSimulation &&
-            <Layer hostId="chart-layer">
-                <Separator>Sensor Simulation</Separator>
-                <SensorSimulation
-                    itheme={itheme}
-                    codeSnippet={codeSnippet}
-                    timeFactor={timeFactor}
-                    onClose={hideSimulationLayer}
-                />
-            </Layer>}
+                </GridCell>
+                <GridCell gridAreaName='sensorSimulation' isVisible={showSimulation}>
+                    <SensorSimulation
+                        itheme={itheme}
+                        codeSnippet={codeSnippet}
+                        timeFactor={timeFactor}
+                        onClose={hideSimulationLayer}
+                    />
+                </GridCell>
+            </Grid>
         </div>
     )
+    // return (
+    //     <div
+    //         ref={editorRef}
+    //         // can't just set a fraction for the height because the parent height may not be
+    //         // set...but if it is, then you can use that.
+    //         // style={{height: window.innerHeight * 0.9, width: '100%'}}
+    //         style={{height: '100%', width: '100%'}}
+    //         onKeyDown={handleKeyboardShortcut}
+    //     >
+    //         {message || <span/>}
+    //         <div
+    //             style={{
+    //                 marginLeft: 30,
+    //                 marginBottom: 8,
+    //                 height: 15,
+    //                 color: itheme.palette.themeSecondary
+    //             }}
+    //         >
+    //             {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
+    //                 '[new file]' :
+    //                 sensorDescriptionPath
+    //             }{modified ? '*' : ''}
+    //         </div>
+    //         <Stack horizontal verticalFill>
+    //             <Stack.Item>
+    //                 {newButton()}
+    //                 {saveButton()}
+    //                 {loadButton()}
+    //                 <Separator/>
+    //                 {showSimulationButton()}
+    //             </Stack.Item>
+    //             <Stack.Item grow verticalFill>
+    //                 {/*<DimensionProvider>*/}
+    //                 <MonacoEditor
+    //                     editorId='spikes-env'
+    //                     // width={dimension.width}
+    //                     // height={dimension.height}
+    //                     width={useGridCellWidth()}
+    //                     height={useGridCellHeight()}
+    //                     language="javascript"
+    //                     theme={themeName}
+    //                     customThemes={editorThemes}
+    //                     value={codeSnippet}
+    //                     options={editorOptions}
+    //                     onChange={onChanged}
+    //                     editorDidMount={noop}
+    //                 />
+    //                 {/*</DimensionProvider>*/}
+    //                 {showSimulation && <LayerHost id='chart-layer'/>}
+    //             </Stack.Item>
+    //         </Stack>
+    //         {showSimulation &&
+    //         <Layer hostId="chart-layer">
+    //             <Separator>Sensor Simulation</Separator>
+    //             <SensorSimulation
+    //                 itheme={itheme}
+    //                 codeSnippet={codeSnippet}
+    //                 timeFactor={timeFactor}
+    //                 onClose={hideSimulationLayer}
+    //             />
+    //         </Layer>}
+    //     </div>
+    // )
 }
 
 /*

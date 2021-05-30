@@ -2,17 +2,7 @@ import * as React from 'react';
 import {FormEvent, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
 // import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
-import {
-    Checkbox,
-    IconButton,
-    ITheme,
-    Label,
-    MessageBar,
-    MessageBarType,
-    Stack,
-    TextField,
-    TooltipHost
-} from "@fluentui/react";
+import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, TextField, TooltipHost} from "@fluentui/react";
 import {SensorOutput} from "./compiler";
 import moment from "moment";
 import {map} from "rxjs/operators";
@@ -22,7 +12,18 @@ import {Datum, Series, seriesFrom} from "../charts/datumSeries";
 import {ChartData} from "../charts/chartData";
 import {regexFilter} from "../charts/regexFilter";
 import {RasterChart} from "../charts/RasterChart";
-// import {DimensionProvider} from "../common/DimensionProvider";
+import {
+    Grid,
+    gridArea,
+    GridCell,
+    gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder,
+    useGridCell,
+    useGridCellHeight,
+    useGridCellWidth,
+    withFraction,
+    withPixels
+} from 'react-resizable-grid-layout';
 
 enum Control {
     TRACKER = 'tracker',
@@ -38,7 +39,6 @@ interface Props {
 
     itheme: ITheme;
     width?: number;
-    heightPerNeuron?: number;
 }
 
 /**
@@ -53,7 +53,6 @@ export default function SensorSimulation(props: Props): JSX.Element {
         timeFactor,
         onClose,
         itheme,
-        heightPerNeuron = 20,
     } = props;
 
     const [neuronList, setNeuronList] = useState<Array<Series>>([]);
@@ -314,160 +313,156 @@ export default function SensorSimulation(props: Props): JSX.Element {
         </>
     }
 
-    /**
-     * Creates the button to hide the sensor simulation layer.
-     * @return The button for hiding the sensor simulation layer.
-     */
-    function hideSimulationButton(): JSX.Element {
-        return <div>
-            <TooltipHost content="Hide the sensor simulation">
-                <IconButton
-                    iconProps={{iconName: 'close'}}
-                    onClick={handleCloseSimulation}
-                />
-            </TooltipHost>
-        </div>
-    }
-
     return (
-        // <div style={{padding: 10, height: '100%'}}>
-        <>
-            <Stack tokens={{childrenGap: 10}} verticalFill>
-                <Stack horizontal tokens={{childrenGap: 5}}>
-                    <Stack.Item>
-                        <TextField
-                            size={8}
-                            prefix="Drop Data After"
-                            suffix="ms"
-                            value={dropDataAfter.toString()}
-                            onChange={(_, value: string) => handleUpdateDropDataAfter(value)}
-                        />
-                    </Stack.Item>
-                    <Stack.Item>
-                        <TextField
-                            size={8}
-                            prefix="Time Window"
-                            suffix="ms"
-                            value={timeWindow.toString()}
-                            onChange={(_, value: string) => handleUpdateTimeWindow(value)}
-                        />
-                    </Stack.Item>
-                    <Stack.Item grow>
-                        <TextField
-                            prefix="Filter"
-                            suffix="RegEx"
-                            value={filterValue}
-                            onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
-                        />
-                    </Stack.Item>
-                    <Stack.Item tokens={{margin: '-20px 20px 0 0'}}>
-                        {hideSimulationButton()}
-                    </Stack.Item>
-                </Stack>
-                <Stack horizontal tokens={{childrenGap: 0}} verticalFill={true}>
-                    <Stack.Item>
-                        {compileButton()}
-                    </Stack.Item>
-                    <Stack.Item>
-                        {runSensorSimulationButton()}
-                    </Stack.Item>
-                    <Stack.Item>
-                        {stopSensorSimulationButton()}
-                    </Stack.Item>
-                    <Stack.Item tokens={{margin: '0 20px 0 30px'}}>
-                        {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED ?
-                            <MessageBar>
-                                Please compile sensor description.
-                            </MessageBar> :
-                            <div/>
-                        }
-                    </Stack.Item>
-                    <Stack.Item tokens={{margin: '0 20px 0 30px'}}>
-                        {expressionError ?
-                            <MessageBar messageBarType={MessageBarType.error}>
-                                {expressionError}
-                            </MessageBar> :
-                            <div/>}
-                    </Stack.Item>
-                </Stack>
-                <Stack.Item>
-                    <Label>Simulation Time Factor: {timeFactor}</Label>
-                </Stack.Item>
-                <Stack.Item grow verticalFill>
-                    {/*<DimensionProvider widthFraction={0.95}>*/}
-                        {neuronList?.length > 0 ?
-                            <RasterChart
-                                    // height={neuronList.length * heightPerNeuron + 60}
-                                    seriesList={neuronList}
-                                    seriesObservable={chartObservable}
-                                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                                    onSubscribe={subscription => subscriptionRef.current = subscription}
-                                    timeWindow={timeWindow}
-                                    windowingTime={100}
-                                    dropDataAfter={dropDataAfter}
-                                    margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                                    tooltip={{
-                                        visible: selectedControl === Control.TOOLTIP,
-                                        backgroundColor: itheme.palette.themeLighterAlt,
-                                        fontColor: itheme.palette.themePrimary,
-                                        borderColor: itheme.palette.themePrimary,
-                                    }}
-                                    magnifier={{
-                                        visible: selectedControl === Control.MAGNIFIER,
-                                        magnification: 5,
-                                        color: itheme.palette.neutralTertiaryAlt,
-                                    }}
-                                    tracker={{
-                                        visible: selectedControl === Control.TRACKER,
-                                        color: itheme.palette.themePrimary,
-                                    }}
-                                    filter={seriesFilter}
-                                    backgroundColor={itheme.palette.white}
-                                    svgStyle={{width: '95%'}}
-                                    axisStyle={{color: itheme.palette.themePrimary}}
-                                    axisLabelFont={{color: itheme.palette.themePrimary}}
-                                    plotGridLines={{color: itheme.palette.themeLighter}}
-                                    spikesStyle={{
-                                        color: itheme.palette.themePrimary,
-                                        highlightColor: itheme.palette.themePrimary
-                                    }}
-                                /> :
-                            <div/>
-                        }
-                    {/*</DimensionProvider>*/}
-                </Stack.Item>
-            </Stack>
-            {neuronList?.length > 0 ?
-                <Stack horizontal tokens={{childrenGap: 20}}>
-                    <Checkbox
-                        label="Tracker"
-                        checked={selectedControl === Control.TRACKER}
-                        onChange={handleTrackerSelection}
-                    />
-                    <Checkbox
-                        label="Tooltip"
-                        checked={selectedControl === Control.TOOLTIP}
-                        onChange={handleTooltipSelection}
-                    />
-                    <Checkbox
-                        label="Magnifier"
-                        checked={selectedControl === Control.MAGNIFIER}
-                        onChange={handleMagnifierSelection}
-                    />
-                </Stack> :
-                <div/>
+        <Grid
+            dimensionsSupplier={useGridCell}
+            gridTemplateColumns={gridTrackTemplateBuilder().addTrack(withFraction(1)).build()}
+            gridTemplateRows={gridTrackTemplateBuilder()
+                .addTrack(withPixels(35))
+                .addTrack(withPixels(35))
+                .addTrack(withFraction(1))
+                .addTrack(withPixels(35))
+                .build()
             }
-        {/*</div>*/}
-        </>
+            gridTemplateAreas={gridTemplateAreasBuilder()
+                .addArea('sensorDataControls', gridArea(1, 1))
+                .addArea('sensorSimulationControls', gridArea(2, 1))
+                .addArea('sensorSimulationChart', gridArea(3, 1))
+                .addArea('sensorSimulationChartControls', gridArea(4, 1))
+                .build()
+            }
+        >
+            <GridCell gridAreaName='sensorDataControls'>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    alignContent: 'center',
+                    columnGap: 5,
+                }}>
+                    <TextField
+                        size={8}
+                        prefix="Drop Data After"
+                        suffix="ms"
+                        value={dropDataAfter.toString()}
+                        onChange={(_, value: string) => handleUpdateDropDataAfter(value)}
+                    />
+                    <TextField
+                        size={8}
+                        prefix="Time Window"
+                        suffix="ms"
+                        value={timeWindow.toString()}
+                        onChange={(_, value: string) => handleUpdateTimeWindow(value)}
+                    />
+                    <TextField
+                        prefix="Filter"
+                        suffix="RegEx"
+                        value={filterValue}
+                        onChange={(_: FormEvent<HTMLInputElement>, value: string) => handleUpdateRegex(value)}
+                    />
+                    <div style={{display: 'flex', justifyContent: 'flex-end', flexGrow: 1}}>
+                        <TooltipHost content="Hide the sensor simulation">
+                            <IconButton
+                                iconProps={{iconName: 'close'}}
+                                onClick={handleCloseSimulation}
+                            />
+                        </TooltipHost>
+                    </div>
+                </div>
+            </GridCell>
+            <GridCell gridAreaName='sensorSimulationControls'>
+                <div>
+                    {compileButton()}
+                    {runSensorSimulationButton()}
+                    {stopSensorSimulationButton()}
+                    {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED ?
+                        <MessageBar>
+                            Please compile sensor description.
+                        </MessageBar> :
+                        <div/>
+                    }
+                    {expressionError ?
+                        <MessageBar messageBarType={MessageBarType.error}>
+                            {expressionError}
+                        </MessageBar> :
+                        <div/>
+                    }
+                </div>
+            </GridCell>
+            <GridCell gridAreaName='sensorSimulationChart'>
+                {neuronList?.length > 0 ?
+                    <RasterChart
+                        height={
+                            // eslint-disable-next-line react-hooks/rules-of-hooks
+                            useGridCellHeight()
+                        }
+                        width={
+                            // eslint-disable-next-line react-hooks/rules-of-hooks
+                            useGridCellWidth()
+                        }
+                        seriesList={neuronList}
+                        seriesObservable={chartObservable}
+                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                        onSubscribe={subscription => subscriptionRef.current = subscription}
+                        timeWindow={timeWindow}
+                        windowingTime={100}
+                        dropDataAfter={dropDataAfter}
+                        margin={{top: 15, right: 20, bottom: 35, left: 30}}
+                        tooltip={{
+                            visible: selectedControl === Control.TOOLTIP,
+                            backgroundColor: itheme.palette.themeLighterAlt,
+                            fontColor: itheme.palette.themePrimary,
+                            borderColor: itheme.palette.themePrimary,
+                        }}
+                        magnifier={{
+                            visible: selectedControl === Control.MAGNIFIER,
+                            magnification: 5,
+                            color: itheme.palette.neutralTertiaryAlt,
+                        }}
+                        tracker={{
+                            visible: selectedControl === Control.TRACKER,
+                            color: itheme.palette.themePrimary,
+                        }}
+                        filter={seriesFilter}
+                        backgroundColor={itheme.palette.white}
+                        svgStyle={{width: '95%'}}
+                        axisStyle={{color: itheme.palette.themePrimary}}
+                        axisLabelFont={{color: itheme.palette.themePrimary}}
+                        plotGridLines={{color: itheme.palette.themeLighter}}
+                        spikesStyle={{
+                            color: itheme.palette.themePrimary,
+                            highlightColor: itheme.palette.themePrimary
+                        }}
+                    /> :
+                    <div/>
+                }
+            </GridCell>
+            <GridCell gridAreaName='sensorSimulationChartControls'>
+                {neuronList?.length > 0 ?
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        alignContent: 'center',
+                        columnGap: 5,
+                    }}>
+                        <Checkbox
+                            label="Tracker"
+                            checked={selectedControl === Control.TRACKER}
+                            onChange={handleTrackerSelection}
+                        />
+                        <Checkbox
+                            label="Tooltip"
+                            checked={selectedControl === Control.TOOLTIP}
+                            onChange={handleTooltipSelection}
+                        />
+                        <Checkbox
+                            label="Magnifier"
+                            checked={selectedControl === Control.MAGNIFIER}
+                            onChange={handleMagnifierSelection}
+                        />
+                    </div> :
+                    <div/>
+                }
+            </GridCell>
+        </Grid>
     );
 }
-
-interface SomeProps {
-    width?: number
-    height?: number
-}
-
-// interface SpikesProps {
-//
-// }
-//

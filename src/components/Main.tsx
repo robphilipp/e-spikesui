@@ -499,18 +499,16 @@ function Main(props: Props): JSX.Element {
                 history.push(`${AppPath.SIMULATION}/${encodeURIComponent(response.filePaths[0])}`);
             })
     }
-    // const visualizationRef = useRef<HTMLDivElement>();
 
     return (
         <>
          <LoadingProvider>
              <LoadingModal/>
+             <SettingsPanel/>
              <MessageProvider>
                 <Grid
                     dimensionsSupplier={useWindowDimensions}
                     gridTemplateColumns={gridTrackTemplateBuilder()
-                        // .addTrack(withPixels(150))
-                        // .addTrack(withPixels(100))
                         .addTrack(withFraction(1))
                         .build()
                     }
@@ -522,11 +520,6 @@ function Main(props: Props): JSX.Element {
                         .build()
                     }
                     gridTemplateAreas={gridTemplateAreasBuilder()
-                        // .addArea('header', gridArea(1, 1, 1, 3))
-                        // .addArea('sidebar', gridArea(2, 1))
-                        // .addArea('main', gridArea(2, 2))
-                        // .addArea('aside', gridArea(2, 3))
-                        // .addArea('footer', gridArea(3, 1, 1, 3))
                         .addArea('header', gridArea(1, 1))
                         .addArea('messages', gridArea(2, 1))
                         .addArea('main', gridArea(3, 1))
@@ -545,10 +538,6 @@ function Main(props: Props): JSX.Element {
                         <ApplicationMessage/>
                     </GridCell>
                     <GridCell gridAreaName='main'>
-                        {/*<SimulationManager*/}
-                        {/*    networkRouterPath={AppPath.NETWORK_EDITOR}*/}
-                        {/*    sensorRouterPath={AppPath.SENSOR_EDITOR}*/}
-                        {/*/>*/}
                         <Switch>
                             <Route
                                 path={`${AppPath.SIMULATION}/:simulationProjectPath`}

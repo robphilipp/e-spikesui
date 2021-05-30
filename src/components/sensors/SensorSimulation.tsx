@@ -22,7 +22,7 @@ import {Datum, Series, seriesFrom} from "../charts/datumSeries";
 import {ChartData} from "../charts/chartData";
 import {regexFilter} from "../charts/regexFilter";
 import {RasterChart} from "../charts/RasterChart";
-import {DimensionProvider} from "../common/DimensionProvider";
+// import {DimensionProvider} from "../common/DimensionProvider";
 
 enum Control {
     TRACKER = 'tracker',
@@ -394,7 +394,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     <Label>Simulation Time Factor: {timeFactor}</Label>
                 </Stack.Item>
                 <Stack.Item grow verticalFill>
-                    <DimensionProvider widthFraction={0.95}>
+                    {/*<DimensionProvider widthFraction={0.95}>*/}
                         {neuronList?.length > 0 ?
                             <RasterChart
                                     // height={neuronList.length * heightPerNeuron + 60}
@@ -434,7 +434,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                                 /> :
                             <div/>
                         }
-                    </DimensionProvider>
+                    {/*</DimensionProvider>*/}
                 </Stack.Item>
             </Stack>
             {neuronList?.length > 0 ?

@@ -42,6 +42,13 @@ import LoadingModal from "./common/LoadingModal";
 import LoadingProvider from './common/useLoading';
 import {MessageProvider} from "./common/useMessage";
 import ApplicationMessage from "./common/ApplicationMessage";
+import {
+    Grid, gridArea, GridCell, gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder,
+    useWindowDimensions,
+    withFraction,
+    withPixels
+} from 'react-resizable-grid-layout';
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -495,50 +502,128 @@ function Main(props: Props): JSX.Element {
     // const visualizationRef = useRef<HTMLDivElement>();
 
     return (
-        <div style={{height: '100vh', width: '100%'}}>
-        <LoadingProvider>
-            <LoadingModal/>
-            <MessageProvider>
-            <Stack grow verticalFill={true}>
-                <StackItem>
-                    <CommandBar
-                        items={menuItems()}
-                        farItems={farMenuItems(handleSettingsPanelVisibility)}
-                    />
-                </StackItem>
-                <StackItem>
-                    <ApplicationMessage/>
-                </StackItem>
-                <StackItem grow>
-                    <SettingsPanel/>
-                </StackItem>
-                <StackItem grow verticalFill={true}>
-                    <Switch>
-                        <Route
-                            path={`${AppPath.SIMULATION}/:simulationProjectPath`}
-                            render={(renderProps) =>
-                                <SimulationManager
-                                    networkRouterPath={AppPath.NETWORK_EDITOR}
-                                    sensorRouterPath={AppPath.SENSOR_EDITOR}
-                                    {...renderProps}
-                                />
-                            }
+        <>
+         <LoadingProvider>
+             <LoadingModal/>
+             <MessageProvider>
+                <Grid
+                    dimensionsSupplier={useWindowDimensions}
+                    gridTemplateColumns={gridTrackTemplateBuilder()
+                        // .addTrack(withPixels(150))
+                        // .addTrack(withPixels(100))
+                        .addTrack(withFraction(1))
+                        .build()
+                    }
+                    gridTemplateRows={gridTrackTemplateBuilder()
+                        .addTrack(withPixels(40))
+                        .addTrack(withPixels(20))
+                        .addTrack(withFraction(1))
+                        .addTrack(withPixels(20))
+                        .build()
+                    }
+                    gridTemplateAreas={gridTemplateAreasBuilder()
+                        // .addArea('header', gridArea(1, 1, 1, 3))
+                        // .addArea('sidebar', gridArea(2, 1))
+                        // .addArea('main', gridArea(2, 2))
+                        // .addArea('aside', gridArea(2, 3))
+                        // .addArea('footer', gridArea(3, 1, 1, 3))
+                        .addArea('header', gridArea(1, 1))
+                        .addArea('messages', gridArea(2, 1))
+                        .addArea('main', gridArea(3, 1))
+                        .addArea('footer', gridArea(4, 1,))
+                        .build()
+                    }
+                    columnGap={5}
+                >
+                    <GridCell gridAreaName='header'>
+                        <CommandBar
+                            items={menuItems()}
+                            farItems={farMenuItems(handleSettingsPanelVisibility)}
                         />
-                        <Route
-                            path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
-                            render={(renderProps) => <NetworkEditor {...renderProps}/>}
-                        />
-                        <Route
-                            path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
-                            render={(renderProps) => <SensorsEditor {...renderProps}/>}
-                        />
-                    </Switch>
-                </StackItem>
-            </Stack>
-            </MessageProvider>
-        </LoadingProvider>
-        </div>
+                    </GridCell>
+                    <GridCell gridAreaName='messages'>
+                        <ApplicationMessage/>
+                    </GridCell>
+                    <GridCell gridAreaName='main'>
+                        {/*<SimulationManager*/}
+                        {/*    networkRouterPath={AppPath.NETWORK_EDITOR}*/}
+                        {/*    sensorRouterPath={AppPath.SENSOR_EDITOR}*/}
+                        {/*/>*/}
+                        <Switch>
+                            <Route
+                                path={`${AppPath.SIMULATION}/:simulationProjectPath`}
+                                render={(renderProps) =>
+                                    <SimulationManager
+                                        networkRouterPath={AppPath.NETWORK_EDITOR}
+                                        sensorRouterPath={AppPath.SENSOR_EDITOR}
+                                        {...renderProps}
+                                    />
+                                }
+                            />
+                            <Route
+                                path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
+                                render={(renderProps) => <NetworkEditor {...renderProps}/>}
+                            />
+                            <Route
+                                path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
+                                render={(renderProps) => <SensorsEditor {...renderProps}/>}
+                            />
+                        </Switch>
+                    </GridCell>
+                    <GridCell gridAreaName='footer'>
+                        <div>Spikes version 3.1.4</div>
+                    </GridCell>
+                </Grid>
+
+             </MessageProvider>
+         </LoadingProvider>
+            </>
     )
+    // return (
+    //     <div style={{height: '100vh', width: '100%'}}>
+    //     <LoadingProvider>
+    //         <LoadingModal/>
+    //         <MessageProvider>
+    //         <Stack grow verticalFill={true}>
+    //             <StackItem>
+    //                 <CommandBar
+    //                     items={menuItems()}
+    //                     farItems={farMenuItems(handleSettingsPanelVisibility)}
+    //                 />
+    //             </StackItem>
+    //             <StackItem>
+    //                 <ApplicationMessage/>
+    //             </StackItem>
+    //             <StackItem grow>
+    //                 <SettingsPanel/>
+    //             </StackItem>
+    //             <StackItem grow verticalFill={true}>
+    //                 <Switch>
+    //                     <Route
+    //                         path={`${AppPath.SIMULATION}/:simulationProjectPath`}
+    //                         render={(renderProps) =>
+    //                             <SimulationManager
+    //                                 networkRouterPath={AppPath.NETWORK_EDITOR}
+    //                                 sensorRouterPath={AppPath.SENSOR_EDITOR}
+    //                                 {...renderProps}
+    //                             />
+    //                         }
+    //                     />
+    //                     <Route
+    //                         path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
+    //                         render={(renderProps) => <NetworkEditor {...renderProps}/>}
+    //                     />
+    //                     <Route
+    //                         path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
+    //                         render={(renderProps) => <SensorsEditor {...renderProps}/>}
+    //                     />
+    //                 </Switch>
+    //             </StackItem>
+    //         </Stack>
+    //         </MessageProvider>
+    //     </LoadingProvider>
+    //     </div>
+    // )
 }
 
 /*

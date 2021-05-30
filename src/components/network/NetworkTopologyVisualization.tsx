@@ -8,8 +8,7 @@ import {interval, Observable} from "rxjs";
 import {EventTime, NetworkEvent, SignalIntensity, SPIKE, updateNetworkTopology} from "../redux/actions/networkEvent";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {ConnectionInfo} from "../visualization/neuralthree/Connections";
-import {IconButton, Spinner, SpinnerSize, Stack, TooltipHost} from "@fluentui/react";
-import {Label} from 'office-ui-fabric-react/lib/Label';
+import {IconButton, Label, Spinner, SpinnerSize, Stack, TooltipHost} from "@fluentui/react";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
@@ -18,6 +17,16 @@ import {RouteComponentProps, withRouter} from "react-router-dom";
 import {networkTopology, NetworkTopology} from "./networkTopology";
 import {map} from "rxjs/operators";
 import {useNeuronColors} from "../visualization/useNeuronColors";
+import {
+    Grid,
+    gridArea,
+    GridCell,
+    gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder,
+    useGridCell,
+    withFraction,
+    withPixels
+} from 'react-resizable-grid-layout';
 
 export interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -113,39 +122,59 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
         if (onClose) onClose();
     }
 
-    return (
-        <div style={{padding: 10}}>
-            <Stack tokens={{childrenGap: 10}}>
-                {neurons.isEmpty() || connections.isEmpty() ?
-                    <Stack horizontal tokens={{childrenGap: 5}}>
-                        <Label>Medium spinner</Label>
-                        <Spinner size={SpinnerSize.medium}/>
-                    </Stack> :
-                    <Stack horizontal tokens={{childrenGap: 5}}>
-                        <Stack.Item grow>
-                            <Network
-                                visualizationId="editor-visualization"
-                                sceneHeight={sceneHeight}
-                                sceneWidth={sceneWidth}
-                                excitationColor={excitationColor}
-                                inhibitionColor={inhibitionColor}
-                                colorAttenuation={colorAttenuation}
-                                colors={colors}
-                                networkObservable={networkObservable}
-                                spikeDuration={230}
-                            />
-                        </Stack.Item>
-                        <Stack.Item tokens={{margin: '-20px 20px 0 0'}}>
-                            <TooltipHost content="Hide the network visualization">
-                                <IconButton
-                                    iconProps={{iconName: 'close'}}
-                                    onClick={handleCloseVisualization}
-                                />
-                            </TooltipHost>
-                        </Stack.Item>
-                    </Stack>}
+    if (neurons.isEmpty() || connections.isEmpty()) {
+        return (
+            <Stack horizontal tokens={{childrenGap: 5}}>
+                <Label>Medium spinner</Label>
+                <Spinner size={SpinnerSize.medium}/>
             </Stack>
-        </div>
+        )
+    }
+    return (
+        <Grid
+            dimensionsSupplier={useGridCell}
+            gridTemplateColumns={gridTrackTemplateBuilder().addTrack(withFraction(1)).build()}
+            gridTemplateRows={gridTrackTemplateBuilder()
+                .addTrack(withPixels(1))
+                .addTrack(withFraction(1))
+                .build()
+            }
+            gridTemplateAreas={gridTemplateAreasBuilder()
+                .addArea('networkEditorSimulationHeader', gridArea(1, 1))
+                .addArea('networkEditorNetworkViz', gridArea(2, 1))
+                .build()
+            }
+        >
+            <GridCell gridAreaName='networkEditorSimulationHeader'>
+                <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                <TooltipHost content="Hide the network visualization">
+                    <IconButton
+                        iconProps={{iconName: 'close'}}
+                        onClick={handleCloseVisualization}
+                    />
+                </TooltipHost>
+                </div>
+            </GridCell>
+            <GridCell gridAreaName='networkEditorNetworkViz'>
+                <Network
+                    visualizationId="editor-visualization"
+                    sceneHeight={
+                        // eslint-disable-next-line react-hooks/rules-of-hooks
+                        useGridCell().height
+                    }
+                    sceneWidth={
+                        // eslint-disable-next-line react-hooks/rules-of-hooks
+                        useGridCell().width
+                    }
+                    excitationColor={excitationColor}
+                    inhibitionColor={inhibitionColor}
+                    colorAttenuation={colorAttenuation}
+                    colors={colors}
+                    networkObservable={networkObservable}
+                    spikeDuration={230}
+                />
+            </GridCell>
+        </Grid>
     )
 }
 

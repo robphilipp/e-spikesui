@@ -10,6 +10,7 @@ import {HashRouter as Router} from "react-router-dom";
 import {loadOrInitializeSetting} from "./components/settings/appSettings";
 import {createRemoteRepositories} from "./components/repos/remoteRepositories";
 import ThemeProvider from "./components/common/useTheme";
+import {WindowDimensionsProvider} from 'react-resizable-grid-layout';
 
 // set up and register all the icons for the application. the fabric-ui icons are
 // copyrighted by microsoft and so we can't use them for non-microsoft-office
@@ -34,7 +35,9 @@ ReactDOM.render(
     <Provider store={store}>
         <Router>
             <ThemeProvider initialTheme={applicationSettings.themeName} initialPalettes={palettes}>
-                <Main/>
+                <WindowDimensionsProvider>
+                    <Main/>
+                </WindowDimensionsProvider>
             </ThemeProvider>
         </Router>
     </Provider>,

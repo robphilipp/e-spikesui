@@ -18,7 +18,6 @@ import {AppState} from "../redux/reducers/root";
 import {SimulationProject} from "../repos/simulationProjectRepo";
 import {baseRouterPathFrom} from "../router/router";
 import ProjectConfig from "./ProjectConfig";
-import RunDeployManager from "./RunDeployManager";
 import {loadNetworkDescriptionFrom, NetworkDescriptionLoadedAction} from "../redux/actions/networkDescription";
 import {loadSensorsFrom, SensorsLoadedAction} from "../redux/actions/sensors";
 import {useLoading} from "../common/useLoading";
@@ -26,6 +25,13 @@ import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent"
 import {useTheme} from "../common/useTheme";
 import {useMessage} from "../common/useMessage";
 import {ITheme} from "@uifabric/styling";
+import {
+    Grid, gridArea,
+    GridCell,
+    gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder, useGridCell, withFraction,
+    withPixels
+} from "react-resizable-grid-layout";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -265,7 +271,7 @@ function SimulationManager(props: Props): JSX.Element {
      * @return a button to create a new network
      */
     function newButton(): JSX.Element {
-        return <div style={{width: SIDEBAR_WIDTH, height: SIDEBAR_ELEMENT_HEIGHT}}>
+        return <div>
             <TooltipHost content="New simulation project">
                 <IconButton
                     iconProps={{iconName: 'add'}}
@@ -344,83 +350,164 @@ function SimulationManager(props: Props): JSX.Element {
     //      the surrounding div, which also has the pivot tabs, and so the somehow need to subtract the height
     //      of the tabs from the content
     return (
-        <Stack onKeyDown={handleKeyboardShortcut} verticalFill={true}>
-            <StackItem>
-            <div
-                style={{
-                    marginLeft: 30,
-                    marginBottom: 8,
-                    height: 15,
-                    color: itheme.palette.themeSecondary
-                }}
+        <Grid
+            dimensionsSupplier={useGridCell}
+            gridTemplateColumns={gridTrackTemplateBuilder()
+                .addTrack(withPixels(SIDEBAR_WIDTH))
+                .addTrack(withFraction(1))
+                .build()
+            }
+            gridTemplateRows={gridTrackTemplateBuilder()
+                .addTrack(withPixels(30))
+                .addTrack(withFraction(1))
+                .build()
+            }
+            gridTemplateAreas={gridTemplateAreasBuilder()
+                .addArea('projectPath', gridArea(1, 2))
+                .addArea('sidebar', gridArea(1, 1))
+                .addArea('simulationMain', gridArea(2, 2))
+                .build()
+            }
+        >
+            <GridCell
+                gridAreaName='projectPath'
+                styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
             >
-                {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
-            </div>
-            </StackItem>
-            <StackItem grow>
-            <Stack horizontal verticalFill={true}>
-                <StackItem>
-                    <Stack>
-                        <StackItem>
-                            {newButton()}
-                        </StackItem>
-                        <StackItem>
-                            {loadButton()}
-                        </StackItem>
-                        <StackItem>
-                            {saveButton()}
-                        </StackItem>
-                        <StackItem>
-                            {saveAsButton()}
-                        </StackItem>
-                        <StackItem>
-                            <Separator/>
-                            {/*{compileButton()}*/}
-                            {/*{runSensorSimulationButton()}*/}
-                            {/*{stopSensorSimulationButton()}*/}
-                            {/*{showSimulation && hideSimulationButton()}*/}
-                        </StackItem>
-                    </Stack>
-                </StackItem>
-                <StackItem grow>
-                    <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
-                        <StackItem>
-                            <Pivot
-                                aria-label="simulation-tabs"
-                                selectedKey={selectedTab}
-                                onLinkClick={item => setSelectedTab(item.props.itemKey)}
-                            >
-                                <PivotItem
-                                    headerText="Project Config"
-                                    itemKey={TabName.PROJECT_CONFIG}
-                                />
-                                <PivotItem
-                                    headerText="Deploy and Run"
-                                    itemKey={TabName.DEPLOY_EXECUTE}
-                                />
-                            </Pivot>
-                        </StackItem>
-                        <StackItem grow>
-                            <div
-                                aria-labelledby={getTabId(selectedTab)}
-                                style={{height: '100%'}}
-                            >
-                                {selectedTab === TabName.PROJECT_CONFIG ?
-                                    <ProjectConfig
-                                        itheme={itheme}
-                                        networkRouterPath={networkRouterPath}
-                                        sensorRouterPath={sensorRouterPath}
-                                    /> :
-                                    <RunDeployManager itheme={itheme}/>
-                                }
-                            </div>
-                        </StackItem>
-                    </Stack>
-                </StackItem>
-            </Stack>
-            </StackItem>
-        </Stack>
-    );
+                <span style={{color: itheme.palette.themeSecondary}}>
+                    {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
+                </span>
+            </GridCell>
+            <GridCell gridAreaName='sidebar'>
+                <Stack>
+                    <StackItem>
+                        {newButton()}
+                    </StackItem>
+                    <StackItem>
+                        {loadButton()}
+                    </StackItem>
+                    <StackItem>
+                        {saveButton()}
+                    </StackItem>
+                    <StackItem>
+                        {saveAsButton()}
+                    </StackItem>
+                    <StackItem>
+                        <Separator/>
+                    </StackItem>
+                </Stack>
+            </GridCell>
+            <GridCell gridAreaName='simulationMain'>
+                <div style={{height: '100%'}}>
+                <Pivot
+                    aria-label="simulation-tabs"
+                    selectedKey={selectedTab}
+                    onLinkClick={item => setSelectedTab(item.props.itemKey)}
+                >
+                    <PivotItem
+                        headerText="Project Config"
+                        itemKey={TabName.PROJECT_CONFIG}
+                    />
+                    <PivotItem
+                        headerText="Deploy and Run"
+                        itemKey={TabName.DEPLOY_EXECUTE}
+                    />
+                </Pivot>
+                <div
+                    aria-labelledby={getTabId(selectedTab)}
+                    style={{height: '100%'}}
+                >
+                    {selectedTab === TabName.PROJECT_CONFIG ?
+                        <ProjectConfig
+                            itheme={itheme}
+                            networkRouterPath={networkRouterPath}
+                            sensorRouterPath={sensorRouterPath}
+                        /> :
+                        // <RunDeployManager itheme={itheme}/>
+                        <div>Run/Deploy Manager</div>
+                    }
+                </div>
+                </div>
+            </GridCell>
+        </Grid>
+    )
+    // return (
+    //     <Stack onKeyDown={handleKeyboardShortcut} verticalFill={true}>
+    //         <StackItem>
+    //         <div
+    //             style={{
+    //                 marginLeft: 30,
+    //                 marginBottom: 8,
+    //                 height: 15,
+    //                 color: itheme.palette.themeSecondary
+    //             }}
+    //         >
+    //             {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
+    //         </div>
+    //         </StackItem>
+    //         <StackItem grow>
+    //         <Stack horizontal verticalFill={true}>
+    //             <StackItem>
+    //                 <Stack>
+    //                     <StackItem>
+    //                         {newButton()}
+    //                     </StackItem>
+    //                     <StackItem>
+    //                         {loadButton()}
+    //                     </StackItem>
+    //                     <StackItem>
+    //                         {saveButton()}
+    //                     </StackItem>
+    //                     <StackItem>
+    //                         {saveAsButton()}
+    //                     </StackItem>
+    //                     <StackItem>
+    //                         <Separator/>
+    //                         {/*{compileButton()}*/}
+    //                         {/*{runSensorSimulationButton()}*/}
+    //                         {/*{stopSensorSimulationButton()}*/}
+    //                         {/*{showSimulation && hideSimulationButton()}*/}
+    //                     </StackItem>
+    //                 </Stack>
+    //             </StackItem>
+    //             <StackItem grow>
+    //                 <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
+    //                     <StackItem>
+    //                         <Pivot
+    //                             aria-label="simulation-tabs"
+    //                             selectedKey={selectedTab}
+    //                             onLinkClick={item => setSelectedTab(item.props.itemKey)}
+    //                         >
+    //                             <PivotItem
+    //                                 headerText="Project Config"
+    //                                 itemKey={TabName.PROJECT_CONFIG}
+    //                             />
+    //                             <PivotItem
+    //                                 headerText="Deploy and Run"
+    //                                 itemKey={TabName.DEPLOY_EXECUTE}
+    //                             />
+    //                         </Pivot>
+    //                     </StackItem>
+    //                     <StackItem grow>
+    //                         <div
+    //                             aria-labelledby={getTabId(selectedTab)}
+    //                             style={{height: '100%'}}
+    //                         >
+    //                             {selectedTab === TabName.PROJECT_CONFIG ?
+    //                                 <ProjectConfig
+    //                                     itheme={itheme}
+    //                                     networkRouterPath={networkRouterPath}
+    //                                     sensorRouterPath={sensorRouterPath}
+    //                                 /> :
+    //                                 <RunDeployManager itheme={itheme}/>
+    //                             }
+    //                         </div>
+    //                     </StackItem>
+    //                 </Stack>
+    //             </StackItem>
+    //         </Stack>
+    //         </StackItem>
+    //     </Stack>
+    // );
 }
 
 interface WrapperProps {

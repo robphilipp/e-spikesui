@@ -22,7 +22,7 @@ import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import {useTheme} from "../common/useTheme";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-import {DimensionProvider} from "../common/DimensionProvider";
+import {useGridCell} from "react-resizable-grid-layout";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -393,6 +393,7 @@ function SensorsEditor(props: Props): JSX.Element {
         )
     }
 
+    const dims = useGridCell()
     return (
         <div
             ref={editorRef}
@@ -425,11 +426,13 @@ function SensorsEditor(props: Props): JSX.Element {
                     {showSimulationButton()}
                 </Stack.Item>
                 <Stack.Item grow verticalFill>
-                    <DimensionProvider>
+                    {/*<DimensionProvider>*/}
                         <MonacoEditor
                             editorId='spikes-env'
                             // width={dimension.width}
                             // height={dimension.height}
+                            width={dims.width}
+                            height={dims.height}
                             language="javascript"
                             theme={themeName}
                             customThemes={editorThemes}
@@ -438,7 +441,7 @@ function SensorsEditor(props: Props): JSX.Element {
                             onChange={onChanged}
                             editorDidMount={noop}
                         />
-                    </DimensionProvider>
+                    {/*</DimensionProvider>*/}
                     {showSimulation && <LayerHost id='chart-layer'/>}
                 </Stack.Item>
             </Stack>

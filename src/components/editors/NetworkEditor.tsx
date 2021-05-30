@@ -15,17 +15,7 @@ import {
     updateNetworkDescription
 } from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
-import {
-    IconButton,
-    Layer,
-    LayerHost,
-    MessageBar,
-    MessageBarType,
-    Separator,
-    Stack,
-    StackItem,
-    TooltipHost
-} from '@fluentui/react';
+import {IconButton, MessageBar, MessageBarType, Separator, TooltipHost} from '@fluentui/react';
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import {baseRouterPathFrom} from '../router/router';
@@ -33,6 +23,17 @@ import {noop} from "../../commons";
 import NetworkTopologyVisualization from "../network/NetworkTopologyVisualization";
 import {useTheme} from "../common/useTheme";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
+import {
+    Grid,
+    gridArea,
+    GridCell,
+    gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder,
+    useGridCell,
+    withFraction,
+    withGridTrack,
+    withPixels
+} from 'react-resizable-grid-layout';
 
 export const NEW_NETWORK_PATH = '**new**';
 
@@ -96,9 +97,9 @@ function NetworkEditor(props: Props): JSX.Element {
 
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
-    const editorRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
-    const heightFractionRef = useRef(1.0);
+    // const editorRef = useRef<HTMLDivElement>();
+    // const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
+    // const heightFractionRef = useRef(1.0);
 
     // whether to show the simulation panel
     const [showSimulation, setShowSimulation] = useState(false);
@@ -137,17 +138,17 @@ function NetworkEditor(props: Props): JSX.Element {
                 loadNetworkDescriptionOrTemplate(decodeURIComponent(networkPath));
             }
 
-            if (editorRef.current) {
-                setDimension(editorDimensions());
-            }
-
-            // listen to resize events so that the editor width and height can be updated
-            window.addEventListener('resize', handleWindowResize);
-
-            return () => {
-                // stop listening to resize events
-                window.removeEventListener('resize', handleWindowResize);
-            }
+            // if (editorRef.current) {
+            //     setDimension(editorDimensions());
+            // }
+            //
+            // // listen to resize events so that the editor width and height can be updated
+            // window.addEventListener('resize', handleWindowResize);
+            //
+            // return () => {
+            //     // stop listening to resize events
+            //     window.removeEventListener('resize', handleWindowResize);
+            // }
         },
         []
     )
@@ -178,30 +179,30 @@ function NetworkEditor(props: Props): JSX.Element {
         [path]
     )
 
-    /**
-     * calculates the editors dimensions based on the `<div>`'s width and height
-     * @return The dimension of the editor
-     */
-    function editorDimensions(): Dimension {
-        return {
-            width: editorRef.current.offsetWidth - 25,
-            height: editorRef.current.clientHeight * heightFractionRef.current
-        };
-    }
-
-    /**
-     * updates the editor's width and height when the container's dimensions change
-     */
-    function handleWindowResize(): void {
-        if (editorRef.current) {
-            const nextDimension = editorDimensions()
-            const minDiff = 2;
-            if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
-                Math.abs(nextDimension.width - dimension.width) > minDiff) {
-                setDimension(nextDimension);
-            }
-        }
-    }
+    // /**
+    //  * calculates the editors dimensions based on the `<div>`'s width and height
+    //  * @return The dimension of the editor
+    //  */
+    // function editorDimensions(): Dimension {
+    //     return {
+    //         width: editorRef.current.offsetWidth - 25,
+    //         height: editorRef.current.clientHeight * heightFractionRef.current
+    //     };
+    // }
+    //
+    // /**
+    //  * updates the editor's width and height when the container's dimensions change
+    //  */
+    // function handleWindowResize(): void {
+    //     if (editorRef.current) {
+    //         const nextDimension = editorDimensions()
+    //         const minDiff = 2;
+    //         if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
+    //             Math.abs(nextDimension.width - dimension.width) > minDiff) {
+    //             setDimension(nextDimension);
+    //         }
+    //     }
+    // }
 
     /**
      * Handles keyboard events when the editor is focused
@@ -290,8 +291,6 @@ function NetworkEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is visible
      */
     function showSimulationLayer(): void {
-        heightFractionRef.current = 0.4;
-        setDimension(editorDimensions());
         setShowSimulation(true);
     }
 
@@ -299,8 +298,6 @@ function NetworkEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is hidden
      */
     function hideSimulationLayer(): void {
-        heightFractionRef.current = 1.0;
-        setDimension(editorDimensions());
         setShowSimulation(false);
     }
 
@@ -313,7 +310,7 @@ function NetworkEditor(props: Props): JSX.Element {
             <TooltipHost content="New network description from template">
                 <IconButton
                     iconProps={{iconName: 'add'}}
-                    onClick={() => handleNew()}
+                    onClick={handleNew}
                 />
             </TooltipHost>
         </div>
@@ -402,67 +399,149 @@ function NetworkEditor(props: Props): JSX.Element {
         )
     }
 
+    // function createGridTemplateRows(showSimulation: boolean): GridTrackTemplate {
+    //     if (showSimulation) {
+    //         return gridTrackTemplateBuilder()
+    //             .addTrack(withPixels(30))
+    //             .addTrack(withFraction(1))
+    //             .addTrack(withFraction(1))
+    //             .build()
+    //     }
+    //     return gridTrackTemplateBuilder()
+    //         .addTrack(withPixels(30))
+    //         .repeatFor(showSimulation ? 2 : 1, withGridTrack(withFraction(1)))
+    //         .build()
+    // }
+
     return (
-        <div
-            ref={editorRef}
-            // can't just set a fraction for the height because the parent height may not be
-            // set...but if it is, then you can use that.
-            style={{height: window.innerHeight * 0.9, width: '100%'}}
-            onKeyDown={handleKeyboardShortcut}
+        <div onKeyDown={handleKeyboardShortcut}>
+        <Grid
+            dimensionsSupplier={useGridCell}
+            gridTemplateRows={gridTrackTemplateBuilder()
+                .addTrack(withPixels(30))
+                .repeatFor(showSimulation ? 2 : 1, withGridTrack(withFraction(1)))
+                .build()
+            }
+            gridTemplateColumns={gridTrackTemplateBuilder()
+                .addTrack(withPixels(SIDEBAR_WIDTH))
+                .addTrack(withFraction(1))
+                .build()
+            }
+            gridTemplateAreas={gridTemplateAreasBuilder()
+                .addArea('networkDescriptionPath', gridArea(1, 2))
+                .addArea('networkEditorSidebar', gridArea(1, 1, 2, 1))
+                .addArea('networkEditor', gridArea(2, 2))
+                .addArea('networkSimulation', gridArea(3, 2))
+                .build()
+            }
         >
-            {message || <span/>}
-            <div
-                style={{
-                    marginLeft: 30,
-                    marginBottom: 8,
-                    height: 15,
-                    color: itheme.palette.themeSecondary
-                }}
+            <GridCell
+                gridAreaName='networkDescriptionPath'
+                styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
             >
-                {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?
-                    '[new file]' :
-                    networkDescriptionPath
-                }{modified ? '*' : ''}
-            </div>
-            <Stack horizontal>
-                <StackItem>
+                <span style={{color: itheme.palette.themeSecondary}}>
+                    {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?
+                        '[new file]' :
+                        networkDescriptionPath
+                    }{modified ? '*' : ''}
+                </span>
+            </GridCell>
+            <GridCell gridAreaName='networkEditorSidebar'>
+                <div>
                     {newButton()}
                     {saveButton()}
                     {loadButton()}
                     {buildButton()}
                     <Separator/>
                     {showSimulationButton()}
-                </StackItem>
-                <StackItem>
-                    <MonacoEditor
-                        editorId='spikes-lang'
-                        width={dimension.width}
-                        height={dimension.height}
-                        language={SPIKES_LANGUAGE_ID}
-                        // theme={editorThemeFrom(themeName)}
-                        // customThemes={customThemes}
-                        theme={themeName}
-                        customThemes={editorThemes}
-                        value={networkDescription}
-                        options={editorOptions}
-                        onChange={(value: string) => onChanged(value)}
-                        editorDidMount={noop}
-                    />
-                    {showSimulation && <LayerHost id='chart-layer'/>}
-                </StackItem>
-                {showSimulation &&
-                <Layer hostId="chart-layer" style={{width: '100%'}}>
-                    <Separator>Network Topology</Separator>
-                    <NetworkTopologyVisualization
-                        itheme={itheme}
-                        sceneHeight={window.innerHeight * 0.9 - dimension.height - 75}
-                        sceneWidth={window.innerWidth - 100}
-                        onClose={hideSimulationLayer}
-                    />
-                </Layer>}
-            </Stack>
+                </div>
+            </GridCell>
+            <GridCell gridAreaName='networkEditor'>
+                <MonacoEditor
+                    editorId='spikes-lang'
+                    width={useGridCell().width}
+                    height={useGridCell().height}
+                    language={SPIKES_LANGUAGE_ID}
+                    theme={themeName}
+                    customThemes={editorThemes}
+                    value={networkDescription}
+                    options={editorOptions}
+                    onChange={(value: string) => onChanged(value)}
+                    editorDidMount={noop}
+                />
+            </GridCell>
+            <GridCell gridAreaName='networkSimulation' isVisible={showSimulation}>
+                <NetworkTopologyVisualization
+                    itheme={itheme}
+                    sceneWidth={useGridCell().width}
+                    sceneHeight={useGridCell().height}
+                    onClose={hideSimulationLayer}
+                />
+            </GridCell>
+        </Grid>
         </div>
     )
+    // return (
+    //     <div
+    //         ref={editorRef}
+    //         // can't just set a fraction for the height because the parent height may not be
+    //         // set...but if it is, then you can use that.
+    //         style={{height: window.innerHeight * 0.9, width: '100%'}}
+    //         onKeyDown={handleKeyboardShortcut}
+    //     >
+    //         {message || <span/>}
+    //         <div
+    //             style={{
+    //                 marginLeft: 30,
+    //                 marginBottom: 8,
+    //                 height: 15,
+    //                 color: itheme.palette.themeSecondary
+    //             }}
+    //         >
+    //             {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?
+    //                 '[new file]' :
+    //                 networkDescriptionPath
+    //             }{modified ? '*' : ''}
+    //         </div>
+    //         <Stack horizontal>
+    //             <StackItem>
+    //                 {newButton()}
+    //                 {saveButton()}
+    //                 {loadButton()}
+    //                 {buildButton()}
+    //                 <Separator/>
+    //                 {showSimulationButton()}
+    //             </StackItem>
+    //             <StackItem>
+    //                 <MonacoEditor
+    //                     editorId='spikes-lang'
+    //                     width={dimension.width}
+    //                     height={dimension.height}
+    //                     language={SPIKES_LANGUAGE_ID}
+    //                     // theme={editorThemeFrom(themeName)}
+    //                     // customThemes={customThemes}
+    //                     theme={themeName}
+    //                     customThemes={editorThemes}
+    //                     value={networkDescription}
+    //                     options={editorOptions}
+    //                     onChange={(value: string) => onChanged(value)}
+    //                     editorDidMount={noop}
+    //                 />
+    //                 {showSimulation && <LayerHost id='chart-layer'/>}
+    //             </StackItem>
+    //             {showSimulation &&
+    //             <Layer hostId="chart-layer" style={{width: '100%'}}>
+    //                 <Separator>Network Topology</Separator>
+    //                 <NetworkTopologyVisualization
+    //                     itheme={itheme}
+    //                     sceneHeight={window.innerHeight * 0.9 - dimension.height - 75}
+    //                     sceneWidth={window.innerWidth - 100}
+    //                     onClose={hideSimulationLayer}
+    //                 />
+    //             </Layer>}
+    //         </Stack>
+    //     </div>
+    // )
 }
 
 /*

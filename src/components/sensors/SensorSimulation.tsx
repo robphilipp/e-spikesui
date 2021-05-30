@@ -22,6 +22,7 @@ import {Datum, Series, seriesFrom} from "../charts/datumSeries";
 import {ChartData} from "../charts/chartData";
 import {regexFilter} from "../charts/regexFilter";
 import {RasterChart} from "../charts/RasterChart";
+import {DimensionProvider} from "../common/DimensionProvider";
 
 enum Control {
     TRACKER = 'tracker',
@@ -329,8 +330,9 @@ export default function SensorSimulation(props: Props): JSX.Element {
     }
 
     return (
-        <div style={{padding: 10}}>
-            <Stack tokens={{childrenGap: 10}}>
+        // <div style={{padding: 10, height: '100%'}}>
+        <>
+            <Stack tokens={{childrenGap: 10}} verticalFill>
                 <Stack horizontal tokens={{childrenGap: 5}}>
                     <Stack.Item>
                         <TextField
@@ -362,7 +364,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         {hideSimulationButton()}
                     </Stack.Item>
                 </Stack>
-                <Stack horizontal tokens={{childrenGap: 0}}>
+                <Stack horizontal tokens={{childrenGap: 0}} verticalFill={true}>
                     <Stack.Item>
                         {compileButton()}
                     </Stack.Item>
@@ -391,46 +393,48 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 <Stack.Item>
                     <Label>Simulation Time Factor: {timeFactor}</Label>
                 </Stack.Item>
-                <Stack.Item>
-                    {neuronList?.length > 0 ?
-                        <RasterChart
-                            height={neuronList.length * heightPerNeuron + 60}
-                            seriesList={neuronList}
-                            seriesObservable={chartObservable}
-                            shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                            onSubscribe={subscription => subscriptionRef.current = subscription}
-                            timeWindow={timeWindow}
-                            windowingTime={100}
-                            dropDataAfter={dropDataAfter}
-                            margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                            tooltip={{
-                                visible: selectedControl === Control.TOOLTIP,
-                                backgroundColor: itheme.palette.themeLighterAlt,
-                                fontColor: itheme.palette.themePrimary,
-                                borderColor: itheme.palette.themePrimary,
-                            }}
-                            magnifier={{
-                                visible: selectedControl === Control.MAGNIFIER,
-                                magnification: 5,
-                                color: itheme.palette.neutralTertiaryAlt,
-                            }}
-                            tracker={{
-                                visible: selectedControl === Control.TRACKER,
-                                color: itheme.palette.themePrimary,
-                            }}
-                            filter={seriesFilter}
-                            backgroundColor={itheme.palette.white}
-                            svgStyle={{width: '95%'}}
-                            axisStyle={{color: itheme.palette.themePrimary}}
-                            axisLabelFont={{color: itheme.palette.themePrimary}}
-                            plotGridLines={{color: itheme.palette.themeLighter}}
-                            spikesStyle={{
-                                color: itheme.palette.themePrimary,
-                                highlightColor: itheme.palette.themePrimary
-                            }}
-                        /> :
-                        <div/>
-                    }
+                <Stack.Item grow verticalFill>
+                    <DimensionProvider widthFraction={0.95}>
+                        {neuronList?.length > 0 ?
+                            <RasterChart
+                                    // height={neuronList.length * heightPerNeuron + 60}
+                                    seriesList={neuronList}
+                                    seriesObservable={chartObservable}
+                                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                                    onSubscribe={subscription => subscriptionRef.current = subscription}
+                                    timeWindow={timeWindow}
+                                    windowingTime={100}
+                                    dropDataAfter={dropDataAfter}
+                                    margin={{top: 15, right: 20, bottom: 35, left: 30}}
+                                    tooltip={{
+                                        visible: selectedControl === Control.TOOLTIP,
+                                        backgroundColor: itheme.palette.themeLighterAlt,
+                                        fontColor: itheme.palette.themePrimary,
+                                        borderColor: itheme.palette.themePrimary,
+                                    }}
+                                    magnifier={{
+                                        visible: selectedControl === Control.MAGNIFIER,
+                                        magnification: 5,
+                                        color: itheme.palette.neutralTertiaryAlt,
+                                    }}
+                                    tracker={{
+                                        visible: selectedControl === Control.TRACKER,
+                                        color: itheme.palette.themePrimary,
+                                    }}
+                                    filter={seriesFilter}
+                                    backgroundColor={itheme.palette.white}
+                                    svgStyle={{width: '95%'}}
+                                    axisStyle={{color: itheme.palette.themePrimary}}
+                                    axisLabelFont={{color: itheme.palette.themePrimary}}
+                                    plotGridLines={{color: itheme.palette.themeLighter}}
+                                    spikesStyle={{
+                                        color: itheme.palette.themePrimary,
+                                        highlightColor: itheme.palette.themePrimary
+                                    }}
+                                /> :
+                            <div/>
+                        }
+                    </DimensionProvider>
                 </Stack.Item>
             </Stack>
             {neuronList?.length > 0 ?
@@ -453,6 +457,17 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 </Stack> :
                 <div/>
             }
-        </div>
+        {/*</div>*/}
+        </>
     );
 }
+
+interface SomeProps {
+    width?: number
+    height?: number
+}
+
+// interface SpikesProps {
+//
+// }
+//

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {cloneElement, CSSProperties, useEffect, useRef, useState} from "react";
+import {cloneElement, createRef, CSSProperties, useEffect, useRef, useState} from "react";
 
 interface Props {
     widthFraction?: number
@@ -55,6 +55,7 @@ export function DimensionProvider(props: Props): JSX.Element {
         return cloneElement(children, {height: divRef.current?.clientHeight, width: divRef.current?.clientWidth})
     }
 
+    console.log("dim provider", divRef.current?.clientHeight, divRef.current?.clientWidth)
     return <div
         ref={divRef}
         style={{
@@ -86,9 +87,10 @@ function useResizeListener(): React.MutableRefObject<HTMLDivElement | undefined>
     useEffect(
         () => {
             const updateDimensions = () => setDimensions({
-                height: divRef.current?.clientHeight,
-                width: divRef.current?.clientWidth
+                height: Math.floor(divRef.current?.offsetHeight),
+                width: Math.floor(divRef.current?.offsetWidth)
             })
+            updateDimensions()
             window.addEventListener('resize', updateDimensions)
 
             return () => {

@@ -3,7 +3,7 @@
  */
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-import React, {useEffect, useRef} from "react";
+import React, {useEffect, useLayoutEffect, useRef} from "react";
 import { noop } from "../../commons";
 
 interface Props {
@@ -44,8 +44,8 @@ interface Props {
 export default function MonacoEditor(props: Props): JSX.Element {
     const {
         editorId,
-        width = 100,
-        height = 100,
+        width = 300,
+        height = 400,
         value,
         defaultValue = '',
         language = 'javascript',
@@ -85,7 +85,8 @@ export default function MonacoEditor(props: Props): JSX.Element {
                 );
 
                 // set the editor's dimensions
-                editorRef.current.layout({width: width, height: height});
+                editorRef.current.layout({width, height});
+                console.log("editor mounted", width, height)
 
                 // after initializing monaco editor
                 handleEditorDidMount(editorRef.current);
@@ -176,10 +177,11 @@ export default function MonacoEditor(props: Props): JSX.Element {
     )
 
     // when the width and height of the editor change need to update the layout
-    useEffect(
+    useLayoutEffect(
         () => {
             if (containerElementRef.current) {
-                editorRef.current?.layout({width: width, height: height});
+                editorRef.current?.layout({width, height});
+                console.log("editor resized", width, height, "editor ref", editorRef.current)
             }
         },
         [width, height]

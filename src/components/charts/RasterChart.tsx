@@ -80,7 +80,7 @@ const textWidthOf = (elem: TextSelection) => elem.node()?.getBBox()?.width || 0;
 
 interface Props {
     width?: number;
-    height: number;
+    height?: number;
     margin?: Partial<Margin>;
     spikesStyle?: Partial<{ margin: number, color: string, lineWidth: number, highlightColor: string, highlightWidth: number }>;
     axisLabelFont?: Partial<{ size: number, color: string, family: string, weight: number }>;

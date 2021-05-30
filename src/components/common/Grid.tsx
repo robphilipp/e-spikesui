@@ -151,7 +151,7 @@ export function GridCell(props: CellProps): JSX.Element {
             `The number of rows spanned by this <GridCell/> greater than 1; rows spanned: ${rowsSpanned}`
         )
     }
-    if (column < 1 || row > column) {
+    if (column < 1 || column > numColumns) {
         throw new Error(
             `<GridCell/> column must be greater than 1 and less than the number of columns; number columns: ${numColumns}; column: ${column}`
         )

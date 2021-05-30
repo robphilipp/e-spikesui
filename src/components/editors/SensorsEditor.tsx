@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {useEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 import {useHistory, useParams, useRouteMatch, withRouter} from "react-router-dom";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -22,6 +22,7 @@ import {baseRouterPathFrom} from '../router/router';
 import {noop} from "../../commons";
 import {useTheme} from "../common/useTheme";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
+import {DimensionProvider} from "../common/DimensionProvider";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -94,7 +95,7 @@ function SensorsEditor(props: Props): JSX.Element {
     const [baseRouterPath, setBaseRouterPath] = useState<string>(baseRouterPathFrom(path));
 
     const editorRef = useRef<HTMLDivElement>();
-    const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
+    // const [dimension, setDimension] = useState<Dimension>({width: 50, height: 50});
     const heightFractionRef = useRef(1.0);
 
     // whether to show the simulation panel
@@ -102,6 +103,26 @@ function SensorsEditor(props: Props): JSX.Element {
 
     const [message, setMessage] = useState<JSX.Element>();
 
+
+    /**
+     * Loads the code snippet describing the sensor, or if the file path is for a new
+     * code snippet, then loads the template
+     * @param filePath The path to the file holding the code snippet
+     */
+    const loadCodeSnippetOrTemplate = useCallback(
+        (filePath: string): void => {
+            if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
+                onLoadTemplate(templatePath)
+                    .then(() => console.log("loaded"))
+                    .catch(reason => setMessage(errorMessage(reason.message)))
+            } else {
+                onLoadSensor(filePath)
+                    .then(() => console.log("loaded"))
+                    .catch(reason => setMessage(errorMessage(reason.message)))
+            }
+        },
+        [onLoadSensor, onLoadTemplate, templatePath]
+    )
 
     // when the environment code-snippet file path from the router has changed, and is
     // not equal to the current state path, or is empty, then load the environment code-snippet,
@@ -120,7 +141,7 @@ function SensorsEditor(props: Props): JSX.Element {
                 loadCodeSnippetOrTemplate(filePath);
             }
         },
-        [sensorsPath]
+        [codeSnippet, loadCodeSnippetOrTemplate, sensorDescriptionPath, sensorsPath]
     );
 
     // when component mounts, loads the code snippet if needed, sets the initial dimension of the
@@ -134,37 +155,20 @@ function SensorsEditor(props: Props): JSX.Element {
                 loadCodeSnippetOrTemplate(decodeURIComponent(sensorsPath));
             }
 
-            if (editorRef.current) {
-                setDimension(editorDimensions());
-            }
-
-            // listen to resize events so that the editor width and height can be updated
-            window.addEventListener('resize', handleWindowResize);
-
-            return () => {
-                // stop listening to resize events
-                window.removeEventListener('resize', handleWindowResize);
-            }
+            // if (editorRef.current) {
+            //     setDimension(editorDimensions());
+            // }
+            //
+            // // listen to resize events so that the editor width and height can be updated
+            // window.addEventListener('resize', handleWindowResize);
+            //
+            // return () => {
+            //     // stop listening to resize events
+            //     window.removeEventListener('resize', handleWindowResize);
+            // }
         },
-        []
+        [codeSnippet, loadCodeSnippetOrTemplate, sensorsPath]
     );
-
-    /**
-     * Loads the code snippet describing the sensor, or if the file path is for a new
-     * code snippet, then loads the template
-     * @param filePath The path to the file holding the code snippet
-     */
-    function loadCodeSnippetOrTemplate(filePath: string): void {
-        if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
-            onLoadTemplate(templatePath)
-                .then(() => console.log("loaded"))
-                .catch(reason => setMessage(errorMessage(reason.message)))
-        } else {
-            onLoadSensor(filePath)
-                .then(() => console.log("loaded"))
-                .catch(reason => setMessage(errorMessage(reason.message)))
-        }
-    }
 
     // recalculate the base path when the path changes (note that the base path won't change)
     useEffect(
@@ -174,30 +178,30 @@ function SensorsEditor(props: Props): JSX.Element {
         [path]
     )
 
-    /**
-     * calculates the editors dimensions based on the `<div>`'s width and height
-     * @return The dimension of the editor
-     */
-    function editorDimensions(): Dimension {
-        return {
-            width: editorRef.current.offsetWidth - 25,
-            height: editorRef.current.clientHeight * heightFractionRef.current
-        };
-    }
+    // /**
+    //  * calculates the editors dimensions based on the `<div>`'s width and height
+    //  * @return The dimension of the editor
+    //  */
+    // function editorDimensions(): Dimension {
+    //     return {
+    //         width: editorRef.current.offsetWidth - 25,
+    //         height: editorRef.current.clientHeight * heightFractionRef.current
+    //     };
+    // }
 
-    /**
-     * updates the editor's width and height when the container's dimensions change
-     */
-    function handleWindowResize(): void {
-        if (editorRef.current) {
-            const nextDimension = editorDimensions()
-            const minDiff = 2;
-            if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
-                Math.abs(nextDimension.width - dimension.width) > minDiff) {
-                setDimension(nextDimension);
-            }
-        }
-    }
+    // /**
+    //  * updates the editor's width and height when the container's dimensions change
+    //  */
+    // function handleWindowResize(): void {
+    //     if (editorRef.current) {
+    //         const nextDimension = editorDimensions()
+    //         const minDiff = 2;
+    //         if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
+    //             Math.abs(nextDimension.width - dimension.width) > minDiff) {
+    //             setDimension(nextDimension);
+    //         }
+    //     }
+    // }
 
     /**
      * Handles keyboard events when the editor is focused
@@ -291,7 +295,7 @@ function SensorsEditor(props: Props): JSX.Element {
      */
     function showSimulationLayer(): void {
         heightFractionRef.current = 0.5;
-        setDimension(editorDimensions());
+        // setDimension(editorDimensions());
         setShowSimulation(true);
     }
 
@@ -300,7 +304,7 @@ function SensorsEditor(props: Props): JSX.Element {
      */
     function hideSimulationLayer(): void {
         heightFractionRef.current = 1.0;
-        setDimension(editorDimensions());
+        // setDimension(editorDimensions());
         setShowSimulation(false);
     }
 
@@ -394,7 +398,8 @@ function SensorsEditor(props: Props): JSX.Element {
             ref={editorRef}
             // can't just set a fraction for the height because the parent height may not be
             // set...but if it is, then you can use that.
-            style={{height: window.innerHeight * 0.9, width: '100%'}}
+            // style={{height: window.innerHeight * 0.9, width: '100%'}}
+            style={{height: '100%', width: '100%'}}
             onKeyDown={handleKeyboardShortcut}
         >
             {message || <span/>}
@@ -411,7 +416,7 @@ function SensorsEditor(props: Props): JSX.Element {
                     sensorDescriptionPath
                 }{modified ? '*' : ''}
             </div>
-            <Stack horizontal>
+            <Stack horizontal verticalFill>
                 <Stack.Item>
                     {newButton()}
                     {saveButton()}
@@ -419,12 +424,12 @@ function SensorsEditor(props: Props): JSX.Element {
                     <Separator/>
                     {showSimulationButton()}
                 </Stack.Item>
-                <Stack>
-                    <Stack.Item>
+                <Stack.Item grow verticalFill>
+                    <DimensionProvider>
                         <MonacoEditor
                             editorId='spikes-env'
-                            width={dimension.width}
-                            height={dimension.height}
+                            // width={dimension.width}
+                            // height={dimension.height}
                             language="javascript"
                             theme={themeName}
                             customThemes={editorThemes}
@@ -433,9 +438,9 @@ function SensorsEditor(props: Props): JSX.Element {
                             onChange={onChanged}
                             editorDidMount={noop}
                         />
-                        {showSimulation && <LayerHost id='chart-layer'/>}
-                    </Stack.Item>
-                </Stack>
+                    </DimensionProvider>
+                    {showSimulation && <LayerHost id='chart-layer'/>}
+                </Stack.Item>
             </Stack>
             {showSimulation &&
             <Layer hostId="chart-layer">

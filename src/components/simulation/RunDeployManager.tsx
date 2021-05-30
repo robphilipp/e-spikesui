@@ -39,7 +39,7 @@ import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkM
 import useSimulationTimer from "./useSimulationTimer";
 import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
-import {ApportionProvider, DimensionProvider} from "../common/DimensionProvider";
+import {DimensionProvider} from "../common/DimensionProvider";
 import {Grid, GridCell} from "../common/Grid";
 import SpikesChart from "./SpikesChart";
 

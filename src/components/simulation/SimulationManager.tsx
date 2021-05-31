@@ -32,6 +32,7 @@ import {
     gridTrackTemplateBuilder, useGridCell, withFraction,
     withPixels
 } from "react-resizable-grid-layout";
+import RunDeployManager from "./RunDeployManager";
 
 export const NEW_PROJECT_PATH = '**new**';
 const SIDEBAR_WIDTH = 32;
@@ -422,8 +423,7 @@ function SimulationManager(props: Props): JSX.Element {
                             networkRouterPath={networkRouterPath}
                             sensorRouterPath={sensorRouterPath}
                         /> :
-                        // <RunDeployManager itheme={itheme}/>
-                        <div>Run/Deploy Manager</div>
+                        <RunDeployManager itheme={itheme}/>
                     }
                 </div>
                 </div>

@@ -42,7 +42,7 @@ import {useMessage} from "../common/useMessage";
 import SpikesChart from "./SpikesChart";
 import {
     Grid, gridArea, GridCell, gridTemplateAreasBuilder,
-    gridTrackTemplateBuilder, useGridCell,
+    gridTrackTemplateBuilder, useGridCell, useGridCellHeight, useGridCellWidth,
     useWindowDimensions,
     withFraction, withGridTrack,
     withPixels
@@ -543,7 +543,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 .build()
             }
             gridTemplateRows={gridTrackTemplateBuilder()
-                .addTrack(withPixels(20))
+                .addTrack(withPixels(30))
                 .addTrack(withPixels(150))
                 .addTrack(withFraction(1))
                 .build()
@@ -614,6 +614,14 @@ function RunDeployManager(props: Props): JSX.Element {
                             <NetworkVisualization
                                 key="net-1"
                                 networkObservable={spikeSubject}
+                                height={
+                                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                                    useGridCellHeight()
+                                }
+                                width={
+                                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                                    useGridCellWidth()
+                                }
                                 {...props}
                             /> :
                             <div/>
@@ -622,6 +630,14 @@ function RunDeployManager(props: Props): JSX.Element {
                     <GridCell row={1} column={2}>
                         {networkId.isSome() && networkBuilt ?
                             <SpikesChart
+                                height={
+                                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                                    useGridCellHeight()
+                                }
+                                width={
+                                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                                    useGridCellWidth()
+                                }
                                 networkObservable={spikeSubject}
                                 shouldSubscribe={running}
                                 {...props}

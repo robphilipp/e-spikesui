@@ -1,4 +1,4 @@
-import {IconButton, MessageBarType, Pivot, PivotItem, Separator, Stack, StackItem, TooltipHost} from "@fluentui/react";
+import {IconButton, MessageBarType, Pivot, PivotItem, Separator, TooltipHost} from "@fluentui/react";
 import {remote} from "electron";
 import * as React from "react";
 import {useEffect, useState} from "react";
@@ -24,12 +24,14 @@ import {useLoading} from "../common/useLoading";
 import {deleteNetwork, DeleteNetworkAction} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
 import {useMessage} from "../common/useMessage";
-import {ITheme} from "@uifabric/styling";
 import {
-    Grid, gridArea,
+    Grid,
+    gridArea,
     GridCell,
     gridTemplateAreasBuilder,
-    gridTrackTemplateBuilder, useGridCell, withFraction,
+    gridTrackTemplateBuilder,
+    useGridCell,
+    withFraction,
     withPixels
 } from "react-resizable-grid-layout";
 import RunDeployManager from "./RunDeployManager";
@@ -120,7 +122,6 @@ function SimulationManager(props: Props): JSX.Element {
         () => {
             const filePath = decodeURIComponent(simulationProjectPath);
             if (filePath !== 'undefined' && filePath !== NEW_PROJECT_PATH && !modified) {
-                // updateLoadingState(true, "Loading simulation project")
                 onLoad(filePath)
                     .then(action => {
                         Promise.all([
@@ -129,7 +130,6 @@ function SimulationManager(props: Props): JSX.Element {
                         ]).catch(reason => setMessage(MessageBarType.error, <div>{reason.message}</div>))
                     })
                     .catch(reason => setMessage(MessageBarType.error, <div>{reason.message}</div>))
-                // .finally(() => updateLoadingState(false))
             }
         },
         [simulationProjectPath]
@@ -347,10 +347,8 @@ function SimulationManager(props: Props): JSX.Element {
         return `network_management_pivot_${itemKey}`
     }
 
-    // todo sizing issue has to do with the pivot. setting the height of content to 100% uses the height of
-    //      the surrounding div, which also has the pivot tabs, and so the somehow need to subtract the height
-    //      of the tabs from the content
     return (
+        <div onKeyDown={handleKeyboardShortcut}>
         <Grid
             dimensionsSupplier={useGridCell}
             gridTemplateColumns={gridTrackTemplateBuilder()
@@ -360,13 +358,15 @@ function SimulationManager(props: Props): JSX.Element {
             }
             gridTemplateRows={gridTrackTemplateBuilder()
                 .addTrack(withPixels(30))
+                .addTrack(withPixels(45))
                 .addTrack(withFraction(1))
                 .build()
             }
             gridTemplateAreas={gridTemplateAreasBuilder()
                 .addArea('projectPath', gridArea(1, 2))
                 .addArea('sidebar', gridArea(1, 1))
-                .addArea('simulationMain', gridArea(2, 2))
+                .addArea('simulationPivot', gridArea(2, 2))
+                .addArea('simulationMain', gridArea(3, 2))
                 .build()
             }
         >
@@ -379,26 +379,15 @@ function SimulationManager(props: Props): JSX.Element {
                 </span>
             </GridCell>
             <GridCell gridAreaName='sidebar'>
-                <Stack>
-                    <StackItem>
-                        {newButton()}
-                    </StackItem>
-                    <StackItem>
-                        {loadButton()}
-                    </StackItem>
-                    <StackItem>
-                        {saveButton()}
-                    </StackItem>
-                    <StackItem>
-                        {saveAsButton()}
-                    </StackItem>
-                    <StackItem>
-                        <Separator/>
-                    </StackItem>
-                </Stack>
+                <div>
+                    {newButton()}
+                    {loadButton()}
+                    {saveButton()}
+                    {saveAsButton()}
+                    <Separator/>
+                </div>
             </GridCell>
-            <GridCell gridAreaName='simulationMain'>
-                <div style={{height: '100%'}}>
+            <GridCell gridAreaName='simulationPivot'>
                 <Pivot
                     aria-label="simulation-tabs"
                     selectedKey={selectedTab}
@@ -413,10 +402,9 @@ function SimulationManager(props: Props): JSX.Element {
                         itemKey={TabName.DEPLOY_EXECUTE}
                     />
                 </Pivot>
-                <div
-                    aria-labelledby={getTabId(selectedTab)}
-                    style={{height: '100%'}}
-                >
+            </GridCell>
+            <GridCell gridAreaName='simulationMain'>
+                <div aria-labelledby={getTabId(selectedTab)}>
                     {selectedTab === TabName.PROJECT_CONFIG ?
                         <ProjectConfig
                             itheme={itheme}
@@ -426,94 +414,10 @@ function SimulationManager(props: Props): JSX.Element {
                         <RunDeployManager itheme={itheme}/>
                     }
                 </div>
-                </div>
             </GridCell>
         </Grid>
+        </div>
     )
-    // return (
-    //     <Stack onKeyDown={handleKeyboardShortcut} verticalFill={true}>
-    //         <StackItem>
-    //         <div
-    //             style={{
-    //                 marginLeft: 30,
-    //                 marginBottom: 8,
-    //                 height: 15,
-    //                 color: itheme.palette.themeSecondary
-    //             }}
-    //         >
-    //             {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
-    //         </div>
-    //         </StackItem>
-    //         <StackItem grow>
-    //         <Stack horizontal verticalFill={true}>
-    //             <StackItem>
-    //                 <Stack>
-    //                     <StackItem>
-    //                         {newButton()}
-    //                     </StackItem>
-    //                     <StackItem>
-    //                         {loadButton()}
-    //                     </StackItem>
-    //                     <StackItem>
-    //                         {saveButton()}
-    //                     </StackItem>
-    //                     <StackItem>
-    //                         {saveAsButton()}
-    //                     </StackItem>
-    //                     <StackItem>
-    //                         <Separator/>
-    //                         {/*{compileButton()}*/}
-    //                         {/*{runSensorSimulationButton()}*/}
-    //                         {/*{stopSensorSimulationButton()}*/}
-    //                         {/*{showSimulation && hideSimulationButton()}*/}
-    //                     </StackItem>
-    //                 </Stack>
-    //             </StackItem>
-    //             <StackItem grow>
-    //                 <Stack tokens={{childrenGap: 10}} style={{marginLeft: 20}} grow verticalFill={true}>
-    //                     <StackItem>
-    //                         <Pivot
-    //                             aria-label="simulation-tabs"
-    //                             selectedKey={selectedTab}
-    //                             onLinkClick={item => setSelectedTab(item.props.itemKey)}
-    //                         >
-    //                             <PivotItem
-    //                                 headerText="Project Config"
-    //                                 itemKey={TabName.PROJECT_CONFIG}
-    //                             />
-    //                             <PivotItem
-    //                                 headerText="Deploy and Run"
-    //                                 itemKey={TabName.DEPLOY_EXECUTE}
-    //                             />
-    //                         </Pivot>
-    //                     </StackItem>
-    //                     <StackItem grow>
-    //                         <div
-    //                             aria-labelledby={getTabId(selectedTab)}
-    //                             style={{height: '100%'}}
-    //                         >
-    //                             {selectedTab === TabName.PROJECT_CONFIG ?
-    //                                 <ProjectConfig
-    //                                     itheme={itheme}
-    //                                     networkRouterPath={networkRouterPath}
-    //                                     sensorRouterPath={sensorRouterPath}
-    //                                 /> :
-    //                                 <RunDeployManager itheme={itheme}/>
-    //                             }
-    //                         </div>
-    //                     </StackItem>
-    //                 </Stack>
-    //             </StackItem>
-    //         </Stack>
-    //         </StackItem>
-    //     </Stack>
-    // );
-}
-
-interface WrapperProps {
-    itheme: ITheme
-    networkRouterPath: string
-    sensorRouterPath: string
 }
 
 /*

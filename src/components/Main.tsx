@@ -562,7 +562,7 @@ function Main(props: Props): JSX.Element {
                                 />
                             </Switch>
                         </GridCell>
-                        <GridCell gridAreaName='footer' styles={{backgroundColor: itheme.palette.neutralLight}}>
+                        <GridCell gridAreaName='footer'>
                             <div style={{
                                 height: '100%',
                                 display: 'flex',

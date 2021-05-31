@@ -26,7 +26,8 @@ export default function LoadingModal(): JSX.Element {
         {isLoading ?
             <div style={{
                 zIndex: 10000,
-                margin: '-8px',
+                margin: 0,
+                padding: 0,
                 width: '100%',
                 height: '100%',
                 background: tinycolor(itheme.palette.black).setAlpha(0.5).toRgbString(),

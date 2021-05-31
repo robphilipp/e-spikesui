@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {useEffect, useRef} from 'react'
-import {CommandBar, ContextualMenuItemType, ICommandBarItemProps, Stack, StackItem} from '@fluentui/react'
+import {CommandBar, ContextualMenuItemType, ICommandBarItemProps, Stack, StackItem, Text} from '@fluentui/react'
 import {Palette} from "../theming";
 import {connect} from 'react-redux';
 import {AppState} from "./redux/reducers/root";
@@ -49,6 +49,7 @@ import {
     withFraction,
     withPixels
 } from 'react-resizable-grid-layout';
+import {useTheme} from "./common/useTheme";
 
 enum AppPath {
     NETWORK_EDITOR = '/network-editor',
@@ -132,6 +133,8 @@ function Main(props: Props): JSX.Element {
     // react-router
     const history = useHistory();
     const networkEditorRouteMatch = useRouteMatch(AppPath.NETWORK_EDITOR);
+
+    const {itheme} = useTheme()
 
     // register spikes language with the monaco editor when the component mounts
     useEffect(() => {
@@ -502,71 +505,90 @@ function Main(props: Props): JSX.Element {
 
     return (
         <>
-         <LoadingProvider>
-             <LoadingModal/>
-             <SettingsPanel/>
-             <MessageProvider>
-                <Grid
-                    dimensionsSupplier={useWindowDimensions}
-                    gridTemplateColumns={gridTrackTemplateBuilder()
-                        .addTrack(withFraction(1))
-                        .build()
-                    }
-                    gridTemplateRows={gridTrackTemplateBuilder()
-                        .addTrack(withPixels(40))
-                        .addTrack(withPixels(20))
-                        .addTrack(withFraction(1))
-                        .addTrack(withPixels(20))
-                        .build()
-                    }
-                    gridTemplateAreas={gridTemplateAreasBuilder()
-                        .addArea('header', gridArea(1, 1))
-                        .addArea('messages', gridArea(2, 1))
-                        .addArea('main', gridArea(3, 1))
-                        .addArea('footer', gridArea(4, 1,))
-                        .build()
-                    }
-                    columnGap={5}
-                >
-                    <GridCell gridAreaName='header'>
-                        <CommandBar
-                            items={menuItems()}
-                            farItems={farMenuItems(handleSettingsPanelVisibility)}
-                        />
-                    </GridCell>
-                    <GridCell gridAreaName='messages'>
-                        <ApplicationMessage/>
-                    </GridCell>
-                    <GridCell gridAreaName='main'>
-                        <Switch>
-                            <Route
-                                path={`${AppPath.SIMULATION}/:simulationProjectPath`}
-                                render={(renderProps) =>
-                                    <SimulationManager
-                                        networkRouterPath={AppPath.NETWORK_EDITOR}
-                                        sensorRouterPath={AppPath.SENSOR_EDITOR}
-                                        {...renderProps}
-                                    />
-                                }
+            <LoadingProvider>
+                <LoadingModal/>
+                <SettingsPanel/>
+                <MessageProvider>
+                    <Grid
+                        dimensionsSupplier={useWindowDimensions}
+                        gridTemplateColumns={gridTrackTemplateBuilder()
+                            .addTrack(withFraction(1))
+                            .build()
+                        }
+                        gridTemplateRows={gridTrackTemplateBuilder()
+                            .addTrack(withPixels(40))
+                            .addTrack(withPixels(20))
+                            .addTrack(withFraction(1))
+                            .addTrack(withPixels(22))
+                            .build()
+                        }
+                        gridTemplateAreas={gridTemplateAreasBuilder()
+                            .addArea('header', gridArea(1, 1))
+                            .addArea('messages', gridArea(2, 1))
+                            .addArea('main', gridArea(3, 1))
+                            .addArea('footer', gridArea(4, 1,))
+                            .build()
+                        }
+                        columnGap={5}
+                    >
+                        <GridCell gridAreaName='header'>
+                            <CommandBar
+                                items={menuItems()}
+                                farItems={farMenuItems(handleSettingsPanelVisibility)}
                             />
-                            <Route
-                                path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
-                                render={(renderProps) => <NetworkEditor {...renderProps}/>}
-                            />
-                            <Route
-                                path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
-                                render={(renderProps) => <SensorsEditor {...renderProps}/>}
-                            />
-                        </Switch>
-                    </GridCell>
-                    <GridCell gridAreaName='footer'>
-                        <div>Spikes version 3.1.4</div>
-                    </GridCell>
-                </Grid>
+                        </GridCell>
+                        <GridCell gridAreaName='messages'>
+                            <ApplicationMessage/>
+                        </GridCell>
+                        <GridCell gridAreaName='main'>
+                            <Switch>
+                                <Route
+                                    path={`${AppPath.SIMULATION}/:simulationProjectPath`}
+                                    render={(renderProps) =>
+                                        <SimulationManager
+                                            networkRouterPath={AppPath.NETWORK_EDITOR}
+                                            sensorRouterPath={AppPath.SENSOR_EDITOR}
+                                            {...renderProps}
+                                        />
+                                    }
+                                />
+                                <Route
+                                    path={`${AppPath.NETWORK_EDITOR}/:networkPath`}
+                                    render={(renderProps) => <NetworkEditor {...renderProps}/>}
+                                />
+                                <Route
+                                    path={`${AppPath.SENSOR_EDITOR}/:sensorsPath`}
+                                    render={(renderProps) => <SensorsEditor {...renderProps}/>}
+                                />
+                            </Switch>
+                        </GridCell>
+                        <GridCell gridAreaName='footer' styles={{backgroundColor: itheme.palette.neutralLight}}>
+                            <div style={{
+                                height: '100%',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                paddingLeft: 10,
+                                paddingRight: 10
+                            }}>
+                                <Text variant="small" style={{color: itheme.palette.themeSecondary, fontWeight: 400}}>
+                                    Spikes (v1.0.0)
+                                </Text>
+                                <Text variant="small" style={{color: itheme.palette.themeSecondary, fontWeight: 400}}>
+                                    Spiking Neural Networks
+                                </Text>
+                                    <a href="mailto:rob.philipp@gmail.com" style={{textDecorationColor: itheme.palette.themeSecondary}}>
+                                        <Text variant="small" style={{color: itheme.palette.themeSecondary, fontWeight: 400}}>
+                                        rob.philipp@gmail.com
+                                        </Text>
+                                    </a>
+                            </div>
+                        </GridCell>
+                    </Grid>
 
-             </MessageProvider>
-         </LoadingProvider>
-            </>
+                </MessageProvider>
+            </LoadingProvider>
+        </>
     )
     // return (
     //     <div style={{height: '100vh', width: '100%'}}>

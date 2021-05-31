@@ -5,7 +5,17 @@ import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
-import {IconButton, Layer, LayerHost, MessageBar, MessageBarType, Separator, Stack, TooltipHost} from '@fluentui/react';
+import {
+    IconButton,
+    Layer,
+    LayerHost,
+    MessageBar,
+    MessageBarType,
+    Separator,
+    Stack,
+    Text,
+    TooltipHost
+} from '@fluentui/react';
 import {
     loadSensorsFrom,
     loadSensorsFromTemplate,
@@ -33,6 +43,7 @@ import {
     useGridCellWidth, withFraction, withGridTrack,
     withPixels
 } from "react-resizable-grid-layout";
+import {NEW_PROJECT_PATH} from "../simulation/SimulationManager";
 
 export const NEW_SENSOR_PATH = '**new**';
 
@@ -430,12 +441,15 @@ function SensorsEditor(props: Props): JSX.Element {
                     gridAreaName='sensorPath'
                     styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
                 >
-                    <span style={{color: itheme.palette.themeSecondary}}>
-                    {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
-                        '[new file]' :
-                        sensorDescriptionPath
-                    }{modified ? '*' : ''}
-                    </span>
+                    <Text
+                        variant="medium"
+                        style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
+                    >
+                        {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
+                            '[new file]' :
+                            sensorDescriptionPath
+                        }{modified ? '*' : ''}
+                    </Text>
                 </GridCell>
                 <GridCell gridAreaName='sensorEditorSidebar'>
                     <div>

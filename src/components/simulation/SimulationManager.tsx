@@ -1,4 +1,4 @@
-import {IconButton, MessageBarType, Pivot, PivotItem, Separator, TooltipHost} from "@fluentui/react";
+import {IconButton, MessageBarType, Pivot, PivotItem, Separator, Text, TooltipHost} from "@fluentui/react";
 import {remote} from "electron";
 import * as React from "react";
 import {useEffect, useState} from "react";
@@ -374,9 +374,12 @@ function SimulationManager(props: Props): JSX.Element {
                 gridAreaName='projectPath'
                 styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
             >
-                <span style={{color: itheme.palette.themeSecondary}}>
+                <Text
+                    variant="medium"
+                    style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
+                >
                     {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
-                </span>
+                </Text>
             </GridCell>
             <GridCell gridAreaName='sidebar'>
                 <div>

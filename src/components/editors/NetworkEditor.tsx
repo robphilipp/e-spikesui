@@ -15,7 +15,7 @@ import {
     updateNetworkDescription
 } from '../redux/actions/networkDescription';
 import {connect} from "react-redux";
-import {IconButton, MessageBar, MessageBarType, Separator, TooltipHost} from '@fluentui/react';
+import {IconButton, MessageBar, MessageBarType, Separator, Text, TooltipHost} from '@fluentui/react';
 import {remote} from "electron";
 import {KeyboardShortcut, keyboardShortcutFor} from "./keyboardShortcuts";
 import {baseRouterPathFrom} from '../router/router';
@@ -36,6 +36,7 @@ import {
     useGridCellHeight,
     useGridCellWidth
 } from 'react-resizable-grid-layout';
+import {NEW_PROJECT_PATH} from "../simulation/SimulationManager";
 
 export const NEW_NETWORK_PATH = '**new**';
 
@@ -385,12 +386,15 @@ function NetworkEditor(props: Props): JSX.Element {
                 gridAreaName='networkDescriptionPath'
                 styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
             >
-                <span style={{color: itheme.palette.themeSecondary}}>
+                <Text
+                    variant="medium"
+                    style={{color: itheme.palette.themeSecondary, fontWeight: 400}}
+                >
                     {networkDescriptionPath === undefined || networkDescriptionPath === templatePath ?
                         '[new file]' :
                         networkDescriptionPath
                     }{modified ? '*' : ''}
-                </span>
+                </Text>
             </GridCell>
             <GridCell gridAreaName='networkEditorSidebar'>
                 <div>

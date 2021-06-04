@@ -10,6 +10,7 @@ import {ConnectionInfo} from '../visualization/neuralthree/Connections';
 import Network from "../visualization/neuralthree/Network";
 import {useNeuronColors} from "../visualization/useNeuronColors";
 import {useTheme} from "../common/useTheme";
+import {useGridCell} from "react-resizable-grid-layout";
 
 interface OwnProps {
     height?: number
@@ -37,10 +38,9 @@ type Props = StateProps & OwnProps
  */
 function NetworkVisualization(props: Props): JSX.Element {
     const {itheme} = useTheme()
+    const {width, height} = useGridCell()
 
     const {
-        height = 400,
-        width = 600,
         excitationColor = new Color(itheme.palette.green),     // green
         inhibitionColor = new Color(itheme.palette.red),     // red
         colorAttenuation = 0.8,  // mostly the excitation or inhibition color

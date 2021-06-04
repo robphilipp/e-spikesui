@@ -1016,18 +1016,18 @@ export function RasterChart(props: Props): JSX.Element {
             }
 
             if (shouldSubscribe) {
-                // if (subscriptionRef.current !== undefined) {
-                //     subscriptionRef.current?.unsubscribe();
-                // }
-                subscriptionRef.current = subscribe();
-                console.log("subscribed to chart observable");
+                subscriptionRef.current = subscribe()
+                console.log("raster chart subscribed to network-events observable")
             } else {
-                subscriptionRef.current?.unsubscribe();
-                console.log("unsubscribed to chart observable");
+                subscriptionRef.current?.unsubscribe()
+                console.log("raster chart unsubscribed to network-events observable")
             }
 
             // stop the stream on dismount
-            return () => subscriptionRef.current?.unsubscribe();
+            return () => {
+                subscriptionRef.current?.unsubscribe()
+                console.log("raster chart unsubscribed to network-events observable on unmount")
+            }
         },
         [
             dropDataAfter,

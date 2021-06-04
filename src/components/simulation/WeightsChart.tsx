@@ -3,15 +3,16 @@ import {useEffect, useState} from 'react'
 // import {ChartData, Datum, RasterChart, Series, seriesFrom} from "stream-charts";
 import {Datum, Series, seriesFrom} from "../charts/datumSeries";
 import {ChartData} from "../charts/chartData";
-import {RasterChart} from "../charts/RasterChart";
 import {Observable} from "rxjs";
-import {NetworkEvent, Spike, SPIKE} from "../redux/actions/networkEvent";
+import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
 import {filter, map} from "rxjs/operators";
 import {HashMap, Option} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {AppState} from "../redux/reducers/root";
 import {connect} from "react-redux";
+import {ConnectionInfo} from "../visualization/neuralthree/Connections";
+import {ScatterChart} from '../charts/ScatterChart';
 import {useGridCell} from "react-resizable-grid-layout";
 
 interface OwnProps {
@@ -23,23 +24,23 @@ interface OwnProps {
 
 interface StateProps {
     networkId: Option<string>
-    neurons: HashMap<string, NeuronInfo>
-    // connections: HashMap<string, ConnectionInfo>
+    // neurons: HashMap<string, NeuronInfo>
+    connections: HashMap<string, ConnectionInfo>
 }
 
 type Props = StateProps & OwnProps
 
-function SpikesChart(props: Props): JSX.Element {
+function WeightsChart(props: Props): JSX.Element {
     const {
         networkObservable,
         shouldSubscribe,
-        neurons,
+        connections,
     } = props
     const {itheme} = useTheme()
     const {width, height} = useGridCell()
 
     const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(convert(networkObservable))
-    const [neuronList, setNeuronList] = useState<Array<Series>>(seriesList(neurons))
+    const [connectionList, setConnectionList] = useState<Array<Series>>(seriesList(connections))
 
     useEffect(
         () => {
@@ -50,19 +51,22 @@ function SpikesChart(props: Props): JSX.Element {
 
     useEffect(
         () => {
-            setNeuronList(seriesList(neurons));
+            setConnectionList(seriesList(connections));
         },
-        [neurons]
+        [connections]
     )
 
     function convert(observable: Observable<NetworkEvent>): Observable<ChartData> {
         return observable.pipe(
-            filter(event => event.type === SPIKE),
-            map(event => event.payload as Spike),
-            map(spike => ({
-                maxTime: spike.timestamp.value,
+            filter(event => event.type === CONNECTION_WEIGHT),
+            map(event => event.payload as ConnectionWeight),
+            map(weight => ({
+                maxTime: weight.signalTime.value,
                 newPoints: new Map<string, Array<Datum>>(
-                    [[spike.neuronId, [{time: spike.timestamp.value, value: spike.signalIntensity.value} as Datum]]]
+                    [[
+                        `${weight.sourceId}-${weight.neuronId}`,
+                        [{time: weight.signalTime.value, value: weight.newWeight} as Datum]]
+                    ]
                 )
             }))
         )
@@ -73,22 +77,22 @@ function SpikesChart(props: Props): JSX.Element {
      * @param {HashMap<string, NeuronInfo>} neurons A map holding the neuron ID to its association information
      * @return {Array<Series>} The array of {@link Series} holding the neuron ID and empty data.
      */
-    function seriesList(neurons: HashMap<string, NeuronInfo>): Array<Series> {
+    function seriesList(neurons: HashMap<string, ConnectionInfo>): Array<Series> {
         return neurons
             .toVector()
-            .map(([, info]) => seriesFrom(info.name))
+            .map(([, info]) => seriesFrom(`${info.preSynaptic.name}-${info.postSynaptic.name}`))
             .toArray()
     }
 
     return (
-        <RasterChart
-            // height={neuronList.length * heightPerNeuron + 60}
+        <ScatterChart
             height={height}
             width={width}
-            seriesList={neuronList}
+            seriesList={connectionList}
             seriesObservable={chartObservable}
             shouldSubscribe={shouldSubscribe}
             // onSubscribe={subscription => subscriptionRef.current = subscription}
+            onSubscribe={subscription => console.log("weights chart subscribed to learn subject")}
             // timeWindow={timeWindow}
             timeWindow={5000}
             windowingTime={100}
@@ -121,10 +125,7 @@ function SpikesChart(props: Props): JSX.Element {
             axisStyle={{color: itheme.palette.themePrimary}}
             axisLabelFont={{color: itheme.palette.themePrimary}}
             plotGridLines={{color: itheme.palette.themeLighter}}
-            spikesStyle={{
-                color: itheme.palette.themePrimary,
-                highlightColor: itheme.palette.themePrimary
-            }}
+            minY={0}
         />
     )
 }
@@ -144,8 +145,8 @@ function SpikesChart(props: Props): JSX.Element {
  */
 const mapStateToProps = (state: AppState): StateProps => ({
     networkId: state.networkManagement.networkId,
-    neurons: state.networkEvent.neurons,
-    // connections: state.networkEvent.connections,
+    // neurons: state.networkEvent.neurons,
+    connections: state.networkEvent.connections,
 });
 
-export default connect(mapStateToProps, {})(SpikesChart)
+export default connect(mapStateToProps, {})(WeightsChart)

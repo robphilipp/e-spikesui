@@ -1,16 +1,20 @@
-import { default as React, useEffect, useRef } from "react";
+import {default as React, useEffect, useRef} from "react";
 import * as d3 from "d3";
-import { Axis, ScaleLinear, Selection, ZoomTransform } from "d3";
-import { adjustedDimensions, Margin, PlotDimensions } from "./margins";
-import { Datum, emptySeries, Series } from "./datumSeries";
-import { timeRangeFor, TimeRange } from "./timeRange";
-import { defaultTooltipStyle, TooltipStyle } from "./TooltipStyle";
-import { fromEvent, Observable, Subscription } from "rxjs";
-import { ChartData } from "./chartData";
-import { LensTransformation2d, RadialMagnifier, radialMagnifierWith } from "./radialMagnifier";
-import { throttleTime, windowTime } from "rxjs/operators";
-import { defaultTrackerStyle, TrackerStyle } from "./TrackerStyle";
-import { grabWidth, initialSvgStyle, SvgStyle } from "./svgStyle";
+import {Axis, ScaleLinear, Selection, ZoomTransform} from "d3";
+import {adjustedDimensions, Margin, PlotDimensions} from "./margins";
+import {Datum, emptySeries, Series} from "./datumSeries";
+import {TimeRange, timeRangeFor} from "./timeRange";
+import {defaultTooltipStyle, TooltipStyle} from "./TooltipStyle";
+import {fromEvent, Observable, Subscription} from "rxjs";
+import {ChartData} from "./chartData";
+import {LensTransformation2d, RadialMagnifier, radialMagnifierWith} from "./radialMagnifier";
+import {throttleTime, windowTime} from "rxjs/operators";
+import {defaultTrackerStyle, TrackerStyle} from "./TrackerStyle";
+import {grabWidth, initialSvgStyle, SvgStyle} from "./svgStyle";
+
+function noop(): void {
+    /* empty */
+}
 
 const defaultMargin = { top: 30, right: 20, bottom: 30, left: 50 };
 const defaultAxesStyle = { color: '#d2933f' };
@@ -138,9 +142,9 @@ export function ScatterChart(props: Props): JSX.Element {
         windowingTime = 100,
         dropDataAfter = Infinity,
         shouldSubscribe = true,
-        onSubscribe = (_: Subscription) => {},
-        onUpdateData = () => { },
-        onUpdateTime = (_: number) => { },
+        onSubscribe = noop,
+        onUpdateData = noop,
+        onUpdateTime = noop,
         filter = /./,
         seriesColors = seriesColorsFor(seriesList, defaultLineStyle.color, "#a9a9b4")
     } = props;
@@ -198,6 +202,7 @@ export function ScatterChart(props: Props): JSX.Element {
     const seriesRef = useRef<Map<string, Series>>(new Map<string, Series>(seriesList.map(series => [series.name, series])));
     const currentTimeRef = useRef<number>(0);
 
+    const subscriptionRef = useRef<Subscription>();
 
     // unlike the magnifier, the handler forms a closure on the tooltip properties, and so if they change in this
     // component, the closed properties are unchanged. using a ref allows the properties to which the reference
@@ -224,7 +229,7 @@ export function ScatterChart(props: Props): JSX.Element {
             }
 
             // subscribe to the throttled resizing events using a consumer that updates the plot
-            const subscription = resizeEventFlowRef.current.subscribe(_ => updateDimensionsAndPlot());
+            const subscription = resizeEventFlowRef.current.subscribe(() => updateDimensionsAndPlot());
 
             // stop listening to resize events when this component unmounts
             return () => {
@@ -243,11 +248,70 @@ export function ScatterChart(props: Props): JSX.Element {
     // called on mount, dismount and when shouldSubscribe changes
     useEffect(
         () => {
-            if (shouldSubscribe) {
-                const subscription = subscribe();
+            /**
+             * Subscribes to the observable that streams chart events and hands the subscription a consumer
+             * that updates the charts as events enter. Also hands the subscription back to the parent
+             * component using the registered {@link onSubscribe} callback method from the properties.
+             * @return {Subscription} The subscription (disposable) for cancelling
+             */
+            function subscribe(): Subscription {
+                const subscription = seriesObservable
+                    .pipe(windowTime(windowingTime))
+                    .subscribe(dataList => {
+                        dataList.forEach(data => {
+                            // updated the current time to be the max of the new data
+                            currentTimeRef.current = data.maxTime;
 
-                // stop the stream on dismount
-                return () => subscription.unsubscribe();
+                            // add each new point to it's corresponding series
+                            data.newPoints.forEach((newData, name) => {
+                                // grab the current series associated with the new data
+                                const series = seriesRef.current.get(name) || emptySeries(name);
+
+                                // update the handler with the new data point
+                                onUpdateData(name, newData);
+
+                                // add the new data to the series
+                                series.data.push(...newData);
+
+                                // drop data that is older than the max time-window
+                                while (currentTimeRef.current - series.data[0].time > dropDataAfter) {
+                                    series.data.shift();
+                                }
+                            })
+
+                            // update the data
+                            // liveDataRef.current = Array.from(seriesRef.current.values());
+                            liveDataRef.current = seriesRef.current;
+                            timeRangeRef.current = timeRangeFor(
+                                Math.max(0, currentTimeRef.current - timeWindow),
+                                Math.max(currentTimeRef.current, timeWindow)
+                            )
+                        }).then(() => {
+                            // updates the caller with the current time
+                            onUpdateTime(currentTimeRef.current);
+
+                            updatePlot(timeRangeRef.current, plotDimRef.current);
+                        })
+                    });
+
+                // provide the subscription to the caller
+                onSubscribe(subscription);
+
+                return subscription;
+            }
+
+            if (shouldSubscribe) {
+                subscriptionRef.current = subscribe()
+                console.log("scatter chart subscribed to network-events observable")
+            } else {
+                subscriptionRef.current?.unsubscribe()
+                console.log("scatter chart unsubscribed to the network-events observable")
+            }
+
+            // stop the stream on dismount
+            return () => {
+                subscriptionRef.current?.unsubscribe()
+                console.log("scatter chart unsubscribed to the network-events observable on unmount")
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1149,58 +1213,6 @@ export function ScatterChart(props: Props): JSX.Element {
         return series.data
             .filter((datum: Datum, index: number, array: Datum[]) => inTimeRange(datum, index, array))
             .map(datum => [datum.time, datum.value]);
-    }
-
-    /**
-     * Subscribes to the observable that streams chart events and hands the subscription a consumer
-     * that updates the charts as events enter. Also hands the subscription back to the parent
-     * component using the registered {@link onSubscribe} callback method from the properties.
-     * @return {Subscription} The subscription (disposable) for cancelling
-     */
-    function subscribe(): Subscription {
-        const subscription = seriesObservable
-            .pipe(windowTime(windowingTime))
-            .subscribe(dataList => {
-                dataList.forEach(data => {
-                    // updated the current time to be the max of the new data
-                    currentTimeRef.current = data.maxTime;
-
-                    // add each new point to it's corresponding series
-                    data.newPoints.forEach((newData, name) => {
-                        // grab the current series associated with the new data
-                        const series = seriesRef.current.get(name) || emptySeries(name);
-
-                        // update the handler with the new data point
-                        onUpdateData(name, newData);
-
-                        // add the new data to the series
-                        series.data.push(...newData);
-
-                        // drop data that is older than the max time-window
-                        while (currentTimeRef.current - series.data[0].time > dropDataAfter) {
-                            series.data.shift();
-                        }
-                    })
-
-                    // update the data
-                    // liveDataRef.current = Array.from(seriesRef.current.values());
-                    liveDataRef.current = seriesRef.current;
-                    timeRangeRef.current = timeRangeFor(
-                        Math.max(0, currentTimeRef.current - timeWindow),
-                        Math.max(currentTimeRef.current, timeWindow)
-                    )
-                }).then(() => {
-                    // updates the caller with the current time
-                    onUpdateTime(currentTimeRef.current);
-
-                    updatePlot(timeRangeRef.current, plotDimRef.current);
-                })
-            });
-
-        // provide the subscription to the caller
-        onSubscribe(subscription);
-
-        return subscription;
     }
 
     /**

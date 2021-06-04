@@ -47,6 +47,7 @@ import {
     withFraction, withGridTrack,
     withPixels
 } from 'react-resizable-grid-layout';
+import WeightsChart from './WeightsChart';
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -304,8 +305,10 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     async function handleStart(): Promise<void> {
         if (networkManagerThreadRef.current === undefined) {
-            setMessage(MessageBarType.error, <div>Cannot start the network because the network manager thread is
-                undefined</div>)
+            setMessage(
+                MessageBarType.error,
+                <div>Cannot start the network because the network manager thread is undefined</div>
+            )
             return;
         }
         const networkManager = networkManagerThreadRef.current;
@@ -614,14 +617,6 @@ function RunDeployManager(props: Props): JSX.Element {
                             <NetworkVisualization
                                 key="net-1"
                                 networkObservable={spikeSubject}
-                                height={
-                                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                                    useGridCellHeight()
-                                }
-                                width={
-                                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                                    useGridCellWidth()
-                                }
                                 {...props}
                             /> :
                             <div/>
@@ -630,14 +625,6 @@ function RunDeployManager(props: Props): JSX.Element {
                     <GridCell row={1} column={2}>
                         {networkId.isSome() && networkBuilt ?
                             <SpikesChart
-                                height={
-                                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                                    useGridCellHeight()
-                                }
-                                width={
-                                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                                    useGridCellWidth()
-                                }
                                 networkObservable={spikeSubject}
                                 shouldSubscribe={running}
                                 {...props}
@@ -647,7 +634,11 @@ function RunDeployManager(props: Props): JSX.Element {
                     </GridCell>
                     <GridCell row={2} column={2}>
                         {networkId.isSome() && networkBuilt ?
-                            <div style={{color: itheme.palette.themePrimary}}>weights chart</div> :
+                            <WeightsChart
+                                networkObservable={learnSubject}
+                                shouldSubscribe={running}
+                                {...props}
+                            /> :
                             <div/>
                         }
                     </GridCell>
@@ -657,7 +648,6 @@ function RunDeployManager(props: Props): JSX.Element {
         </Grid>
     )
 }
-
 
 /*
  |

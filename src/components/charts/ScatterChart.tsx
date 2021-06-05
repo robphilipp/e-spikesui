@@ -81,7 +81,7 @@ const defaultRadialMagnifierStyle: RadialMagnifierStyle = {
 };
 
 interface Props {
-    width?: number;
+    width: number;
     height: number;
     margin?: Partial<Margin>;
     axisLabelFont?: Partial<{ size: number, color: string, family: string, weight: number }>;
@@ -132,6 +132,7 @@ interface Props {
 export function ScatterChart(props: Props): JSX.Element {
 
     const {
+        width,
         height,
         backgroundColor = '#202020',
         minY = -1, maxY = 1,
@@ -165,16 +166,16 @@ export function ScatterChart(props: Props): JSX.Element {
     const chartId = useRef<number>(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
 
     // hold a reference to the current width and the plot dimensions
-    const width = useRef<number>(props.width || 500);
-    const plotDimRef = useRef<PlotDimensions>(adjustedDimensions(width.current, height, margin));
+    // const width = useRef<number>(props.width || 500);
+    const plotDimRef = useRef<PlotDimensions>(adjustedDimensions(width, height, margin));
 
-    // resize event throttling
-    const resizeEventFlowRef = useRef<Observable<Event>>(
-        fromEvent(window, 'resize')
-            .pipe(
-                throttleTime(50)
-            )
-    );
+    // // resize event throttling
+    // const resizeEventFlowRef = useRef<Observable<Event>>(
+    //     fromEvent(window, 'resize')
+    //         .pipe(
+    //             throttleTime(50)
+    //         )
+    // );
 
     // the container that holds the d3 svg element
     const containerRef = useRef<SVGSVGElement>(null);
@@ -227,14 +228,14 @@ export function ScatterChart(props: Props): JSX.Element {
                 axesRef.current = initializeAxes(svg, plotDimRef.current);
                 updateDimensionsAndPlot();
             }
-
-            // subscribe to the throttled resizing events using a consumer that updates the plot
-            const subscription = resizeEventFlowRef.current.subscribe(() => updateDimensionsAndPlot());
-
-            // stop listening to resize events when this component unmounts
-            return () => {
-                subscription.unsubscribe();
-            }
+            //
+            // // subscribe to the throttled resizing events using a consumer that updates the plot
+            // const subscription = resizeEventFlowRef.current.subscribe(() => updateDimensionsAndPlot());
+            //
+            // // stop listening to resize events when this component unmounts
+            // return () => {
+            //     subscription.unsubscribe();
+            // }
         },
         // we really, really only want this called when the component mounts, and there are
         // no stale closures in the this. recall that d3 manages the updates to the chart, and
@@ -315,7 +316,7 @@ export function ScatterChart(props: Props): JSX.Element {
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [shouldSubscribe]
+        [shouldSubscribe, seriesObservable]
     )
 
     // update the plot for tooltip, magnifier, or tracker if their visibility changes
@@ -439,7 +440,7 @@ export function ScatterChart(props: Props): JSX.Element {
      */
     function onZoom(transform: ZoomTransform, x: number, plotDimensions: PlotDimensions): void {
         // only zoom if the mouse is in the plot area
-        if (x > 0 && x < width.current - margin.right) {
+        if (x > 0 && x < width - margin.right) {
             const time = axesRef.current!.xAxisGenerator.scale<ScaleLinear<number, number>>().invert(x);
             timeRangeRef.current = timeRangeRef.current!.scale(transform.k, time);
             zoomFactorRef.current = transform.k;
@@ -869,7 +870,7 @@ export function ScatterChart(props: Props): JSX.Element {
      * @return {boolean} `true` if the mouse is in the plot area; `false` if the mouse is not in the plot area
      */
     function mouseInPlotArea(x: number, y: number): boolean {
-        return x > margin.left && x < width.current - margin.right && y > margin.top && y < height - margin.bottom;
+        return x > margin.left && x < width - margin.right && y > margin.top && y < height - margin.bottom;
     }
 
     /**
@@ -1103,7 +1104,7 @@ export function ScatterChart(props: Props): JSX.Element {
             // once
             if (mainGRef.current === undefined) {
                 mainGRef.current = svg
-                    .attr('width', width.current)
+                    .attr('width', width)
                     .attr('height', height)
                     .attr('color', axisStyle.color)
                     .append<SVGGElement>('g')
@@ -1131,7 +1132,7 @@ export function ScatterChart(props: Props): JSX.Element {
             // set up for zooming
             const zoom = d3.zoom<SVGSVGElement, Datum>()
                 .scaleExtent([0, 10])
-                .translateExtent([[margin.left, margin.top], [width.current - margin.right, height - margin.bottom]])
+                .translateExtent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]])
                 .on("zoom", () => {
                     onZoom(d3.event.transform, d3.event.sourceEvent.offsetX - margin.left, plotDimensions);
                 })
@@ -1219,8 +1220,8 @@ export function ScatterChart(props: Props): JSX.Element {
      * Updates the plot dimensions and then updates the plot
      */
     function updateDimensionsAndPlot(): void {
-        width.current = grabWidth(containerRef.current);
-        plotDimRef.current = adjustedDimensions(width.current, height, margin);
+        // width.current = grabWidth(containerRef.current);
+        plotDimRef.current = adjustedDimensions(width, height, margin);
         updatePlot(timeRangeRef.current, plotDimRef.current);
     }
 

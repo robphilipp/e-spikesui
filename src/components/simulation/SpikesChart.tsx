@@ -82,7 +82,6 @@ function SpikesChart(props: Props): JSX.Element {
 
     return (
         <RasterChart
-            // height={neuronList.length * heightPerNeuron + 60}
             height={height}
             width={width}
             seriesList={neuronList}

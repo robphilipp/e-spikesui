@@ -82,7 +82,7 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
         networkEvents.subscribe(event => spikesSubject.next(event))
 
         const learnSubject = new Subject<NetworkEvent>()
-        learnEvents.subscribe(event => spikesSubject.next(event))
+        learnEvents.subscribe(event => learnSubject.next(event))
 
         return {
             spikeEventsSubject: spikesSubject,

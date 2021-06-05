@@ -1,16 +1,7 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
 import {RouteComponentProps, withRouter} from "react-router-dom";
-import {
-    IconButton,
-    IStackItemProps,
-    ITheme,
-    MessageBarType,
-    Separator,
-    Stack,
-    Text,
-    TooltipHost
-} from "@fluentui/react";
+import {IconButton, ITheme, MessageBarType, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
 import {ApplicationAction,} from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -41,10 +32,14 @@ import {useLoading} from "../common/useLoading";
 import {useMessage} from "../common/useMessage";
 import SpikesChart from "./SpikesChart";
 import {
-    Grid, gridArea, GridCell, gridTemplateAreasBuilder,
-    gridTrackTemplateBuilder, useGridCell, useGridCellHeight, useGridCellWidth,
-    useWindowDimensions,
-    withFraction, withGridTrack,
+    Grid,
+    gridArea,
+    GridCell,
+    gridTemplateAreasBuilder,
+    gridTrackTemplateBuilder,
+    useGridCell,
+    withFraction,
+    withGridTrack,
     withPixels
 } from 'react-resizable-grid-layout';
 import WeightsChart from './WeightsChart';
@@ -127,8 +122,8 @@ function RunDeployManager(props: Props): JSX.Element {
 
     // observable that streams the unadulterated network events
     const buildSubscriptionRef = useRef<Subscription>()
-    const [spikeSubject, setSpikeSubject] = useState<Subject<NetworkEvent>>(new Subject());
-    const [learnSubject, setLearnSubject] = useState<Subject<NetworkEvent>>(new Subject());
+    const spikeSubjectRef = useRef<Subject<NetworkEvent>>(new Subject())
+    const learnSubjectRef = useRef<Subject<NetworkEvent>>(new Subject())
     const [running, setRunning] = useState(false);
     const [usedUp, setUsedUp] = useState(false);
 
@@ -144,13 +139,7 @@ function RunDeployManager(props: Props): JSX.Element {
             // set up the network manager thread for managing the network and the sensor
             newNetworkManagerThread().then(managerThread => networkManagerThreadRef.current = managerThread);
 
-            // // listen to resize events so that the visualization size can be updated
-            // window.addEventListener('resize', handleWindowResize);
-
             return () => {
-                // // stop listening to resize events
-                // window.removeEventListener('resize', handleWindowResize);
-
                 networkManagerThreadRef.current?.stop()
                     .then(() => networkManagerThreadRef.current?.remove()
                         .then(() => networkManagerThreadRef.current?.terminate())
@@ -316,8 +305,8 @@ function RunDeployManager(props: Props): JSX.Element {
         updateLoadingState(true, "Attempting to start neural network")
         try {
             const {spikeEventsSubject, learnEventSubject} = await networkManager.start(sensorDescription, timeFactor)
-            setSpikeSubject(spikeEventsSubject)
-            setLearnSubject(learnEventSubject)
+            spikeSubjectRef.current = spikeEventsSubject
+            learnSubjectRef.current = learnEventSubject
             setRunning(true)
 
             // start the simulation timer
@@ -616,7 +605,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         {networkId.isSome() && networkBuilt ?
                             <NetworkVisualization
                                 key="net-1"
-                                networkObservable={spikeSubject}
+                                networkObservable={spikeSubjectRef.current}
                                 {...props}
                             /> :
                             <div/>
@@ -625,7 +614,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     <GridCell row={1} column={2}>
                         {networkId.isSome() && networkBuilt ?
                             <SpikesChart
-                                networkObservable={spikeSubject}
+                                networkObservable={spikeSubjectRef.current}
                                 shouldSubscribe={running}
                                 {...props}
                             /> :
@@ -635,7 +624,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     <GridCell row={2} column={2}>
                         {networkId.isSome() && networkBuilt ?
                             <WeightsChart
-                                networkObservable={learnSubject}
+                                networkObservable={learnSubjectRef.current}
                                 shouldSubscribe={running}
                                 {...props}
                             /> :

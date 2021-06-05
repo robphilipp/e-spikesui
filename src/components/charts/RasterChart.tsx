@@ -1104,8 +1104,6 @@ export function RasterChart(props: Props): JSX.Element {
             style={{
                 ...svgStyle,
                 backgroundColor: backgroundColor,
-                // height: plotDimRef.current.height,
-                // width: plotDimRef.current.width,
             }}
             ref={containerRef}
         />

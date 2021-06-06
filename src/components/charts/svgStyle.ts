@@ -1,15 +1,18 @@
+
+
 export interface SvgStyle {
     // height: string;
-    width?: string;
-    outline?: string;
-
-    [propName: string]: any;
+    width?: number | string
+    outline?: string
+    display?: string
+    top?: number
+    left?: number
+    // [propName: string]: any;
 }
 
 export const initialSvgStyle: SvgStyle = {
     width: '100%',
     display: "inline-block",
-    position: "floating",
     top: 0,
     left: 0
 };

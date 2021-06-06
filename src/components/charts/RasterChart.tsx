@@ -1,57 +1,38 @@
-import {default as React, useCallback, useEffect, useMemo, useRef} from "react";
+import {default as React, SVGProps, useCallback, useEffect, useMemo, useRef} from "react";
 import * as d3 from "d3";
 import {Axis, ScaleBand, ScaleLinear, Selection, ZoomTransform} from "d3";
 import {BarMagnifier, barMagnifierWith, LensTransformation} from "./barMagnifier";
 import {TimeRange, timeRangeFor} from "./timeRange";
 import {adjustedDimensions, Margin, PlotDimensions} from "./margins";
 import {Datum, emptySeries, PixelDatum, Series} from "./datumSeries";
-import {defaultTooltipStyle, TooltipStyle} from "./TooltipStyle";
+import {TooltipStyle} from "./TooltipStyle";
 import {Observable, Subscription} from "rxjs";
 import {ChartData} from "./chartData";
 import {windowTime} from "rxjs/operators";
-import {defaultTrackerStyle, TrackerStyle} from "./TrackerStyle";
+import {TrackerStyle} from "./TrackerStyle";
+import {
+    AxisElementSelection,
+    BarMagnifierSelection,
+    generateChartId,
+    GSelection,
+    LineMagnifierStyle,
+    LineSelection,
+    noop,
+    SvgSelection,
+    textWidthOf,
+    TrackerSelection
+} from "./chartUtils";
+import {defaultLineMagnifierStyle, mergeStyleDefaults} from "./chartDefaults";
 import {initialSvgStyle, SvgStyle} from "./svgStyle";
 
-function noop() {/* empty */
-}
-
-const defaultMargin: Margin = {top: 30, right: 20, bottom: 30, left: 50};
 const defaultSpikesStyle = {
     margin: 2,
     color: '#008aad',
     lineWidth: 2,
     highlightColor: '#d2933f',
     highlightWidth: 4
-};
-const defaultAxesStyle = {color: '#d2933f'};
-const defaultAxesLabelFont = {
-    size: 12,
-    color: '#d2933f',
-    weight: 300,
-    family: 'sans-serif'
-};
-const defaultPlotGridLines = {visible: true, color: 'rgba(210,147,63,0.30)'};
-
-/**
- * Properties for rendering the line-magnifier lens
- */
-interface LineMagnifierStyle {
-    visible: boolean;
-    width: number;
-    magnification: number;
-    color: string;
-    lineWidth: number;
-    axisOpacity?: number;
 }
-
-const defaultLineMagnifierStyle: LineMagnifierStyle = {
-    visible: false,
-    width: 125,
-    magnification: 1,
-    color: '#d2933f',
-    lineWidth: 1,
-    axisOpacity: 0.35
-};
+const defaultPlotGridLines = {visible: true, color: 'rgba(210,147,63,0.30)'}
 
 interface MagnifiedDatum extends Datum {
     lens: LensTransformation
@@ -67,17 +48,6 @@ interface Axes {
     lineHeight: number;
 }
 
-// the axis-element type return when calling the ".call(axis)" function
-type AxisElementSelection = Selection<SVGGElement, unknown, null, undefined>;
-type SvgSelection = Selection<SVGSVGElement, any, null, undefined>;
-type MagnifierSelection = Selection<SVGRectElement, Datum, null, undefined>;
-type LineSelection = Selection<SVGLineElement, any, SVGGElement, undefined>;
-type GSelection = Selection<SVGGElement, any, null, undefined>;
-type TrackerSelection = Selection<SVGLineElement, Datum, null, undefined>;
-type TextSelection = Selection<SVGTextElement, any, HTMLElement, any>;
-
-const textWidthOf = (elem: TextSelection) => elem.node()?.getBBox()?.width || 0;
-
 interface Props {
     width?: number;
     height?: number;
@@ -90,6 +60,7 @@ interface Props {
     tooltip?: Partial<TooltipStyle>;
     magnifier?: Partial<LineMagnifierStyle>;
     tracker?: Partial<TrackerStyle>;
+    // svgStyle?: SVGProps<SVGSVGElement>
     svgStyle?: Partial<SvgStyle>;
 
     // data to plot: time-window is the time-range of data shown (slides in time)
@@ -137,21 +108,23 @@ export function RasterChart(props: Props): JSX.Element {
     } = props;
 
     // override the defaults with the parent's properties, leaving any unset values as the default value
-    const margin = useMemo<Margin>(() => ({...defaultMargin, ...props.margin}), [props.margin])
-    const spikesStyle = useMemo(() => ({...defaultSpikesStyle, ...props.spikesStyle}), [props.spikesStyle])
-    const axisStyle = useMemo(() => ({...defaultAxesStyle, ...props.axisStyle}), [props.axisStyle])
-    const axisLabelFont = useMemo(() => ({...defaultAxesLabelFont, ...props.axisLabelFont}), [props.axisLabelFont])
-    const plotGridLines = useMemo(() => ({...defaultPlotGridLines, ...props.plotGridLines}), [props.plotGridLines])
-    const tooltip = useMemo<TooltipStyle>(() => ({...defaultTooltipStyle, ...props.tooltip}), [props.tooltip])
-    const magnifier = useMemo(() => ({...defaultLineMagnifierStyle, ...props.magnifier}), [props.magnifier])
-    const tracker = useMemo(() => ({...defaultTrackerStyle, ...props.tracker}), [props.tracker])
-    const svgStyle = width !== undefined ?
-        {...initialSvgStyle, ...props.svgStyle, width} :
-        {...initialSvgStyle, ...props.svgStyle}
-    ;
+    const {margin, axisStyle, axisLabelFont, tooltip, tracker, svgStyle} = useMemo(() => mergeStyleDefaults({
+        margin: props.margin,
+        axisStyle: props.axisStyle,
+        axisLabelFont: props.axisLabelFont,
+        tooltip: props.tooltip,
+        tracker: props.tracker,
+        svgStyle: width !== undefined ? {...props.svgStyle, width} : props.svgStyle
+    }), [props.margin, props.axisStyle, props.axisLabelFont, props.tooltip, props.tracker, props.svgStyle])
+
+    const {spikesStyle, plotGridLines, magnifier} = useMemo(() => ({
+        spikesStyle: {...defaultSpikesStyle, ...props.spikesStyle},
+        plotGridLines: {...defaultPlotGridLines, ...props.plotGridLines},
+        magnifier: {...defaultLineMagnifierStyle, ...props.magnifier}
+    }), [props.spikesStyle, props.plotGridLines, props.magnifier])
 
     // id of the chart to avoid dom conflicts when multiple raster charts are used in the same app
-    const chartId = useRef<number>(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
+    const chartId = useRef<number>(generateChartId());
 
     // hold a reference to the current width and the plot dimensions
     const plotDimRef = useRef<PlotDimensions>(adjustedDimensions(width, height, margin));
@@ -593,7 +566,7 @@ export function RasterChart(props: Props): JSX.Element {
              * @param height The height of the magnifier lens
              * @return The magnifier selection if visible; otherwise undefined
              */
-            function magnifierLens(svg: SvgSelection, visible: boolean, height: number): MagnifierSelection | undefined {
+            function magnifierLens(svg: SvgSelection, visible: boolean, height: number): BarMagnifierSelection | undefined {
                 if (visible && magnifierRef.current === undefined) {
                     const linearGradient = svg
                         .append<SVGDefsElement>('defs')
@@ -1017,16 +990,13 @@ export function RasterChart(props: Props): JSX.Element {
 
             if (shouldSubscribe) {
                 subscriptionRef.current = subscribe()
-                console.log("raster chart subscribed to network-events observable")
             } else {
                 subscriptionRef.current?.unsubscribe()
-                console.log("raster chart unsubscribed to network-events observable")
             }
 
             // stop the stream on dismount
             return () => {
                 subscriptionRef.current?.unsubscribe()
-                console.log("raster chart unsubscribed to network-events observable on unmount")
             }
         },
         [
@@ -1101,6 +1071,7 @@ export function RasterChart(props: Props): JSX.Element {
 
     return (
         <svg
+            // viewBox={`0 0 ${width} ${height}`}
             style={{
                 ...svgStyle,
                 backgroundColor: backgroundColor,

@@ -485,69 +485,6 @@ function SensorsEditor(props: Props): JSX.Element {
             </Grid>
         </div>
     )
-    // return (
-    //     <div
-    //         ref={editorRef}
-    //         // can't just set a fraction for the height because the parent height may not be
-    //         // set...but if it is, then you can use that.
-    //         // style={{height: window.innerHeight * 0.9, width: '100%'}}
-    //         style={{height: '100%', width: '100%'}}
-    //         onKeyDown={handleKeyboardShortcut}
-    //     >
-    //         {message || <span/>}
-    //         <div
-    //             style={{
-    //                 marginLeft: 30,
-    //                 marginBottom: 8,
-    //                 height: 15,
-    //                 color: itheme.palette.themeSecondary
-    //             }}
-    //         >
-    //             {sensorDescriptionPath === undefined || sensorDescriptionPath === templatePath ?
-    //                 '[new file]' :
-    //                 sensorDescriptionPath
-    //             }{modified ? '*' : ''}
-    //         </div>
-    //         <Stack horizontal verticalFill>
-    //             <Stack.Item>
-    //                 {newButton()}
-    //                 {saveButton()}
-    //                 {loadButton()}
-    //                 <Separator/>
-    //                 {showSimulationButton()}
-    //             </Stack.Item>
-    //             <Stack.Item grow verticalFill>
-    //                 {/*<DimensionProvider>*/}
-    //                 <MonacoEditor
-    //                     editorId='spikes-env'
-    //                     // width={dimension.width}
-    //                     // height={dimension.height}
-    //                     width={useGridCellWidth()}
-    //                     height={useGridCellHeight()}
-    //                     language="javascript"
-    //                     theme={themeName}
-    //                     customThemes={editorThemes}
-    //                     value={codeSnippet}
-    //                     options={editorOptions}
-    //                     onChange={onChanged}
-    //                     editorDidMount={noop}
-    //                 />
-    //                 {/*</DimensionProvider>*/}
-    //                 {showSimulation && <LayerHost id='chart-layer'/>}
-    //             </Stack.Item>
-    //         </Stack>
-    //         {showSimulation &&
-    //         <Layer hostId="chart-layer">
-    //             <Separator>Sensor Simulation</Separator>
-    //             <SensorSimulation
-    //                 itheme={itheme}
-    //                 codeSnippet={codeSnippet}
-    //                 timeFactor={timeFactor}
-    //                 onClose={hideSimulationLayer}
-    //             />
-    //         </Layer>}
-    //     </div>
-    // )
 }
 
 /*

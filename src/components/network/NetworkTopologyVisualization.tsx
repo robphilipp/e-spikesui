@@ -20,14 +20,14 @@ import {useNeuronColors} from "../visualization/useNeuronColors";
 import {
     Grid,
     gridArea,
-    GridCell,
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
     withFraction,
     withPixels,
     useGridCellHeight,
-    useGridCellWidth
+    useGridCellWidth,
+    GridItem
 } from 'react-resizable-grid-layout';
 
 export interface OwnProps extends RouteComponentProps<never> {
@@ -147,7 +147,7 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                 .build()
             }
         >
-            <GridCell gridAreaName='networkEditorSimulationHeader'>
+            <GridItem gridAreaName='networkEditorSimulationHeader'>
                 <div style={{display: 'flex', justifyContent: 'flex-end'}}>
                 <TooltipHost content="Hide the network visualization">
                     <IconButton
@@ -156,8 +156,8 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                     />
                 </TooltipHost>
                 </div>
-            </GridCell>
-            <GridCell gridAreaName='networkEditorNetworkViz'>
+            </GridItem>
+            <GridItem gridAreaName='networkEditorNetworkViz'>
                 <Network
                     visualizationId="editor-visualization"
                     sceneHeight={
@@ -175,7 +175,7 @@ function NetworkTopologyVisualization(props: Props): JSX.Element {
                     networkObservable={networkObservable}
                     spikeDuration={230}
                 />
-            </GridCell>
+            </GridItem>
         </Grid>
     )
 }

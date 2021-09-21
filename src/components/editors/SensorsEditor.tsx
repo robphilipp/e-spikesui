@@ -35,7 +35,7 @@ import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 import {
     Grid,
     gridArea,
-    GridCell,
+    GridItem,
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
@@ -134,11 +134,11 @@ function SensorsEditor(props: Props): JSX.Element {
         (filePath: string): void => {
             if (filePath === NEW_SENSOR_PATH || filePath === 'undefined') {
                 onLoadTemplate(templatePath)
-                    .then(() => console.log("loaded"))
+                    .then(() => console.log("loaded code-snippet template for sensor"))
                     .catch(reason => setMessage(errorMessage(reason.message)))
             } else {
                 onLoadSensor(filePath)
-                    .then(() => console.log("loaded"))
+                    .then(() => console.log("loaded code-snippet for sensor"))
                     .catch(reason => setMessage(errorMessage(reason.message)))
             }
         },
@@ -175,18 +175,6 @@ function SensorsEditor(props: Props): JSX.Element {
             if (codeSnippet === undefined || codeSnippet === '') {
                 loadCodeSnippetOrTemplate(decodeURIComponent(sensorsPath));
             }
-
-            // if (editorRef.current) {
-            //     setDimension(editorDimensions());
-            // }
-            //
-            // // listen to resize events so that the editor width and height can be updated
-            // window.addEventListener('resize', handleWindowResize);
-            //
-            // return () => {
-            //     // stop listening to resize events
-            //     window.removeEventListener('resize', handleWindowResize);
-            // }
         },
         [codeSnippet, loadCodeSnippetOrTemplate, sensorsPath]
     );
@@ -198,31 +186,6 @@ function SensorsEditor(props: Props): JSX.Element {
         },
         [path]
     )
-
-    // /**
-    //  * calculates the editors dimensions based on the `<div>`'s width and height
-    //  * @return The dimension of the editor
-    //  */
-    // function editorDimensions(): Dimension {
-    //     return {
-    //         width: editorRef.current.offsetWidth - 25,
-    //         height: editorRef.current.clientHeight * heightFractionRef.current
-    //     };
-    // }
-
-    // /**
-    //  * updates the editor's width and height when the container's dimensions change
-    //  */
-    // function handleWindowResize(): void {
-    //     if (editorRef.current) {
-    //         const nextDimension = editorDimensions()
-    //         const minDiff = 2;
-    //         if (Math.abs(nextDimension.height - dimension.height) > minDiff ||
-    //             Math.abs(nextDimension.width - dimension.width) > minDiff) {
-    //             setDimension(nextDimension);
-    //         }
-    //     }
-    // }
 
     /**
      * Handles keyboard events when the editor is focused
@@ -315,8 +278,6 @@ function SensorsEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is visible
      */
     function showSimulationLayer(): void {
-        // heightFractionRef.current = 0.5;
-        // setDimension(editorDimensions());
         setShowSimulation(true);
     }
 
@@ -324,8 +285,6 @@ function SensorsEditor(props: Props): JSX.Element {
      * Sets the state so that the sensor simulation window is hidden
      */
     function hideSimulationLayer(): void {
-        // heightFractionRef.current = 1.0;
-        // setDimension(editorDimensions());
         setShowSimulation(false);
     }
 
@@ -437,7 +396,7 @@ function SensorsEditor(props: Props): JSX.Element {
                     .build()
                 }
             >
-                <GridCell
+                <GridItem
                     gridAreaName='sensorPath'
                     styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
                 >
@@ -450,8 +409,8 @@ function SensorsEditor(props: Props): JSX.Element {
                             sensorDescriptionPath
                         }{modified ? '*' : ''}
                     </Text>
-                </GridCell>
-                <GridCell gridAreaName='sensorEditorSidebar'>
+                </GridItem>
+                <GridItem gridAreaName='sensorEditorSidebar'>
                     <div>
                         {newButton()}
                         {saveButton()}
@@ -459,8 +418,8 @@ function SensorsEditor(props: Props): JSX.Element {
                         <Separator/>
                         {showSimulationButton()}
                     </div>
-                </GridCell>
-                <GridCell gridAreaName='sensorEditor'>
+                </GridItem>
+                <GridItem gridAreaName='sensorEditor'>
                     <MonacoEditor
                         editorId='spikes-env'
                         width={useGridCellWidth()}
@@ -473,15 +432,15 @@ function SensorsEditor(props: Props): JSX.Element {
                         onChange={onChanged}
                         editorDidMount={noop}
                     />
-                </GridCell>
-                <GridCell gridAreaName='sensorSimulation' isVisible={showSimulation}>
+                </GridItem>
+                <GridItem gridAreaName='sensorSimulation' isVisible={showSimulation}>
                     <SensorSimulation
                         itheme={itheme}
                         codeSnippet={codeSnippet}
                         timeFactor={timeFactor}
                         onClose={hideSimulationLayer}
                     />
-                </GridCell>
+                </GridItem>
             </Grid>
         </div>
     )

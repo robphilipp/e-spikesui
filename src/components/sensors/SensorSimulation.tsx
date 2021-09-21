@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {FormEvent, useEffect, useRef, useState} from 'react';
+import {FormEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
 // import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
 import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, TextField, TooltipHost} from "@fluentui/react";
@@ -15,7 +15,7 @@ import {RasterChart} from "../charts/RasterChart";
 import {
     Grid,
     gridArea,
-    GridCell,
+    GridItem,
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
@@ -24,6 +24,7 @@ import {
     withFraction,
     withPixels
 } from 'react-resizable-grid-layout';
+import {JSX} from "@babel/types";
 
 enum Control {
     TRACKER = 'tracker',
@@ -78,7 +79,9 @@ export default function SensorSimulation(props: Props): JSX.Element {
     // creates the new sensor simulation thread that runs the javascript code snippet
     useEffect(
         () => {
+            console.log("mounted sensor simulation ")
             return () => {
+                console.log("unmounted sensor simulation")
                 // terminate sensor-simulation worker thread on dismount, in case it is
                 // still hanging around
                 sensorThreadRef.current.terminate()
@@ -313,6 +316,63 @@ export default function SensorSimulation(props: Props): JSX.Element {
         </>
     }
 
+    const onSubscribe = useCallback(
+        (subscription: Subscription) => subscriptionRef.current = subscription,
+        []
+    )
+
+    /**
+     * Component that wraps the Raster chart to avoid the react conditional-hook error. In this
+     * case the hook is called each time, but only used when the neuron list is not empty
+     * @constructor
+     */
+    function RastaRapper(): JSX.Element {
+        const {width, height} = useGridCell()
+        if (neuronList?.length > 0) {
+            console.log("Sensor Simulation: RastaRapper; expressionState", expressionState, "onSubscribe", onSubscribe, "neuronList", neuronList)
+            return <RasterChart
+                key="sensor-simulation-raster-chart-12344"
+                width={width}
+                height={height}
+                seriesList={neuronList}
+                seriesObservable={chartObservable}
+                shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                // onSubscribe={subscription => subscriptionRef.current = subscription}
+                onSubscribe={onSubscribe}
+                timeWindow={timeWindow}
+                windowingTime={100}
+                dropDataAfter={dropDataAfter}
+                margin={{top: 15, right: 20, bottom: 35, left: 30}}
+                tooltip={{
+                    visible: selectedControl === Control.TOOLTIP,
+                    backgroundColor: itheme.palette.themeLighterAlt,
+                    fontColor: itheme.palette.themePrimary,
+                    borderColor: itheme.palette.themePrimary,
+                }}
+                magnifier={{
+                    visible: selectedControl === Control.MAGNIFIER,
+                    magnification: 5,
+                    color: itheme.palette.neutralTertiaryAlt,
+                }}
+                tracker={{
+                    visible: selectedControl === Control.TRACKER,
+                    color: itheme.palette.themePrimary,
+                }}
+                filter={seriesFilter}
+                backgroundColor={itheme.palette.white}
+                svgStyle={{width: '95%'}}
+                axisStyle={{color: itheme.palette.themePrimary}}
+                axisLabelFont={{color: itheme.palette.themePrimary}}
+                plotGridLines={{color: itheme.palette.themeLighter}}
+                spikesStyle={{
+                    color: itheme.palette.themePrimary,
+                    highlightColor: itheme.palette.themePrimary
+                }}
+            />
+        }
+        return <div/>
+    }
+
     return (
         <Grid
             dimensionsSupplier={useGridCell}
@@ -332,7 +392,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 .build()
             }
         >
-            <GridCell gridAreaName='sensorDataControls'>
+            <GridItem gridAreaName='sensorDataControls'>
                 <div style={{
                     display: 'flex',
                     justifyContent: 'flex-start',
@@ -368,8 +428,8 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         </TooltipHost>
                     </div>
                 </div>
-            </GridCell>
-            <GridCell gridAreaName='sensorSimulationControls'>
+            </GridItem>
+            <GridItem gridAreaName='sensorSimulationControls'>
                 <div>
                     {compileButton()}
                     {runSensorSimulationButton()}
@@ -387,56 +447,49 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         <div/>
                     }
                 </div>
-            </GridCell>
-            <GridCell gridAreaName='sensorSimulationChart'>
-                {neuronList?.length > 0 ?
-                    <RasterChart
-                        height={
-                            // eslint-disable-next-line react-hooks/rules-of-hooks
-                            useGridCellHeight()
-                        }
-                        width={
-                            // eslint-disable-next-line react-hooks/rules-of-hooks
-                            useGridCellWidth()
-                        }
-                        seriesList={neuronList}
-                        seriesObservable={chartObservable}
-                        shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                        onSubscribe={subscription => subscriptionRef.current = subscription}
-                        timeWindow={timeWindow}
-                        windowingTime={100}
-                        dropDataAfter={dropDataAfter}
-                        margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                        tooltip={{
-                            visible: selectedControl === Control.TOOLTIP,
-                            backgroundColor: itheme.palette.themeLighterAlt,
-                            fontColor: itheme.palette.themePrimary,
-                            borderColor: itheme.palette.themePrimary,
-                        }}
-                        magnifier={{
-                            visible: selectedControl === Control.MAGNIFIER,
-                            magnification: 5,
-                            color: itheme.palette.neutralTertiaryAlt,
-                        }}
-                        tracker={{
-                            visible: selectedControl === Control.TRACKER,
-                            color: itheme.palette.themePrimary,
-                        }}
-                        filter={seriesFilter}
-                        backgroundColor={itheme.palette.white}
-                        svgStyle={{width: '95%'}}
-                        axisStyle={{color: itheme.palette.themePrimary}}
-                        axisLabelFont={{color: itheme.palette.themePrimary}}
-                        plotGridLines={{color: itheme.palette.themeLighter}}
-                        spikesStyle={{
-                            color: itheme.palette.themePrimary,
-                            highlightColor: itheme.palette.themePrimary
-                        }}
-                    /> :
-                    <div/>
-                }
-            </GridCell>
-            <GridCell gridAreaName='sensorSimulationChartControls'>
+            </GridItem>
+            <GridItem gridAreaName='sensorSimulationChart'>
+                <RasterChart
+                    key="sensor-simulation-raster-chart-12344"
+                    width={useGridCellWidth()}
+                    height={useGridCellHeight()}
+                    seriesList={neuronList}
+                    seriesObservable={chartObservable}
+                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                    // onSubscribe={subscription => subscriptionRef.current = subscription}
+                    onSubscribe={onSubscribe}
+                    timeWindow={timeWindow}
+                    windowingTime={100}
+                    dropDataAfter={dropDataAfter}
+                    margin={{top: 15, right: 20, bottom: 35, left: 30}}
+                    tooltip={{
+                        visible: selectedControl === Control.TOOLTIP,
+                        backgroundColor: itheme.palette.themeLighterAlt,
+                        fontColor: itheme.palette.themePrimary,
+                        borderColor: itheme.palette.themePrimary,
+                    }}
+                    magnifier={{
+                        visible: selectedControl === Control.MAGNIFIER,
+                        magnification: 5,
+                        color: itheme.palette.neutralTertiaryAlt,
+                    }}
+                    tracker={{
+                        visible: selectedControl === Control.TRACKER,
+                        color: itheme.palette.themePrimary,
+                    }}
+                    filter={seriesFilter}
+                    backgroundColor={itheme.palette.white}
+                    svgStyle={{width: '95%'}}
+                    axisStyle={{color: itheme.palette.themePrimary}}
+                    axisLabelFont={{color: itheme.palette.themePrimary}}
+                    plotGridLines={{color: itheme.palette.themeLighter}}
+                    spikesStyle={{
+                        color: itheme.palette.themePrimary,
+                        highlightColor: itheme.palette.themePrimary
+                    }}
+                />
+            </GridItem>
+            <GridItem gridAreaName='sensorSimulationChartControls'>
                 {neuronList?.length > 0 ?
                     <div style={{
                         display: 'flex',
@@ -462,7 +515,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     </div> :
                     <div/>
                 }
-            </GridCell>
+            </GridItem>
         </Grid>
     );
 }

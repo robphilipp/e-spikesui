@@ -1,5 +1,7 @@
-import {Selection} from "d3";
+import {ScaleLinear, Selection, ZoomTransform} from "d3";
 import {Datum} from "./datumSeries";
+import {Margin, PlotDimensions} from "./margins";
+import {TimeRange} from "./timeRange";
 
 // the axis-element type return when calling the ".call(axis)" function
 export type AxisElementSelection = Selection<SVGGElement, unknown, null, undefined>;
@@ -53,3 +55,15 @@ export function noop(): void {
     /* empty */
 }
 
+/**
+ * Calculates whether the mouse is in the plot-area
+ * @param x The x-coordinate of the mouse's position
+ * @param y The y-coordinate of the mouse's position
+ * @param width The width  of the container holding the plot area
+ * @param height The height of the container holding the plot area
+ * @param margin The margin around the plot area
+ * @return `true` if the mouse is in the plot area; `false` if the mouse is not in the plot area
+ */
+export function mouseInPlotArea(x: number, y: number, width: number, height: number, margin: Margin): boolean {
+    return x > margin.left && x < width - margin.right && y > margin.top && y < height - margin.bottom
+}

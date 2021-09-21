@@ -34,7 +34,7 @@ import SpikesChart from "./SpikesChart";
 import {
     Grid,
     gridArea,
-    GridCell,
+    GridItem,
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
@@ -550,10 +550,10 @@ function RunDeployManager(props: Props): JSX.Element {
             columnGap={0}
             showGrid={false}
         >
-            <GridCell gridAreaName='networkManagementButtons'>
+            <GridItem gridAreaName='networkManagementButtons'>
                 {networkManagementButton()}
-            </GridCell>
-            <GridCell gridAreaName='networkControls'>
+            </GridItem>
+            <GridItem gridAreaName='networkControls'>
                 {networkId.map(id => (
                     <Card key={1} tokens={{childrenMargin: 12, boxShadow: "none", maxWidth: 'unset'}}>
                         <Card.Item>
@@ -588,8 +588,8 @@ function RunDeployManager(props: Props): JSX.Element {
                         </Card.Section>
                     </Card>
                 )).getOrElse(<span/>)}
-            </GridCell>
-            <GridCell gridAreaName='networkCharts'>
+            </GridItem>
+            <GridItem gridAreaName='networkCharts'>
                 <Grid
                     dimensionsSupplier={useGridCell}
                     gridTemplateColumns={gridTrackTemplateBuilder().repeatFor(2, withGridTrack(withFraction(1))).build()}
@@ -601,7 +601,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         .build()
                     }
                 >
-                    <GridCell row={1} rowsSpanned={2} column={1}>
+                    <GridItem row={1} rowsSpanned={2} column={1}>
                         {networkId.isSome() && networkBuilt ?
                             <NetworkVisualization
                                 key="net-1"
@@ -610,30 +610,28 @@ function RunDeployManager(props: Props): JSX.Element {
                             /> :
                             <div/>
                         }
-                    </GridCell>
-                    <GridCell row={1} column={2}>
+                    </GridItem>
+                    <GridItem row={1} column={2}>
                         {networkId.isSome() && networkBuilt ?
                             <SpikesChart
                                 networkObservable={spikeSubjectRef.current}
                                 shouldSubscribe={running}
-                                {...props}
                             /> :
                             <div/>
                         }
-                    </GridCell>
-                    <GridCell row={2} column={2}>
+                    </GridItem>
+                    <GridItem row={2} column={2}>
                         {networkId.isSome() && networkBuilt ?
                             <WeightsChart
                                 networkObservable={learnSubjectRef.current}
                                 shouldSubscribe={running}
-                                {...props}
                             /> :
                             <div/>
                         }
-                    </GridCell>
+                    </GridItem>
                 </Grid>
 
-            </GridCell>
+            </GridItem>
         </Grid>
     )
 }

@@ -43,7 +43,7 @@ import LoadingProvider from './common/useLoading';
 import {MessageProvider} from "./common/useMessage";
 import ApplicationMessage from "./common/ApplicationMessage";
 import {
-    Grid, gridArea, GridCell, gridTemplateAreasBuilder,
+    Grid, gridArea, GridItem, gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useWindowDimensions,
     withFraction,
@@ -531,16 +531,16 @@ function Main(props: Props): JSX.Element {
                         }
                         columnGap={5}
                     >
-                        <GridCell gridAreaName='header'>
+                        <GridItem gridAreaName='header'>
                             <CommandBar
                                 items={menuItems()}
                                 farItems={farMenuItems(handleSettingsPanelVisibility)}
                             />
-                        </GridCell>
-                        <GridCell gridAreaName='messages'>
+                        </GridItem>
+                        <GridItem gridAreaName='messages'>
                             <ApplicationMessage/>
-                        </GridCell>
-                        <GridCell gridAreaName='main'>
+                        </GridItem>
+                        <GridItem gridAreaName='main'>
                             <Switch>
                                 <Route
                                     path={`${AppPath.SIMULATION}/:simulationProjectPath`}
@@ -561,8 +561,8 @@ function Main(props: Props): JSX.Element {
                                     render={(renderProps) => <SensorsEditor {...renderProps}/>}
                                 />
                             </Switch>
-                        </GridCell>
-                        <GridCell gridAreaName='footer'>
+                        </GridItem>
+                        <GridItem gridAreaName='footer'>
                             <div style={{
                                 height: '100%',
                                 display: 'flex',
@@ -583,7 +583,7 @@ function Main(props: Props): JSX.Element {
                                         </Text>
                                     </a>
                             </div>
-                        </GridCell>
+                        </GridItem>
                     </Grid>
 
                 </MessageProvider>

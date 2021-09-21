@@ -41,6 +41,8 @@ function SpikesChart(props: Props): JSX.Element {
     const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(convert(networkObservable))
     const [neuronList, setNeuronList] = useState<Array<Series>>(seriesList(neurons))
 
+    console.log("SpikesChart called")
+
     useEffect(
         () => {
             setChartObservable(convert(networkObservable))

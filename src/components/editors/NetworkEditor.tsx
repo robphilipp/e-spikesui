@@ -26,7 +26,6 @@ import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 import {
     Grid,
     gridArea,
-    GridCell,
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
@@ -34,7 +33,8 @@ import {
     withGridTrack,
     withPixels,
     useGridCellHeight,
-    useGridCellWidth
+    useGridCellWidth,
+    GridItem
 } from 'react-resizable-grid-layout';
 import {NEW_PROJECT_PATH} from "../simulation/SimulationManager";
 
@@ -382,7 +382,7 @@ function NetworkEditor(props: Props): JSX.Element {
                 .build()
             }
         >
-            <GridCell
+            <GridItem
                 gridAreaName='networkDescriptionPath'
                 styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
             >
@@ -395,8 +395,8 @@ function NetworkEditor(props: Props): JSX.Element {
                         networkDescriptionPath
                     }{modified ? '*' : ''}
                 </Text>
-            </GridCell>
-            <GridCell gridAreaName='networkEditorSidebar'>
+            </GridItem>
+            <GridItem gridAreaName='networkEditorSidebar'>
                 <div>
                     {newButton()}
                     {saveButton()}
@@ -405,8 +405,8 @@ function NetworkEditor(props: Props): JSX.Element {
                     <Separator/>
                     {showSimulationButton()}
                 </div>
-            </GridCell>
-            <GridCell gridAreaName='networkEditor'>
+            </GridItem>
+            <GridItem gridAreaName='networkEditor'>
                 <MonacoEditor
                     editorId='spikes-lang'
                     width={useGridCellWidth()}
@@ -419,15 +419,15 @@ function NetworkEditor(props: Props): JSX.Element {
                     onChange={(value: string) => onChanged(value)}
                     editorDidMount={noop}
                 />
-            </GridCell>
-            <GridCell gridAreaName='networkSimulation' isVisible={showSimulation}>
+            </GridItem>
+            <GridItem gridAreaName='networkSimulation' isVisible={showSimulation}>
                 <NetworkTopologyVisualization
                     itheme={itheme}
                     sceneWidth={useGridCellWidth()}
                     sceneHeight={useGridCellHeight()}
                     onClose={hideSimulationLayer}
                 />
-            </GridCell>
+            </GridItem>
         </Grid>
         </div>
     )

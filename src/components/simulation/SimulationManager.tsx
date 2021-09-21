@@ -27,7 +27,7 @@ import {useMessage} from "../common/useMessage";
 import {
     Grid,
     gridArea,
-    GridCell,
+    GridItem,
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
@@ -370,7 +370,7 @@ function SimulationManager(props: Props): JSX.Element {
                 .build()
             }
         >
-            <GridCell
+            <GridItem
                 gridAreaName='projectPath'
                 styles={{display: 'flex', alignItems: 'center', marginLeft: 10}}
             >
@@ -380,8 +380,8 @@ function SimulationManager(props: Props): JSX.Element {
                 >
                     {projectPath === undefined || projectPath === NEW_PROJECT_PATH ? '[new file]' : projectPath}{modified ? '*' : ''}
                 </Text>
-            </GridCell>
-            <GridCell gridAreaName='sidebar'>
+            </GridItem>
+            <GridItem gridAreaName='sidebar'>
                 <div>
                     {newButton()}
                     {loadButton()}
@@ -389,8 +389,8 @@ function SimulationManager(props: Props): JSX.Element {
                     {saveAsButton()}
                     <Separator/>
                 </div>
-            </GridCell>
-            <GridCell gridAreaName='simulationPivot'>
+            </GridItem>
+            <GridItem gridAreaName='simulationPivot'>
                 <Pivot
                     aria-label="simulation-tabs"
                     selectedKey={selectedTab}
@@ -405,8 +405,8 @@ function SimulationManager(props: Props): JSX.Element {
                         itemKey={TabName.DEPLOY_EXECUTE}
                     />
                 </Pivot>
-            </GridCell>
-            <GridCell gridAreaName='simulationMain'>
+            </GridItem>
+            <GridItem gridAreaName='simulationMain'>
                 <div aria-labelledby={getTabId(selectedTab)}>
                     {selectedTab === TabName.PROJECT_CONFIG ?
                         <ProjectConfig
@@ -417,7 +417,7 @@ function SimulationManager(props: Props): JSX.Element {
                         <RunDeployManager itheme={itheme}/>
                     }
                 </div>
-            </GridCell>
+            </GridItem>
         </Grid>
         </div>
     )

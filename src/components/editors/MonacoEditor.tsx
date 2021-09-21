@@ -181,7 +181,7 @@ export default function MonacoEditor(props: Props): JSX.Element {
         () => {
             if (containerElementRef.current) {
                 editorRef.current?.layout({width, height});
-                console.log("editor resized", width, height, "editor ref", editorRef.current)
+                // console.log("editor resized", width, height, "editor ref", editorRef.current)
             }
         },
         [width, height]

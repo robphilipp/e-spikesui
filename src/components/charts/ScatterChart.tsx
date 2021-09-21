@@ -14,7 +14,7 @@ import {defaultTrackerStyle, TrackerStyle} from "./TrackerStyle";
 import {
     AxisElementSelection, generateChartId,
     GSelection,
-    LineSelection,
+    LineSelection, mouseInPlotArea,
     noop,
     RadialMagnifierSelection,
     RadialMagnifierStyle,
@@ -198,14 +198,6 @@ export function ScatterChart(props: Props): JSX.Element {
                 axesRef.current = initializeAxes(svg, plotDimRef.current);
                 updateDimensionsAndPlot();
             }
-            //
-            // // subscribe to the throttled resizing events using a consumer that updates the plot
-            // const subscription = resizeEventFlowRef.current.subscribe(() => updateDimensionsAndPlot());
-            //
-            // // stop listening to resize events when this component unmounts
-            // return () => {
-            //     subscription.unsubscribe();
-            // }
         },
         // we really, really only want this called when the component mounts, and there are
         // no stale closures in the this. recall that d3 manages the updates to the chart, and
@@ -667,11 +659,11 @@ export function ScatterChart(props: Props): JSX.Element {
             path
                 .attr('x1', x)
                 .attr('x2', x)
-                .attr('opacity', () => mouseInPlotArea(x, y) ? 1 : 0)
+                .attr('opacity', () => mouseInPlotArea(x, y, width, height, margin) ? 1 : 0)
             ;
 
             const label = d3.select<SVGTextElement, any>(`#scatter-chart-tracker-time-${chartId.current}`)
-                .attr('opacity', () => mouseInPlotArea(x, y) ? 1 : 0)
+                .attr('opacity', () => mouseInPlotArea(x, y, width, height, margin) ? 1 : 0)
                 .text(() => `${d3.format(",.0f")(axesRef.current!.xScale.invert(x - margin.left))} ms`)
 
 
@@ -731,7 +723,7 @@ export function ScatterChart(props: Props): JSX.Element {
         // create the lens
         if (containerRef.current && path && svg) {
             const [x, y] = d3.mouse(containerRef.current);
-            const isMouseInPlotArea = mouseInPlotArea(x, y)
+            const isMouseInPlotArea = mouseInPlotArea(x, y, width, height, margin)
             path
                 .attr('r', magnifier.radius)
                 .attr('cx', x)
@@ -825,16 +817,6 @@ export function ScatterChart(props: Props): JSX.Element {
                 magnifierYAxisLabelRef.current!.text(() => '')
             }
         }
-    }
-
-    /**
-     * Calculates whether the mouse is in the plot-area
-     * @param {number} x The x-coordinate of the mouse's position
-     * @param {number} y The y-coordinate of the mouse's position
-     * @return {boolean} `true` if the mouse is in the plot area; `false` if the mouse is not in the plot area
-     */
-    function mouseInPlotArea(x: number, y: number): boolean {
-        return x > margin.left && x < width - margin.right && y > margin.top && y < height - margin.bottom;
     }
 
     /**

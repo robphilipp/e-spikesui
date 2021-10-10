@@ -1,7 +1,17 @@
 import * as React from 'react';
 import {FormEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
-import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, TextField, TooltipHost, Text} from "@fluentui/react";
+import {
+    Checkbox,
+    ChoiceGroup,
+    IconButton,
+    ITheme,
+    MessageBar,
+    MessageBarType,
+    Text,
+    TextField,
+    TooltipHost
+} from "@fluentui/react";
 import {SensorOutput} from "./compiler";
 import moment from "moment";
 import {map} from "rxjs/operators";
@@ -39,7 +49,6 @@ import {
 enum Control {
     TRACKER = 'tracker',
     TOOLTIP = 'tooltip',
-    MAGNIFIER = 'magnifier'
 }
 
 interface Props {
@@ -157,15 +166,6 @@ export default function SensorSimulation(props: Props): JSX.Element {
      */
     function handleTooltipSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
         handleControlSelection(Control.TOOLTIP, checked);
-    }
-
-    /**
-     * Updates the control selection to add/remove the magnifier
-     * @param event The event
-     * @param checked `true` if the magnifier was selected; `false` otherwise
-     */
-    function handleMagnifierSelection(event: FormEvent<HTMLInputElement>, checked: boolean): void {
-        handleControlSelection(Control.MAGNIFIER, checked);
     }
 
     /**
@@ -369,9 +369,8 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     <ContinuousAxis
                         axisId="x-axis-1"
                         location={AxisLocation.Bottom}
-                        domain={[0, 5000]}
+                        domain={[0, timeWindow]}
                         label="t (ms)"
-                        // font={{color: theme.color}}
                     />
                     <CategoryAxis
                         axisId="y-axis-1"
@@ -390,7 +389,6 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         labelLocation={TrackerLabelLocation.WithMouse}
                         style={{color: itheme.palette.themePrimary}}
                         font={{color: itheme.palette.themePrimary}}
-                        // onTrackerUpdate={update => console.dir(update)}
                     />
                     <Tooltip
                         visible={selectedControl === Control.TOOLTIP}
@@ -428,14 +426,14 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 .addTrack(withPixels(35))
                 .addTrack(withPixels(35))
                 .addTrack(withFraction(1))
-                .addTrack(withPixels(35))
+                // .addTrack(withPixels(35))
                 .build()
             }
             gridTemplateAreas={gridTemplateAreasBuilder()
                 .addArea('sensorDataControls', gridArea(1, 1))
                 .addArea('sensorSimulationControls', gridArea(2, 1))
                 .addArea('sensorSimulationChart', gridArea(3, 1))
-                .addArea('sensorSimulationChartControls', gridArea(4, 1))
+                // .addArea('sensorSimulationChartControls', gridArea(4, 1))
                 .build()
             }
         >
@@ -477,15 +475,56 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 </div>
             </GridItem>
             <GridItem gridAreaName='sensorSimulationControls'>
-                <div>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    alignContent: 'center',
+                    columnGap: 5,
+                }}>
                     {compileButton()}
                     {runSensorSimulationButton()}
                     {stopSensorSimulationButton()}
-                    {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED || expressionState === ExpressionState.STOPPED ?
-                        <Text style={{marginLeft: 10}}>
-                            Please compile sensor description.
-                        </Text> :
-                        <div/>
+                    {
+                        expressionState === ExpressionState.COMPILED ||
+                        expressionState === ExpressionState.RUNNING ||
+                        expressionState === ExpressionState.STOPPED ?
+                            <>
+                            <div style={{marginTop: 7, marginLeft: 20}}>
+                                <Checkbox
+                                    label="Tracker"
+                                    checked={selectedControl === Control.TRACKER}
+                                    onChange={handleTrackerSelection}
+                                />
+                            </div>
+                                <div style={{marginTop: 7, marginLeft: 8}}>
+                                <Checkbox
+                                    label="Tooltip"
+                                    checked={selectedControl === Control.TOOLTIP}
+                                    onChange={handleTooltipSelection}
+                                />
+                            </div>
+                            </>
+                            : <span/>
+                    }
+                    {
+                        neuronList?.length === 0 ||
+                        expressionState === ExpressionState.PRE_COMPILED ||
+                        expressionState === ExpressionState.STOPPED ?
+                            <Text
+                                style={{
+                                    // marginTop: 7,
+                                    marginLeft: 20,
+                                    padding: '7px 10px 7px 10px',
+                                    borderStyle: 'dashed',
+                                    borderColor: itheme.palette.themeSecondary,
+                                    borderWidth: 1,
+                                    borderRadius: 3,
+                                    backgroundColor: itheme.palette.themeLight,
+                                }}
+                            >
+                                Please compile sensor description.
+                            </Text> :
+                            <div/>
                     }
                     {expressionError ?
                         <MessageBar messageBarType={MessageBarType.error}>
@@ -496,28 +535,12 @@ export default function SensorSimulation(props: Props): JSX.Element {
                 </div>
             </GridItem>
             <GridItem gridAreaName='sensorSimulationChart'>
-                {expressionState === ExpressionState.COMPILED || expressionState === ExpressionState.RUNNING || expressionState === ExpressionState.STOPPED ?  RastaRapper(): <div/>}
-            </GridItem>
-            <GridItem gridAreaName='sensorSimulationChartControls'>
-                {neuronList?.length > 0 ?
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-start',
-                        alignContent: 'center',
-                        columnGap: 5,
-                    }}>
-                        <Checkbox
-                            label="Tracker"
-                            checked={selectedControl === Control.TRACKER}
-                            onChange={handleTrackerSelection}
-                        />
-                        <Checkbox
-                            label="Tooltip"
-                            checked={selectedControl === Control.TOOLTIP}
-                            onChange={handleTooltipSelection}
-                        />
-                    </div> :
-                    <div/>
+                {
+                    expressionState === ExpressionState.COMPILED ||
+                    expressionState === ExpressionState.RUNNING ||
+                    expressionState === ExpressionState.STOPPED ?
+                        RastaRapper() :
+                        <div/>
                 }
             </GridItem>
         </Grid>

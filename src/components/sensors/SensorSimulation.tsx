@@ -31,7 +31,9 @@ import {
     regexFilter,
     Series,
     seriesFrom,
-    Tooltip
+    Tooltip,
+    Tracker,
+    TrackerLabelLocation
 } from "stream-charts";
 
 enum Control {
@@ -383,6 +385,13 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         categories={initialDataRef.current.map(series => series.name)}
                         label="neuron"
                     />
+                    <Tracker
+                        visible={selectedControl === Control.TRACKER}
+                        labelLocation={TrackerLabelLocation.WithMouse}
+                        style={{color: itheme.palette.themePrimary}}
+                        font={{color: itheme.palette.themePrimary}}
+                        // onTrackerUpdate={update => console.dir(update)}
+                    />
                     <Tooltip
                         visible={selectedControl === Control.TOOLTIP}
                         style={{
@@ -506,11 +515,6 @@ export default function SensorSimulation(props: Props): JSX.Element {
                             label="Tooltip"
                             checked={selectedControl === Control.TOOLTIP}
                             onChange={handleTooltipSelection}
-                        />
-                        <Checkbox
-                            label="Magnifier"
-                            checked={selectedControl === Control.MAGNIFIER}
-                            onChange={handleMagnifierSelection}
                         />
                     </div> :
                     <div/>

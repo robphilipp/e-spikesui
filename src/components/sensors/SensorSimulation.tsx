@@ -1,17 +1,7 @@
 import * as React from 'react';
 import {FormEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
-import {
-    Checkbox,
-    ChoiceGroup,
-    IconButton,
-    ITheme,
-    MessageBar,
-    MessageBarType,
-    Text,
-    TextField,
-    TooltipHost
-} from "@fluentui/react";
+import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, Text, TextField, TooltipHost} from "@fluentui/react";
 import {SensorOutput} from "./compiler";
 import moment from "moment";
 import {map} from "rxjs/operators";
@@ -82,6 +72,9 @@ export default function SensorSimulation(props: Props): JSX.Element {
     const [seriesFilter, setSeriesFilter] = useState<RegExp>(new RegExp(''));
     const [dropDataAfter, setDropDataAfter] = useState<number>(5000);
     const [timeWindow, setTimeWindow] = useState<number>(5000);
+
+    const [dropDataValue, setDropDataValue] = useState<string>(dropDataAfter.toString())
+    const [timeWindowValue, setTimeWindowValue] = useState<string>(timeWindow.toString())
 
     // manages the state of the code snippet (i.e. pre-compiled, compiled, running), and the
     // compile-time errors
@@ -178,13 +171,36 @@ export default function SensorSimulation(props: Props): JSX.Element {
     }
 
     /**
+     * Reports an error when the time value is invalid
+     * @param time The string representation of time in ms
+     * @return an empty string if there are no errors, otherwise, the error message
+     */
+    function dropDataAfterErrorMessage(time: string): string {
+        if (time.match(/^[1-9]([0-9]*)$/) !== null) return ''
+        if (time.toLowerCase() === 'infinity' || time.toLowerCase() === 'inf') return ''
+        return ' '
+    }
+
+    /**
      * Handles updating the time after which data is dropped
      * @param time The time, in milliseconds, after which data is dropped
      */
     function handleUpdateDropDataAfter(time: string): void {
         if (time.match(/^[1-9]([0-9]*)$/) !== null) {
-            setDropDataAfter(parseInt(time, 10));
+            const value = parseInt(time, 10)
+            setDropDataAfter(value);
+            setDropDataValue(value.toString())
+        } else if (time.toLowerCase() === 'infinity' || time.toLowerCase() === 'inf') {
+            setDropDataAfter(Infinity)
+            setDropDataValue(Infinity.toString())
+        } else {
+            setDropDataValue(dropDataAfter.toString())
         }
+    }
+
+    function timeWindowErrorMessage(time: string): string {
+        if (time.match(/^[1-9]([0-9]*)$/) !== null) return ''
+        return ' '
     }
 
     /**
@@ -194,7 +210,11 @@ export default function SensorSimulation(props: Props): JSX.Element {
      */
     function handleUpdateTimeWindow(time: string): void {
         if (time.match(/^[1-9]([0-9]*)$/) !== null) {
-            setTimeWindow(parseInt(time, 10));
+            const value = parseInt(time, 10)
+            setTimeWindow(value);
+            setTimeWindowValue(value.toString())
+        } else {
+            setTimeWindowValue(timeWindow.toString())
         }
     }
 
@@ -448,15 +468,23 @@ export default function SensorSimulation(props: Props): JSX.Element {
                         size={8}
                         prefix="Drop Data After"
                         suffix="ms"
-                        value={dropDataAfter.toString()}
-                        onChange={(_, value: string) => handleUpdateDropDataAfter(value)}
+                        value={dropDataValue}
+                        // value={dropDataAfter.toString()}
+                        onGetErrorMessage={dropDataAfterErrorMessage}
+                        onBlur={() => handleUpdateDropDataAfter(dropDataValue)}
+                        onChange={(_, value: string) => setDropDataValue(value)}
+                        // onChange={(_, value: string) => handleUpdateDropDataAfter(value)}
                     />
                     <TextField
                         size={8}
                         prefix="Time Window"
                         suffix="ms"
-                        value={timeWindow.toString()}
-                        onChange={(_, value: string) => handleUpdateTimeWindow(value)}
+                        value={timeWindowValue}
+                        // value={timeWindow.toString()}
+                        onGetErrorMessage={timeWindowErrorMessage}
+                        onBlur={() => handleUpdateTimeWindow(dropDataValue)}
+                        onChange={(_, value: string) => setTimeWindowValue(value)}
+                        // onChange={(_, value: string) => handleUpdateTimeWindow(value)}
                     />
                     <TextField
                         prefix="Filter"
@@ -522,7 +550,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                                     backgroundColor: itheme.palette.themeLight,
                                 }}
                             >
-                                Please compile sensor description.
+                                To run simulation you must compile the sensor description.
                             </Text> :
                             <div/>
                     }

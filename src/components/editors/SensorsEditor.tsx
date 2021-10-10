@@ -5,17 +5,7 @@ import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
 import {ApplicationAction} from "../redux/actions/actions";
 import {connect} from "react-redux";
-import {
-    IconButton,
-    Layer,
-    LayerHost,
-    MessageBar,
-    MessageBarType,
-    Separator,
-    Stack,
-    Text,
-    TooltipHost
-} from '@fluentui/react';
+import {IconButton, MessageBar, MessageBarType, Separator, Text, TooltipHost} from '@fluentui/react';
 import {
     loadSensorsFrom,
     loadSensorsFromTemplate,
@@ -40,28 +30,25 @@ import {
     gridTrackTemplateBuilder,
     useGridCell,
     useGridCellHeight,
-    useGridCellWidth, withFraction, withGridTrack,
+    useGridCellWidth,
+    withFraction,
+    withGridTrack,
     withPixels
 } from "react-resizable-grid-layout";
-import {NEW_PROJECT_PATH} from "../simulation/SimulationManager";
 
 export const NEW_SENSOR_PATH = '**new**';
 
 export enum ExpressionState {
     PRE_COMPILED = 'pre-compiled',
     COMPILED = 'compiled',
-    RUNNING = 'running'
+    RUNNING = 'running',
+    STOPPED = 'stopped',
 }
 
 const editorOptions = {selectOnLineNumbers: true, scrollBeyondLastLine: false};
 
 const SIDEBAR_WIDTH = 32;
 const SIDEBAR_ELEMENT_HEIGHT = 32;
-
-interface Dimension {
-    height: number;
-    width: number;
-}
 
 interface StateProps {
     codeSnippet: string;

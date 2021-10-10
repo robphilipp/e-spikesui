@@ -1,17 +1,12 @@
 import * as React from 'react';
 import {FormEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Observable, Subscription} from "rxjs";
-// import {ChartData, Datum, RasterChart, regexFilter, Series, seriesFrom} from "stream-charts";
-import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, TextField, TooltipHost} from "@fluentui/react";
+import {Checkbox, IconButton, ITheme, MessageBar, MessageBarType, TextField, TooltipHost, Text} from "@fluentui/react";
 import {SensorOutput} from "./compiler";
 import moment from "moment";
 import {map} from "rxjs/operators";
 import {ExpressionState} from '../editors/SensorsEditor';
 import {newSensorThread, SensorThread} from "../threads/SensorThread";
-import {Datum, Series, seriesFrom} from "../charts/datumSeries";
-import {ChartData} from "../charts/chartData";
-import {regexFilter} from "../charts/regexFilter";
-import {RasterChart} from "../charts/RasterChart";
 import {
     Grid,
     gridArea,
@@ -19,12 +14,25 @@ import {
     gridTemplateAreasBuilder,
     gridTrackTemplateBuilder,
     useGridCell,
-    useGridCellHeight,
-    useGridCellWidth,
     withFraction,
     withPixels
 } from 'react-resizable-grid-layout';
 import {JSX} from "@babel/types";
+import {
+    AxisLocation,
+    CategoryAxis,
+    Chart,
+    ChartData,
+    ContinuousAxis,
+    Datum,
+    formatNumber,
+    RasterPlot,
+    RasterPlotTooltipContent,
+    regexFilter,
+    Series,
+    seriesFrom,
+    Tooltip
+} from "stream-charts";
 
 enum Control {
     TRACKER = 'tracker',
@@ -57,6 +65,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
     } = props;
 
     const [neuronList, setNeuronList] = useState<Array<Series>>([]);
+    const initialDataRef = useRef<Array<Series>>([])
     const [selectedControl, setSelectedControl] = useState<string>('');
     const [filterValue, setFilterValue] = useState<string>('');
     const [seriesFilter, setSeriesFilter] = useState<RegExp>(new RegExp(''));
@@ -108,7 +117,11 @@ export default function SensorSimulation(props: Props): JSX.Element {
      * @return The array of {@link Series} holding the neuron ID and empty data.
      */
     function seriesList(neurons: Array<string>): Array<Series> {
-        return neurons.map(neuronId => seriesFrom(neuronId));
+        return neurons.map(neuronId => seriesFrom(neuronId, []));
+    }
+
+    function initialDataFrom(data: Array<Series>): Array<Series> {
+        return data.map(series => seriesFrom(series.name, series.data.slice()))
     }
 
     /**
@@ -197,7 +210,9 @@ export default function SensorSimulation(props: Props): JSX.Element {
             const generator = await sensorThreadRef.current.compileSimulator(codeSnippet, timeFactor);
 
             // when successfully compiled, then set up the simulation
-            setNeuronList(seriesList(generator.neuronIds));
+            const neurons = seriesList(generator.neuronIds)
+            setNeuronList(neurons);
+            initialDataRef.current = initialDataFrom(neurons)
             setSensorObservable(generator.observable);
             setExpressionState(ExpressionState.COMPILED);
             setExpressionError(undefined);
@@ -220,10 +235,13 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     const time = Math.ceil((output.time - now) / timeFactor);
                     return {
                         maxTime: time,
+                        maxTimes: new Map<string, number>(
+                            output.neuronIds.map(id => [id, time])
+                        ),
                         newPoints: new Map<string, Array<Datum>>(
                             output.neuronIds.map(id => [id, [{time: time, value: output.signal.value}]])
                         )
-                    }
+                    } as ChartData
                 })
             );
             setChartObservable(observable);
@@ -244,9 +262,10 @@ export default function SensorSimulation(props: Props): JSX.Element {
             sensorThreadRef.current.stop()
                 .then(() => sensorThreadRef.current.terminate())
                 .catch(reason => console.error(`Failed to stop or terminate worker thread; ${reason}`))
-            ;
-            setSensorObservable(undefined);
-            setExpressionState(ExpressionState.PRE_COMPILED);
+
+            setSensorObservable(undefined)
+            // setExpressionState(ExpressionState.PRE_COMPILED);
+            setExpressionState(ExpressionState.STOPPED)
         }
     }
 
@@ -291,6 +310,7 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     disabled={
                         expressionState === ExpressionState.PRE_COMPILED ||
                         expressionState === ExpressionState.RUNNING ||
+                        expressionState === ExpressionState.STOPPED ||
                         // expressionError !== undefined ||
                         sensorObservable === undefined
                     }
@@ -330,45 +350,63 @@ export default function SensorSimulation(props: Props): JSX.Element {
         const {width, height} = useGridCell()
         if (neuronList?.length > 0) {
             console.log("Sensor Simulation: RastaRapper; expressionState", expressionState, "onSubscribe", onSubscribe, "neuronList", neuronList)
-            return <RasterChart
-                key="sensor-simulation-raster-chart-12344"
-                width={width}
-                height={height}
-                seriesList={neuronList}
-                seriesObservable={chartObservable}
-                shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                // onSubscribe={subscription => subscriptionRef.current = subscription}
-                onSubscribe={onSubscribe}
-                timeWindow={timeWindow}
-                windowingTime={100}
-                dropDataAfter={dropDataAfter}
-                margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                tooltip={{
-                    visible: selectedControl === Control.TOOLTIP,
-                    backgroundColor: itheme.palette.themeLighterAlt,
-                    fontColor: itheme.palette.themePrimary,
-                    borderColor: itheme.palette.themePrimary,
-                }}
-                magnifier={{
-                    visible: selectedControl === Control.MAGNIFIER,
-                    magnification: 5,
-                    color: itheme.palette.neutralTertiaryAlt,
-                }}
-                tracker={{
-                    visible: selectedControl === Control.TRACKER,
-                    color: itheme.palette.themePrimary,
-                }}
-                filter={seriesFilter}
-                backgroundColor={itheme.palette.white}
-                svgStyle={{width: '95%'}}
-                axisStyle={{color: itheme.palette.themePrimary}}
-                axisLabelFont={{color: itheme.palette.themePrimary}}
-                plotGridLines={{color: itheme.palette.themeLighter}}
-                spikesStyle={{
-                    color: itheme.palette.themePrimary,
-                    highlightColor: itheme.palette.themePrimary
-                }}
-            />
+            return (
+                <Chart
+                    width={width}
+                    height={height}
+                    margin={{top: 15, right: 60, bottom: 35, left: 60}}
+                    color={itheme.palette.themePrimary}
+                    backgroundColor={itheme.palette.white}
+                    initialData={initialDataRef.current}
+                    seriesFilter={seriesFilter}
+                    seriesObservable={chartObservable}
+                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
+                    onSubscribe={onSubscribe}
+                    windowingTime={75}
+                >
+                    <ContinuousAxis
+                        axisId="x-axis-1"
+                        location={AxisLocation.Bottom}
+                        domain={[0, 5000]}
+                        label="t (ms)"
+                        // font={{color: theme.color}}
+                    />
+                    <CategoryAxis
+                        axisId="y-axis-1"
+                        location={AxisLocation.Left}
+                        categories={initialDataRef.current.map(series => series.name)}
+                        label="neuron"
+                    />
+                    <CategoryAxis
+                        axisId="y-axis-2"
+                        location={AxisLocation.Right}
+                        categories={initialDataRef.current.map(series => series.name)}
+                        label="neuron"
+                    />
+                    <Tooltip
+                        visible={selectedControl === Control.TOOLTIP}
+                        style={{
+                            fontColor: itheme.palette.themePrimary,
+                            backgroundColor: itheme.palette.white,
+                            borderColor: itheme.palette.themePrimary,
+                            backgroundOpacity: 0.9,
+                        }}
+                    >
+                        <RasterPlotTooltipContent
+                            xFormatter={value => formatNumber(value, " ,.0f") + ' ms'}
+                            yFormatter={value => formatNumber(value, " ,.1f") + ' mV'}
+                        />
+                    </Tooltip>
+                    <RasterPlot
+                        // axisAssignments={new Map()}
+                        spikeMargin={2}
+                        dropDataAfter={dropDataAfter}
+                        panEnabled={true}
+                        zoomEnabled={true}
+                        zoomKeyModifiersRequired={false}
+                    />
+                </Chart>
+            )
         }
         return <div/>
     }
@@ -434,60 +472,22 @@ export default function SensorSimulation(props: Props): JSX.Element {
                     {compileButton()}
                     {runSensorSimulationButton()}
                     {stopSensorSimulationButton()}
-                    {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED ?
-                        <MessageBar>
+                    {neuronList?.length === 0 || expressionState === ExpressionState.PRE_COMPILED || expressionState === ExpressionState.STOPPED ?
+                        <Text style={{marginLeft: 10}}>
                             Please compile sensor description.
-                        </MessageBar> :
+                        </Text> :
                         <div/>
                     }
                     {expressionError ?
                         <MessageBar messageBarType={MessageBarType.error}>
-                            {expressionError}
+                            Error: {expressionError}
                         </MessageBar> :
                         <div/>
                     }
                 </div>
             </GridItem>
             <GridItem gridAreaName='sensorSimulationChart'>
-                <RasterChart
-                    key="sensor-simulation-raster-chart-12344"
-                    width={useGridCellWidth()}
-                    height={useGridCellHeight()}
-                    seriesList={neuronList}
-                    seriesObservable={chartObservable}
-                    shouldSubscribe={expressionState === ExpressionState.RUNNING}
-                    // onSubscribe={subscription => subscriptionRef.current = subscription}
-                    onSubscribe={onSubscribe}
-                    timeWindow={timeWindow}
-                    windowingTime={100}
-                    dropDataAfter={dropDataAfter}
-                    margin={{top: 15, right: 20, bottom: 35, left: 30}}
-                    tooltip={{
-                        visible: selectedControl === Control.TOOLTIP,
-                        backgroundColor: itheme.palette.themeLighterAlt,
-                        fontColor: itheme.palette.themePrimary,
-                        borderColor: itheme.palette.themePrimary,
-                    }}
-                    magnifier={{
-                        visible: selectedControl === Control.MAGNIFIER,
-                        magnification: 5,
-                        color: itheme.palette.neutralTertiaryAlt,
-                    }}
-                    tracker={{
-                        visible: selectedControl === Control.TRACKER,
-                        color: itheme.palette.themePrimary,
-                    }}
-                    filter={seriesFilter}
-                    backgroundColor={itheme.palette.white}
-                    svgStyle={{width: '95%'}}
-                    axisStyle={{color: itheme.palette.themePrimary}}
-                    axisLabelFont={{color: itheme.palette.themePrimary}}
-                    plotGridLines={{color: itheme.palette.themeLighter}}
-                    spikesStyle={{
-                        color: itheme.palette.themePrimary,
-                        highlightColor: itheme.palette.themePrimary
-                    }}
-                />
+                {expressionState === ExpressionState.COMPILED || expressionState === ExpressionState.RUNNING || expressionState === ExpressionState.STOPPED ?  RastaRapper(): <div/>}
             </GridItem>
             <GridItem gridAreaName='sensorSimulationChartControls'>
                 {neuronList?.length > 0 ?

@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react'
 import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
-import {filter, map} from "rxjs/operators";
+import {filter, map, tap} from "rxjs/operators";
 import {HashMap, Option} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {AppState} from "../redux/reducers/root";
@@ -38,17 +38,20 @@ function SpikesChart(props: Props): JSX.Element {
     const neuronListRef = useRef<Array<Series>>(seriesList(neurons))
     // const [neuronList, setNeuronList] = useState<Array<Series>>(seriesList(neurons))
     const initialDataRef = useRef<Array<Series>>(initialDataFrom(neuronListRef.current))
+    const [chartObservable, setChartObservable] = useState<Observable<ChartData>>()
     // const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(() => convert(networkObservable))
-    const chartObservableRef = useRef<Observable<ChartData>>(convert(networkObservable))
+    // const chartObservableRef = useRef<Observable<ChartData>>(convert(networkObservable))
+    const [running, setRunning] = useState(false)
 
     console.log("SpikesChart called")
 
     useEffect(
         () => {
-            chartObservableRef.current = convert(networkObservable)
-            // setChartObservable(convert(networkObservable))
+            // chartObservableRef.current = convert(networkObservable)
+            setChartObservable(convert(networkObservable))
+            if (shouldSubscribe) setRunning(true)
         },
-        [networkObservable]
+        [networkObservable, shouldSubscribe]
     )
 
     useEffect(
@@ -64,12 +67,12 @@ function SpikesChart(props: Props): JSX.Element {
     }
 
     function convert(observable: Observable<NetworkEvent>): Observable<ChartData> {
-        console.log("converting network-event observable to chart-data observable")
+        console.log("spikes: converting network-event observable to chart-data observable")
         return observable.pipe(
+            // tap(event => console.log("spike", event)),
             filter(event => event.type === SPIKE),
             map(event => event.payload as Spike),
             map(spike => {
-                console.log(spike)
                 return {
                     maxTime: spike.timestamp.value,
                     maxTimes: new Map<string, number>(
@@ -104,8 +107,10 @@ function SpikesChart(props: Props): JSX.Element {
             backgroundColor={itheme.palette.white}
             initialData={initialDataRef.current}
             seriesFilter={new RegExp('')}
-            seriesObservable={chartObservableRef.current}
-            shouldSubscribe={shouldSubscribe}
+            seriesObservable={chartObservable}
+            // seriesObservable={chartObservableRef.current}
+            shouldSubscribe={shouldSubscribe && running}
+            onSubscribe={() => console.log("spikes observable subscribed")}
             windowingTime={75}
         >
             <ContinuousAxis

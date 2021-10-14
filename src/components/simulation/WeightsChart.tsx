@@ -6,7 +6,7 @@ import {ChartData} from "../charts/chartData";
 import {Observable} from "rxjs";
 import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
-import {filter, map} from "rxjs/operators";
+import {filter, map, tap} from "rxjs/operators";
 import {HashMap, Option} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {AppState} from "../redux/reducers/root";
@@ -39,7 +39,7 @@ function WeightsChart(props: Props): JSX.Element {
     const {itheme} = useTheme()
     const {width, height} = useGridCell()
 
-    const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(convert(networkObservable))
+    const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(() => convert(networkObservable))
     const [connectionList, setConnectionList] = useState<Array<Series>>(seriesList(connections))
 
     useEffect(
@@ -92,7 +92,7 @@ function WeightsChart(props: Props): JSX.Element {
             seriesObservable={chartObservable}
             shouldSubscribe={shouldSubscribe}
             // onSubscribe={subscription => subscriptionRef.current = subscription}
-            onSubscribe={subscription => console.log("weights chart subscribed to learn subject")}
+            onSubscribe={() => console.log("weights chart subscribed to learn subject")}
             // timeWindow={timeWindow}
             timeWindow={5000}
             windowingTime={100}

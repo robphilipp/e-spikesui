@@ -1,18 +1,25 @@
 import * as React from 'react'
-import {useEffect, useState} from 'react'
-// import {ChartData, Datum, RasterChart, Series, seriesFrom} from "stream-charts";
-import {Datum, Series, seriesFrom} from "../charts/datumSeries";
-import {ChartData} from "../charts/chartData";
+import {useEffect, useRef, useState} from 'react'
+import {
+    AxisLocation,
+    CategoryAxis,
+    Chart,
+    ChartData,
+    ContinuousAxis,
+    Datum,
+    ScatterPlot,
+    Series,
+    seriesFrom
+} from "stream-charts";
 import {Observable} from "rxjs";
 import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
-import {filter, map, tap} from "rxjs/operators";
+import {filter, map} from "rxjs/operators";
 import {HashMap, Option} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {AppState} from "../redux/reducers/root";
 import {connect} from "react-redux";
 import {ConnectionInfo} from "../visualization/neuralthree/Connections";
-import {ScatterChart} from '../charts/ScatterChart';
 import {useGridCell} from "react-resizable-grid-layout";
 
 interface OwnProps {
@@ -39,29 +46,58 @@ function WeightsChart(props: Props): JSX.Element {
     const {itheme} = useTheme()
     const {width, height} = useGridCell()
 
+    const connectionListRef = useRef<Array<Series>>(seriesList(connections))
+    const initialDataRef = useRef<Array<Series>>(initialDataFrom(connectionListRef.current))
     const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(() => convert(networkObservable))
-    const [connectionList, setConnectionList] = useState<Array<Series>>(seriesList(connections))
+    // const [connectionList, setConnectionList] = useState<Array<Series>>(seriesList(connections))
+    // when the shouldSubscribe property changes to true, the chart subscribes to the
+    // chart observable before it really exists. the running flag lets the chart know the
+    // the observable has been converted, and that we are now in the running state...
+    const [running, setRunning] = useState(false)
 
     useEffect(
         () => {
             setChartObservable(convert(networkObservable))
+            // we don't want the <Chart/> to subscribe to the observable before it is
+            // converted, so we set the "running" to true once the observable has been
+            // converted and we're ready to run
+            if (shouldSubscribe) setRunning(true)
         },
-        [networkObservable]
+        [networkObservable, shouldSubscribe]
     )
 
     useEffect(
         () => {
-            setConnectionList(seriesList(connections));
+            // setConnectionList(seriesList(connections));
+            connectionListRef.current = seriesList(connections)
         },
         [connections]
     )
 
+    /**
+     * Creates the initial data from the series
+     * @param data The series list
+     * @return an array of series that are the initial data
+     */
+    function initialDataFrom(data: Array<Series>): Array<Series> {
+        return data.map(series => seriesFrom(series.name, series.data.slice()))
+    }
+
+    /**
+     * Converts the network-event observable into a chart-data observable, only passing
+     * through network-events that are spikes.
+     * @param observable The network event observable
+     * @return A observable of chart-data
+     */
     function convert(observable: Observable<NetworkEvent>): Observable<ChartData> {
         return observable.pipe(
             filter(event => event.type === CONNECTION_WEIGHT),
             map(event => event.payload as ConnectionWeight),
             map(weight => ({
                 maxTime: weight.signalTime.value,
+                maxTimes: new Map<string, number>(
+                    [[weight.neuronId, weight.signalTime.value]]
+                ),
                 newPoints: new Map<string, Array<Datum>>(
                     [[
                         `${weight.sourceId}-${weight.neuronId}`,
@@ -85,48 +121,45 @@ function WeightsChart(props: Props): JSX.Element {
     }
 
     return (
-        <ScatterChart
-            height={height}
+        <Chart
             width={width}
-            seriesList={connectionList}
-            seriesObservable={chartObservable}
-            shouldSubscribe={shouldSubscribe}
-            // onSubscribe={subscription => subscriptionRef.current = subscription}
-            onSubscribe={() => console.log("weights chart subscribed to learn subject")}
-            // timeWindow={timeWindow}
-            timeWindow={5000}
-            windowingTime={100}
-            // dropDataAfter={dropDataAfter}
-            dropDataAfter={5000}
-            margin={{top: 15, right: 20, bottom: 35, left: 40}}
-            // margin={{top: 0, right: 0, bottom: 0, left: 0}}
-            tooltip={{
-                // visible: selectedControl === Control.TOOLTIP,
-                visible: true,
-                backgroundColor: itheme.palette.themeLighterAlt,
-                fontColor: itheme.palette.themePrimary,
-                borderColor: itheme.palette.themePrimary,
-            }}
-            magnifier={{
-                // visible: selectedControl === Control.MAGNIFIER,
-                visible: false,
-                magnification: 5,
-                color: itheme.palette.neutralTertiaryAlt,
-            }}
-            tracker={{
-                // visible: selectedControl === Control.TRACKER,
-                visible: false,
-                color: itheme.palette.themePrimary,
-            }}
-            // filter={seriesFilter}
-            filter={new RegExp('')}
+            height={height}
+            margin={{top: 15, right: 60, bottom: 35, left: 60}}
+            color={itheme.palette.themePrimary}
             backgroundColor={itheme.palette.white}
-            svgStyle={{width: '95%'}}
-            axisStyle={{color: itheme.palette.themePrimary}}
-            axisLabelFont={{color: itheme.palette.themePrimary}}
-            plotGridLines={{color: itheme.palette.themeLighter}}
-            minY={0}
-        />
+            initialData={initialDataRef.current}
+            seriesFilter={new RegExp('')}
+            seriesObservable={chartObservable}
+            shouldSubscribe={shouldSubscribe && running}
+            windowingTime={75}
+        >
+            <ContinuousAxis
+                axisId="x-axis-1"
+                location={AxisLocation.Bottom}
+                domain={[0, 10000]}
+                label="t (ms)"
+                // font={{color: theme.color}}
+            />
+            <ContinuousAxis
+                axisId="y-axis-1"
+                location={AxisLocation.Left}
+                label="neuron"
+                domain={[0, 1]}
+            />
+            <ContinuousAxis
+                axisId="y-axis-2"
+                location={AxisLocation.Right}
+                label="neuron"
+                domain={[0, 1]}
+            />
+            <ScatterPlot
+                axisAssignments={new Map()}
+                dropDataAfter={10000}
+                panEnabled={true}
+                zoomEnabled={true}
+            />
+        </Chart>
+
     )
 }
 

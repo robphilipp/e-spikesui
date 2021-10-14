@@ -125,7 +125,7 @@ function SpikesChart(props: Props): JSX.Element {
             <ContinuousAxis
                 axisId="x-axis-1"
                 location={AxisLocation.Bottom}
-                domain={[0, 5000]}
+                domain={[0, 10000]}
                 label="t (ms)"
                 // font={{color: theme.color}}
             />
@@ -144,7 +144,7 @@ function SpikesChart(props: Props): JSX.Element {
             <RasterPlot
                 axisAssignments={new Map()}
                 spikeMargin={1}
-                dropDataAfter={5000}
+                dropDataAfter={10000}
                 panEnabled={true}
                 zoomEnabled={true}
             />

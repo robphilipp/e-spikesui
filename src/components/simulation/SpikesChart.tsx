@@ -36,19 +36,21 @@ function SpikesChart(props: Props): JSX.Element {
     const {width, height} = useGridCell()
 
     const neuronListRef = useRef<Array<Series>>(seriesList(neurons))
-    // const [neuronList, setNeuronList] = useState<Array<Series>>(seriesList(neurons))
     const initialDataRef = useRef<Array<Series>>(initialDataFrom(neuronListRef.current))
     const [chartObservable, setChartObservable] = useState<Observable<ChartData>>()
-    // const [chartObservable, setChartObservable] = useState<Observable<ChartData>>(() => convert(networkObservable))
-    // const chartObservableRef = useRef<Observable<ChartData>>(convert(networkObservable))
+    // when the shouldSubscribe property changes to true, the chart subscribes to the
+    // chart observable before it really exists. the running flag lets the chart know the
+    // the observable has been converted, and that we are now in the running state...
     const [running, setRunning] = useState(false)
 
     console.log("SpikesChart called")
 
     useEffect(
         () => {
-            // chartObservableRef.current = convert(networkObservable)
             setChartObservable(convert(networkObservable))
+            // we don't want the <Chart/> to subscribe to the observable before it is
+            // converted, so we set the "running" to true once the observable has been
+            // converted and we're ready to run
             if (shouldSubscribe) setRunning(true)
         },
         [networkObservable, shouldSubscribe]
@@ -56,18 +58,27 @@ function SpikesChart(props: Props): JSX.Element {
 
     useEffect(
         () => {
-            // setNeuronList(seriesList(neurons));
             neuronListRef.current = seriesList(neurons)
         },
         [neurons]
     )
 
+    /**
+     * Creates the initial data from the series
+     * @param data The series list
+     * @return an array of series that are the initial data
+     */
     function initialDataFrom(data: Array<Series>): Array<Series> {
         return data.map(series => seriesFrom(series.name, series.data.slice()))
     }
 
+    /**
+     * Converts the network-event observable into a chart-data observable, only passing
+     * through network-events that are spikes.
+     * @param observable The network event observable
+     * @return A observable of chart-data
+     */
     function convert(observable: Observable<NetworkEvent>): Observable<ChartData> {
-        console.log("spikes: converting network-event observable to chart-data observable")
         return observable.pipe(
             // tap(event => console.log("spike", event)),
             filter(event => event.type === SPIKE),
@@ -108,9 +119,7 @@ function SpikesChart(props: Props): JSX.Element {
             initialData={initialDataRef.current}
             seriesFilter={new RegExp('')}
             seriesObservable={chartObservable}
-            // seriesObservable={chartObservableRef.current}
             shouldSubscribe={shouldSubscribe && running}
-            onSubscribe={() => console.log("spikes observable subscribed")}
             windowingTime={75}
         >
             <ContinuousAxis
@@ -141,52 +150,6 @@ function SpikesChart(props: Props): JSX.Element {
             />
         </Chart>
     )
-    // return (
-    //     <RasterChart
-    //         height={height}
-    //         width={width}
-    //         seriesList={neuronList}
-    //         seriesObservable={chartObservable}
-    //         shouldSubscribe={shouldSubscribe}
-    //         // onSubscribe={subscription => subscriptionRef.current = subscription}
-    //         // timeWindow={timeWindow}
-    //         timeWindow={5000}
-    //         windowingTime={100}
-    //         // dropDataAfter={dropDataAfter}
-    //         dropDataAfter={5000}
-    //         margin={{top: 15, right: 20, bottom: 35, left: 40}}
-    //         // margin={{top: 0, right: 0, bottom: 0, left: 0}}
-    //         tooltip={{
-    //             // visible: selectedControl === Control.TOOLTIP,
-    //             visible: true,
-    //             backgroundColor: itheme.palette.themeLighterAlt,
-    //             fontColor: itheme.palette.themePrimary,
-    //             borderColor: itheme.palette.themePrimary,
-    //         }}
-    //         magnifier={{
-    //             // visible: selectedControl === Control.MAGNIFIER,
-    //             visible: false,
-    //             magnification: 5,
-    //             color: itheme.palette.neutralTertiaryAlt,
-    //         }}
-    //         tracker={{
-    //             // visible: selectedControl === Control.TRACKER,
-    //             visible: false,
-    //             color: itheme.palette.themePrimary,
-    //         }}
-    //         // filter={seriesFilter}
-    //         filter={new RegExp('')}
-    //         backgroundColor={itheme.palette.white}
-    //         svgStyle={{width: '95%'}}
-    //         axisStyle={{color: itheme.palette.themePrimary}}
-    //         axisLabelFont={{color: itheme.palette.themePrimary}}
-    //         plotGridLines={{color: itheme.palette.themeLighter}}
-    //         spikesStyle={{
-    //             color: itheme.palette.themePrimary,
-    //             highlightColor: itheme.palette.themePrimary
-    //         }}
-    //     />
-    // )
 }
 
 

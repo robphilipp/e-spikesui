@@ -2,14 +2,18 @@ import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import {
     AxisLocation,
-    CategoryAxis,
     Chart,
     ChartData,
     ContinuousAxis,
     Datum,
+    formatNumber,
     ScatterPlot,
+    ScatterPlotTooltipContent,
     Series,
-    seriesFrom
+    seriesFrom,
+    Tooltip,
+    Tracker,
+    TrackerLabelLocation
 } from "stream-charts";
 import {Observable} from "rxjs";
 import {CONNECTION_WEIGHT, ConnectionWeight, NetworkEvent} from "../redux/actions/networkEvent";
@@ -143,15 +147,38 @@ function WeightsChart(props: Props): JSX.Element {
             <ContinuousAxis
                 axisId="y-axis-1"
                 location={AxisLocation.Left}
-                label="neuron"
+                label="weight"
                 domain={[0, 1]}
             />
             <ContinuousAxis
                 axisId="y-axis-2"
                 location={AxisLocation.Right}
-                label="neuron"
+                label="weight"
                 domain={[0, 1]}
             />
+            <Tracker
+                visible={false}
+                labelLocation={TrackerLabelLocation.WithMouse}
+                style={{color: itheme.palette.themePrimary}}
+                font={{color: itheme.palette.themePrimary}}
+                // onTrackerUpdate={update => console.dir(update)}
+            />
+            <Tooltip
+                visible={true}
+                style={{
+                    fontColor: itheme.palette.themePrimary,
+                    backgroundColor: itheme.palette.white,
+                    borderColor: itheme.palette.themePrimary,
+                    backgroundOpacity: 0.9,
+                }}
+            >
+                <ScatterPlotTooltipContent
+                    xLabel="t (ms)"
+                    yLabel="weight"
+                    yValueFormatter={value => formatNumber(value, " ,.0f")}
+                    yChangeFormatter={value => formatNumber(value, " ,.0f")}
+                />
+            </Tooltip>
             <ScatterPlot
                 axisAssignments={new Map()}
                 dropDataAfter={10000}

@@ -9,7 +9,13 @@ import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {AppState} from "../redux/reducers/root";
 import {connect} from "react-redux";
 import {useGridCell} from "react-resizable-grid-layout";
-import {AxisLocation, CategoryAxis, Chart, ChartData, ContinuousAxis, Datum, RasterPlot, Series, seriesFrom} from 'stream-charts';
+import {
+    AxisLocation, CategoryAxis, Chart, ChartData, ContinuousAxis, Datum, formatNumber, RasterPlot,
+    RasterPlotTooltipContent,
+    Series, seriesFrom,
+    Tooltip,
+    Tracker, TrackerLabelLocation
+} from 'stream-charts';
 
 interface OwnProps {
     width?: number
@@ -141,6 +147,28 @@ function SpikesChart(props: Props): JSX.Element {
                 categories={initialDataRef.current.map(series => series.name)}
                 label="neuron"
             />
+            <Tracker
+                visible={false}
+                labelLocation={TrackerLabelLocation.WithMouse}
+                style={{color: itheme.palette.themePrimary}}
+                font={{color: itheme.palette.themePrimary}}
+                // onTrackerUpdate={update => console.dir(update)}
+            />
+            <Tooltip
+                visible={true}
+                style={{
+                    fontColor: itheme.palette.themePrimary,
+                    backgroundColor: itheme.palette.white,
+                    borderColor: itheme.palette.themePrimary,
+                    backgroundOpacity: 0.9,
+                }}
+            >
+                <RasterPlotTooltipContent
+                    xFormatter={value => formatNumber(value, " ,.0f") + ' ms'}
+                    yFormatter={value => formatNumber(value, " ,.1f") + ' mV'}
+                />
+            </Tooltip>
+
             <RasterPlot
                 axisAssignments={new Map()}
                 spikeMargin={1}

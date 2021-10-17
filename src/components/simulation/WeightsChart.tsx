@@ -128,7 +128,7 @@ function WeightsChart(props: Props): JSX.Element {
         <Chart
             width={width}
             height={height}
-            margin={{top: 15, right: 60, bottom: 35, left: 60}}
+            margin={{top: 35, right: 60, bottom: 35, left: 60}}
             color={itheme.palette.themePrimary}
             backgroundColor={itheme.palette.white}
             initialData={initialDataRef.current}

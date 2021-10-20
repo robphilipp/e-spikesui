@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Card} from "@uifabric/react-cards";
+import {Card} from "@fluentui/react-cards";
 import {Icon, IconButton, ITheme, MessageBarType, SpinButton, Text, TextField} from "@fluentui/react";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";

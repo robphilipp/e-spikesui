@@ -1,4 +1,4 @@
-import {ITheme} from "@uifabric/styling";
+import {ITheme} from "@fluentui/style-utilities";
 import {Color} from "three";
 import {ColorRange} from "./neuralthree/Network";
 import {useMemo} from "react";

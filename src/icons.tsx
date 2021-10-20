@@ -1,5 +1,5 @@
 import React from "react";
-import {registerIcons} from '@uifabric/styling';
+import {registerIcons} from '@fluentui/style-utilities';
 
 // icons (fontawesome)
 import {library} from '@fortawesome/fontawesome-svg-core'

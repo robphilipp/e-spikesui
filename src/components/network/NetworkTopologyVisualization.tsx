@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {useEffect, useState} from 'react';
 import {HashMap, HashSet} from "prelude-ts";
-import {ITheme} from "@uifabric/styling";
+import {ITheme} from "@fluentui/style-utilities";
 import Network from "../visualization/neuralthree/Network"
 import {Color} from "three";
 import {interval, Observable} from "rxjs";

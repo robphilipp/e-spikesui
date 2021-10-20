@@ -24,7 +24,7 @@ import {
 } from "../redux/actions/networkEvent";
 import {bufferTime, filter} from "rxjs/operators";
 import {remoteActionCreators} from "../../app";
-import {Card} from '@uifabric/react-cards';
+import {Card} from '@fluentui/react-cards';
 import NetworkVisualization from "./NetworkVisualization";
 import {NetworkManagerThread, newNetworkManagerThread} from "../threads/NetworkManagerThread";
 import useSimulationTimer from "./useSimulationTimer";

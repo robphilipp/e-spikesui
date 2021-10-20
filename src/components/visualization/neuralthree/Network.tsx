@@ -6,7 +6,7 @@ import CameraOrbitControls from "../basethree/CameraOrbitControls";
 import CoordinateAxes from "../basethree/CoordinateAxes";
 import {AmbientLight, Color, PerspectiveCamera, Renderer, Scene, WebGLRenderer} from "three";
 import {Coordinate, coordinateFrom, origin} from "../basethree/Coordinate";
-import {ITheme} from "@uifabric/styling";
+import {ITheme} from "@fluentui/style-utilities";
 import {HashMap, Option, Vector} from "prelude-ts";
 import {connect} from "react-redux";
 import {ApplicationAction} from "../../redux/actions/actions";

@@ -3,18 +3,27 @@ import {useEffect, useRef, useState} from 'react'
 import {Observable} from "rxjs";
 import {NetworkEvent, Spike, SPIKE} from "../redux/actions/networkEvent";
 import {useTheme} from "../common/useTheme";
-import {filter, map, tap} from "rxjs/operators";
+import {filter, map} from "rxjs/operators";
 import {HashMap, Option} from "prelude-ts";
 import {NeuronInfo} from "../visualization/neuralthree/Neurons";
 import {AppState} from "../redux/reducers/root";
 import {connect} from "react-redux";
 import {useGridCell} from "react-resizable-grid-layout";
 import {
-    AxisLocation, CategoryAxis, Chart, ChartData, ContinuousAxis, Datum, formatNumber, RasterPlot,
+    AxisLocation,
+    CategoryAxis,
+    Chart,
+    ChartData,
+    ContinuousAxis,
+    Datum,
+    formatNumber,
+    RasterPlot,
     RasterPlotTooltipContent,
-    Series, seriesFrom,
+    Series,
+    seriesFrom,
     Tooltip,
-    Tracker, TrackerLabelLocation
+    Tracker,
+    TrackerLabelLocation
 } from 'stream-charts';
 
 interface OwnProps {
@@ -27,7 +36,6 @@ interface OwnProps {
 interface StateProps {
     networkId: Option<string>
     neurons: HashMap<string, NeuronInfo>
-    // connections: HashMap<string, ConnectionInfo>
 }
 
 type Props = StateProps & OwnProps
@@ -48,8 +56,6 @@ function SpikesChart(props: Props): JSX.Element {
     // chart observable before it really exists. the running flag lets the chart know the
     // the observable has been converted, and that we are now in the running state...
     const [running, setRunning] = useState(false)
-
-    console.log("SpikesChart called")
 
     useEffect(
         () => {

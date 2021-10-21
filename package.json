@@ -93,7 +93,7 @@
     "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.2.0",
     "extract-text-webpack-plugin": "^3.0.2",
-    "fork-ts-checker-webpack-plugin": "^5.2.0",
+    "fork-ts-checker-webpack-plugin": "^6.4.0",
     "monaco-editor-webpack-plugin": "^5.0.0",
     "node-loader": "^1.0.3",
     "redux-devtools": "^3.7.0",

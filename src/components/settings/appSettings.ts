@@ -5,19 +5,20 @@ import {readSettings, saveSettings} from "../repos/appSettingsRepo";
 import {SensorDescriptionSettings} from "./sensorDescriptionSettings";
 
 export interface ApplicationSettings {
-    themeName: string;
-    server: ServerSettings;
-    kafka: KafkaSettings;
-    networkDescription: NetworkDescriptionSettings;
-    sensorDescription: SensorDescriptionSettings;
+    themeName: string
+    server: ServerSettings
+    kafka: KafkaSettings
+    networkDescription: NetworkDescriptionSettings
+    sensorDescription: SensorDescriptionSettings
 }
 
-export const SETTINGS_PATH = '.spikes-ui'
+export const BASE_PATH = '/Users/rob/.spikes'
+export const SETTINGS_PATH = `${BASE_PATH}/spikes-ui`
 export const DEFAULT_SETTINGS: ApplicationSettings = {
     themeName: 'dark',
     server: {
         host: 'localhost',
-        port: 3000,
+        port: 8080,
         basePath: ''
     },
     kafka: {
@@ -27,10 +28,10 @@ export const DEFAULT_SETTINGS: ApplicationSettings = {
         ]
     },
     networkDescription: {
-        templatePath: '.spikes-network-template',
+        templatePath: `${BASE_PATH}/spikes-network-template`,
     },
     sensorDescription: {
-        templatePath: '.spikes-sensor-template',
+        templatePath: `${BASE_PATH}/spikes-sensor-template`,
     }
 }
 

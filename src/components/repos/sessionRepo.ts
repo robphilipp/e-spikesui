@@ -1,8 +1,9 @@
 import fs from "fs";
 import {Either} from "prelude-ts";
 import {defaultSessionState, SessionState} from "../../session";
+import {BASE_PATH} from "../settings/appSettings";
 
-const SESSION_STATE_PATH = '.spikes-session'
+const SESSION_STATE_PATH = `${BASE_PATH}/spikes-session`
 
 /**
  * Saves the session state to file

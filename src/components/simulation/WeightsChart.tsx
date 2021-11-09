@@ -135,7 +135,7 @@ function WeightsChart(props: Props): JSX.Element {
             seriesFilter={new RegExp('')}
             seriesObservable={chartObservable}
             shouldSubscribe={shouldSubscribe && running}
-            windowingTime={75}
+            windowingTime={125}
         >
             <ContinuousAxis
                 axisId="x-axis-1"

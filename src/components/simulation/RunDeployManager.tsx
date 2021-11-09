@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
 import {RouteComponentProps, withRouter} from "react-router-dom";
-import {IconButton, ITheme, MessageBarType, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
+import {Checkbox, IconButton, ITheme, MessageBarType, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
 import {ApplicationAction,} from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -39,7 +39,6 @@ import {
     gridTrackTemplateBuilder,
     useGridCell,
     withFraction,
-    withGridTrack,
     withPixels
 } from 'react-resizable-grid-layout';
 import WeightsChart from './WeightsChart';
@@ -130,6 +129,10 @@ function RunDeployManager(props: Props): JSX.Element {
     const networkManagerThreadRef = useRef<NetworkManagerThread>();
     const [networkId, setNetworkId] = useState<Option<string>>(Option.none());
 
+    const [showNetwork, setShowNetwork] = useState(true)
+    const [showRaster, setShowRaster] = useState(true)
+    const [showWeights, setShowWeights] = useState(true)
+
     // simulation time
     const {simulationTime, startTimer, cancelTimer} = useSimulationTimer(handleStop)
 
@@ -159,7 +162,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 buildSubscriptionRef.current?.unsubscribe();
             }
         },
-        [networkBuilt]
+        [networkBuilt, updateLoadingState]
     )
 
     /**
@@ -479,7 +482,35 @@ function RunDeployManager(props: Props): JSX.Element {
                 onClick={handleDeleteNetwork}
             />
         </TooltipHost>
+    }
 
+    /**
+     * Controls to set which of the visualizations to display
+     */
+    function visualizationSelection(): JSX.Element {
+        return <Stack horizontal style={{paddingTop: 7, paddingLeft: 4}} tokens={{childrenGap: 15}}>
+            <Checkbox
+                ariaLabel="network"
+                label="Network"
+                checked={showNetwork}
+                onChange={() => setShowNetwork(current => !current)}
+                // disabled={running}
+            />
+            <Checkbox
+                ariaLabel="raster"
+                label="Spikes"
+                checked={showRaster}
+                onChange={() => setShowRaster(current => !current)}
+                // disabled={running}
+            />
+            <Checkbox
+                ariaLabel="weights"
+                label="Weights"
+                checked={showWeights}
+                onChange={() => setShowWeights(current => !current)}
+                // disabled={running}
+            />
+        </Stack>
     }
 
     /**
@@ -585,6 +616,9 @@ function RunDeployManager(props: Props): JSX.Element {
                                     // onClick={handlePause}
                                 />
                             </TooltipHost>
+                            <Separator vertical style={{paddingLeft: 10}}/>
+                            {visualizationSelection()}
+                            <Separator vertical/>
                         </Card.Section>
                     </Card>
                 )).getOrElse(<span/>)}
@@ -592,8 +626,16 @@ function RunDeployManager(props: Props): JSX.Element {
             <GridItem gridAreaName='networkCharts'>
                 <Grid
                     dimensionsSupplier={useGridCell}
-                    gridTemplateColumns={gridTrackTemplateBuilder().repeatFor(2, withGridTrack(withFraction(1))).build()}
-                    gridTemplateRows={gridTrackTemplateBuilder().repeatFor(2, withGridTrack(withFraction(1))).build()}
+                    gridTemplateColumns={gridTrackTemplateBuilder()
+                        .addTrack(showNetwork ? withFraction(1) : withPixels(1))
+                        .addTrack(showRaster || showWeights ? withFraction(1) : withPixels(1))
+                        .build()
+                    }
+                    gridTemplateRows={gridTrackTemplateBuilder()
+                        .addTrack(showRaster ? withFraction(1) : withPixels(1))
+                        .addTrack(showWeights ? withFraction(1) : withPixels(1))
+                        .build()
+                    }
                     gridTemplateAreas={gridTemplateAreasBuilder()
                         .addArea('networkVisualization', gridArea(1, 1, 2, 1))
                         .addArea('networkRasterChart', gridArea(1, 2))
@@ -602,7 +644,7 @@ function RunDeployManager(props: Props): JSX.Element {
                     }
                 >
                     <GridItem row={1} rowsSpanned={2} column={1}>
-                        {networkId.isSome() && networkBuilt ?
+                        {networkId.isSome() && networkBuilt && showNetwork ?
                             <NetworkVisualization
                                 key="net-1"
                                 networkObservable={spikeSubjectRef.current}
@@ -612,7 +654,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         }
                     </GridItem>
                     <GridItem row={1} column={2}>
-                        {networkId.isSome() && networkBuilt ?
+                        {networkId.isSome() && networkBuilt && showRaster ?
                             <SpikesChart
                                 networkObservable={spikeSubjectRef.current}
                                 shouldSubscribe={running}
@@ -621,7 +663,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         }
                     </GridItem>
                     <GridItem row={2} column={2}>
-                        {networkId.isSome() && networkBuilt ?
+                        {networkId.isSome() && networkBuilt && showWeights ?
                             <WeightsChart
                                 networkObservable={learnSubjectRef.current}
                                 shouldSubscribe={running}

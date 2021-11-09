@@ -12,6 +12,7 @@ export interface ApplicationSettings {
     sensorDescription: SensorDescriptionSettings
 }
 
+// todo figure out how to set this to the user's home directory
 export const BASE_PATH = '/Users/rob/.spikes'
 export const SETTINGS_PATH = `${BASE_PATH}/spikes-ui`
 export const DEFAULT_SETTINGS: ApplicationSettings = {

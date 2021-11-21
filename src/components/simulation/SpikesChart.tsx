@@ -140,7 +140,6 @@ function SpikesChart(props: Props): JSX.Element {
                 location={AxisLocation.Bottom}
                 domain={[0, 10000]}
                 label="t (ms)"
-                // font={{color: theme.color}}
             />
             <CategoryAxis
                 axisId="y-axis-1"

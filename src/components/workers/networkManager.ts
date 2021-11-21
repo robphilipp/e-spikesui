@@ -12,6 +12,7 @@ import ServerSettings from "../settings/serverSettings";
 //
 // The variables below are global for the worker, and only the worker
 const BUILD_MESSAGE = {command: "build"};
+const createBuildMessage = (timeFactor: number) => ({command: "build", timeFactor})
 const START_MESSAGE = {command: "start"};
 const STOP_MESSAGE = {command: "stop"};
 
@@ -82,7 +83,7 @@ async function deployNetwork(networkDescription: string): Promise<string> {
  * @throws An error if the network ID is undefined, which means that the network has not
  * been deployed to the server yet.
  */
-function buildNetwork(): void {
+function buildNetwork(timeFactor: number): void {
     if (networkId === undefined) {
         throw new Error("Cannot build network because the network ID is undefined");
     }
@@ -97,7 +98,8 @@ function buildNetwork(): void {
     }
 
     // set the web-socket callbacks for then the connection is complete and when a message arrives
-    websocket.onopen = () => websocket.send(BUILD_MESSAGE.command);
+    websocket.onopen = () => websocket.send(JSON.stringify(createBuildMessage(timeFactor)));
+    // websocket.onopen = () => websocket.send(BUILD_MESSAGE.command);
     websocket.onmessage = (event: MessageEvent) => subject.next(JSON.parse(event.data) as NetworkEvent)
 
     return;
@@ -241,7 +243,7 @@ export interface NetworkManager extends WorkerModule<string> {
      */
     configure: (serverSettings: ServerSettings) => Promise<void>;
     deployNetwork: (networkDescription: string) => Promise<string>;
-    buildNetwork: () => void;
+    buildNetwork: (timeFactor: number) => void;
     startNetwork: (sensorDescription: string, timeFactor: number) => void;
     stopNetwork: () => void;
     deleteNetwork: () => Promise<string>;

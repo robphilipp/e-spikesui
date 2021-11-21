@@ -15,7 +15,7 @@ type NetworkManagerWorker = ((() => ObservablePromise<StripAsync<NetworkEvent>>)
 
 export interface NetworkManagerThread {
     deploy: (networkDescription: string) => Promise<string>
-    build: (networkId: string) => Promise<Observable<NetworkEvent>>
+    build: (networkId: string, timeFactor: number) => Promise<Observable<NetworkEvent>>
     start: (sensorDescription: string, timeFactor: number) => Promise<NetworkEventSubjects>
     // start: (sensorDescription: string, timeFactor: number) => Promise<Subject<NetworkEvent>>;
     stop: () => Promise<void>
@@ -48,10 +48,10 @@ export async function newNetworkManagerThread(): Promise<NetworkManagerThread> {
      * build of the network.
      * @return A promise to an observable of network build events
      */
-    async function build(): Promise<Observable<NetworkEvent>> {
+    async function build(networkId: string, timeFactor: number): Promise<Observable<NetworkEvent>> {
         // ask the worker to build the network, and then once build, ask for the build
         // observable
-        await worker.buildNetwork();
+        await worker.buildNetwork(timeFactor);
         const buildEvents: FnsObservable<NetworkEvent> = worker.buildObservable();
 
 

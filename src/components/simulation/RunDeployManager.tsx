@@ -195,7 +195,7 @@ function RunDeployManager(props: Props): JSX.Element {
             // and we need to respond to the network build events emitted by the network on the
             // server
             updateLoadingState(true, `Building network ${id}`)
-            networkManager.build(id).then(networkEvents => {
+            networkManager.build(id, timeFactor).then(networkEvents => {
                 // emits array's for build (neuron creation and connection) events that occur within a
                 // 100 ms windows. drops non building events, and emits nothing when no events occur in the
                 // time window

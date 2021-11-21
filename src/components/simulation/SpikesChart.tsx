@@ -64,6 +64,7 @@ function SpikesChart(props: Props): JSX.Element {
             // converted, so we set the "running" to true once the observable has been
             // converted and we're ready to run
             if (shouldSubscribe) setRunning(true)
+            return () => setRunning(false)
         },
         [networkObservable, shouldSubscribe]
     )

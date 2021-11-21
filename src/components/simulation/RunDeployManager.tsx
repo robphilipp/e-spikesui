@@ -643,7 +643,7 @@ function RunDeployManager(props: Props): JSX.Element {
                         .build()
                     }
                 >
-                    <GridItem row={1} rowsSpanned={2} column={1}>
+                    <GridItem gridAreaName='networkVisualization'>
                         {networkId.isSome() && networkBuilt && showNetwork ?
                             <NetworkVisualization
                                 key="net-1"
@@ -653,24 +653,52 @@ function RunDeployManager(props: Props): JSX.Element {
                             <div/>
                         }
                     </GridItem>
-                    <GridItem row={1} column={2}>
-                        {networkId.isSome() && networkBuilt && showRaster ?
+                    <GridItem gridAreaName='networkRasterChart'>
+                        {networkId.isSome() && networkBuilt ?
                             <SpikesChart
                                 networkObservable={spikeSubjectRef.current}
-                                shouldSubscribe={running}
+                                shouldSubscribe={running && showRaster}
                             /> :
                             <div/>
                         }
                     </GridItem>
-                    <GridItem row={2} column={2}>
-                        {networkId.isSome() && networkBuilt && showWeights ?
+                    <GridItem gridAreaName='networkWeightsChart'>
+                        {networkId.isSome() && networkBuilt ?
                             <WeightsChart
                                 networkObservable={learnSubjectRef.current}
-                                shouldSubscribe={running}
+                                shouldSubscribe={running && showWeights}
                             /> :
                             <div/>
                         }
                     </GridItem>
+                    {/*<GridItem row={1} rowsSpanned={2} column={1}>*/}
+                    {/*    {networkId.isSome() && networkBuilt && showNetwork ?*/}
+                    {/*        <NetworkVisualization*/}
+                    {/*            key="net-1"*/}
+                    {/*            networkObservable={spikeSubjectRef.current}*/}
+                    {/*            {...props}*/}
+                    {/*        /> :*/}
+                    {/*        <div/>*/}
+                    {/*    }*/}
+                    {/*</GridItem>*/}
+                    {/*<GridItem row={1} column={2} rowsSpanned={showWeights ? 1 : 2}>*/}
+                    {/*    {networkId.isSome() && networkBuilt && showRaster ?*/}
+                    {/*        <SpikesChart*/}
+                    {/*            networkObservable={spikeSubjectRef.current}*/}
+                    {/*            shouldSubscribe={running && showRaster}*/}
+                    {/*        /> :*/}
+                    {/*        <div/>*/}
+                    {/*    }*/}
+                    {/*</GridItem>*/}
+                    {/*<GridItem row={showRaster ? 2 : 1} column={2} rowsSpanned={showRaster ? 1 : 2}>*/}
+                    {/*    {networkId.isSome() && networkBuilt && showWeights ?*/}
+                    {/*        <WeightsChart*/}
+                    {/*            networkObservable={learnSubjectRef.current}*/}
+                    {/*            shouldSubscribe={running && showWeights}*/}
+                    {/*        /> :*/}
+                    {/*        <div/>*/}
+                    {/*    }*/}
+                    {/*</GridItem>*/}
                 </Grid>
 
             </GridItem>

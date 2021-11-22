@@ -82,7 +82,7 @@ function ProjectConfig(props: Props): JSX.Element {
      * @param factor The new time factor
      */
     function handleTimeFactorChange(factor: number): void {
-        const newTimeFactor = Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, factor));
+        const newTimeFactor = boundTimeFactor(factor)
         if (newTimeFactor !== timeFactor) {
             onChange({
                 simulationName,
@@ -92,15 +92,6 @@ function ProjectConfig(props: Props): JSX.Element {
                 networkFilePath: networkDescriptionPath
             })
         }
-    }
-
-    /**
-     * Handles validating the simulation time factor
-     * @param value The new time factor (should be a number in the interval [1, 20])
-     */
-    function handleValidateTimeFactor(value: string): string {
-        const timeFactor = Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, parseInt(value)));
-        return timeFactor.toString();
     }
 
     /**
@@ -410,6 +401,19 @@ function ProjectConfig(props: Props): JSX.Element {
         </>
     );
 }
+
+export function boundTimeFactor(factor: number): number {
+    return Math.max(MIN_TIME_FACTOR, Math.min(MAX_TIME_FACTOR, factor))
+}
+
+/**
+ * Handles validating the simulation time factor
+ * @param value The new time factor (should be a number in the interval [1, 20])
+ */
+export function handleValidateTimeFactor(value: string): string {
+    return boundTimeFactor(parseInt(value)).toString();
+}
+
 
 /*
  |

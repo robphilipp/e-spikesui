@@ -1,7 +1,19 @@
 import * as React from 'react';
 import {useEffect, useRef, useState} from 'react';
 import {RouteComponentProps, withRouter} from "react-router-dom";
-import {Checkbox, IconButton, ITheme, MessageBarType, Separator, Stack, Text, TooltipHost} from "@fluentui/react";
+import {
+    ActionButton,
+    Button,
+    Checkbox,
+    IconButton,
+    ITheme,
+    MessageBarType,
+    Separator,
+    SpinButton,
+    Stack,
+    Text,
+    TooltipHost
+} from "@fluentui/react";
 import {ApplicationAction,} from "../redux/actions/actions";
 import {AppState} from "../redux/reducers/root";
 import {ThunkDispatch} from "redux-thunk";
@@ -42,6 +54,9 @@ import {
     withPixels
 } from 'react-resizable-grid-layout';
 import WeightsChart from './WeightsChart';
+import {boundTimeFactor, handleValidateTimeFactor} from "./ProjectConfig";
+import {SimulationProject} from "../repos/simulationProjectRepo";
+import {updateSimulationProject} from "../redux/actions/simulationProject";
 
 interface OwnProps extends RouteComponentProps<never> {
     itheme: ITheme;
@@ -80,6 +95,8 @@ interface StateProps {
 }
 
 interface DispatchProps {
+    onTimeFactorChange: (project: SimulationProject) => void;
+
     onDeleteNetworkFromServer: (networkId: string) => Promise<NetworkDeletedAction>;
     onClearNetworkState: () => DeleteNetworkAction;
 
@@ -101,6 +118,10 @@ function RunDeployManager(props: Props): JSX.Element {
 
         networkDescription,
         sensorDescription,
+        sensorDescriptionPath,
+        networkDescriptionPath,
+
+        onTimeFactorChange,
 
         networkBuilt,
         subscription,
@@ -466,23 +487,96 @@ function RunDeployManager(props: Props): JSX.Element {
      */
     function networkManagementButton(): JSX.Element {
         if (networkId.isNone()) {
-            return <TooltipHost content="Deploy network to server and build.">
-                <IconButton
+            return <>
+                <Button
                     iconProps={{iconName: "build"}}
-                    style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                    style={{color: itheme.palette.themePrimary, marginLeft: 15}}
                     onClick={handleBuildNetwork}
-                />
-            </TooltipHost>
+                >
+                    Deploy
+                </Button>
+            </>
         }
         return <TooltipHost
             content="Delete network from server.">
-            <IconButton
+            <Button
                 iconProps={{iconName: "delete"}}
-                style={{color: itheme.palette.themePrimary, fontWeight: 400}}
+                style={{color: itheme.palette.themePrimary, marginLeft: 15}}
                 onClick={handleDeleteNetwork}
-            />
+            >
+                Destroy
+            </Button>
         </TooltipHost>
     }
+
+    /**
+     * Shows the network management controls (build/destroy, time-factor)
+     */
+    function networkManagementControls(): JSX.Element {
+        return (
+            <Grid
+                dimensionsSupplier={useGridCell}
+                gridTemplateRows={gridTrackTemplateBuilder()
+                    .addTrack(withPixels(25))
+                    .addTrack(withPixels(50))
+                    .build()
+                }
+                gridTemplateColumns={gridTrackTemplateBuilder()
+                    .addTrack(withPixels(150))
+                    .addTrack(withPixels(200))
+                    .addTrack(withFraction(1))
+                    .build()
+                }
+                columnGap={15}
+            >
+                <GridItem row={1} column={1} columnsSpanned={3}>
+                    <Separator
+                        vertical={false}
+                        color={itheme.palette.neutralSecondary}
+                        styles={{root: {padding: 0, fontSize: 14}}}
+                    >
+                        Network Management
+                    </Separator>
+                </GridItem>
+                <GridItem row={2} column={1}>
+                    {networkManagementButton()}
+                </GridItem>
+                <GridItem row={2} column={2}>
+                    <SpinButton
+                        label="Time Factor"
+                        min={1}
+                        max={20}
+                        value={`${timeFactor}`}
+                        onValidate={handleValidateTimeFactor}
+                        incrementButtonIcon={{iconName: 'chevronup'}}
+                        decrementButtonIcon={{iconName: 'chevrondown'}}
+                        onIncrement={(value: string) => handleTimeFactorChange(parseInt(value) + 1)}
+                        onDecrement={(value: string) => handleTimeFactorChange(parseInt(value) - 1)}
+                        onBlur={event => handleTimeFactorChange(parseInt(event.currentTarget.value))}
+                        disabled={networkId.isSome()}
+                    />
+                </GridItem>
+            </Grid>
+        )
+    }
+
+    /**
+     * Handles changes to the simulation time-factor
+     * @param factor The new time factor
+     */
+    function handleTimeFactorChange(factor: number): void {
+        const newTimeFactor = boundTimeFactor(factor)
+        if (newTimeFactor !== timeFactor) {
+            onTimeFactorChange({
+                simulationName,
+                timeFactor: newTimeFactor,
+                simulationDuration,
+                sensorFilePath: sensorDescriptionPath,
+                networkFilePath: networkDescriptionPath
+            })
+        }
+    }
+
 
     /**
      * Controls to set which of the visualizations to display
@@ -566,7 +660,7 @@ function RunDeployManager(props: Props): JSX.Element {
                 .build()
             }
             gridTemplateRows={gridTrackTemplateBuilder()
-                .addTrack(withPixels(30))
+                .addTrack(withPixels(75))
                 .addTrack(withPixels(150))
                 .addTrack(withFraction(1))
                 .build()
@@ -582,7 +676,7 @@ function RunDeployManager(props: Props): JSX.Element {
             showGrid={false}
         >
             <GridItem gridAreaName='networkManagementButtons'>
-                {networkManagementButton()}
+                {networkManagementControls()}
             </GridItem>
             <GridItem gridAreaName='networkControls'>
                 {networkId.map(id => (
@@ -671,34 +765,6 @@ function RunDeployManager(props: Props): JSX.Element {
                             <div/>
                         }
                     </GridItem>
-                    {/*<GridItem row={1} rowsSpanned={2} column={1}>*/}
-                    {/*    {networkId.isSome() && networkBuilt && showNetwork ?*/}
-                    {/*        <NetworkVisualization*/}
-                    {/*            key="net-1"*/}
-                    {/*            networkObservable={spikeSubjectRef.current}*/}
-                    {/*            {...props}*/}
-                    {/*        /> :*/}
-                    {/*        <div/>*/}
-                    {/*    }*/}
-                    {/*</GridItem>*/}
-                    {/*<GridItem row={1} column={2} rowsSpanned={showWeights ? 1 : 2}>*/}
-                    {/*    {networkId.isSome() && networkBuilt && showRaster ?*/}
-                    {/*        <SpikesChart*/}
-                    {/*            networkObservable={spikeSubjectRef.current}*/}
-                    {/*            shouldSubscribe={running && showRaster}*/}
-                    {/*        /> :*/}
-                    {/*        <div/>*/}
-                    {/*    }*/}
-                    {/*</GridItem>*/}
-                    {/*<GridItem row={showRaster ? 2 : 1} column={2} rowsSpanned={showRaster ? 1 : 2}>*/}
-                    {/*    {networkId.isSome() && networkBuilt && showWeights ?*/}
-                    {/*        <WeightsChart*/}
-                    {/*            networkObservable={learnSubjectRef.current}*/}
-                    {/*            shouldSubscribe={running && showWeights}*/}
-                    {/*        /> :*/}
-                    {/*        <div/>*/}
-                    {/*    }*/}
-                    {/*</GridItem>*/}
                 </Grid>
 
             </GridItem>
@@ -745,6 +811,8 @@ const mapStateToProps = (state: AppState): StateProps => ({
  * @return The updated dispatch-properties holding the event handlers
  */
 const mapDispatchToProps = (dispatch: ThunkDispatch<AppState, unknown, ApplicationAction>): DispatchProps => ({
+    onTimeFactorChange: (project: SimulationProject) => dispatch(updateSimulationProject(project)),
+
     onDeleteNetworkFromServer: (networkId: string) =>
         dispatch(remoteActionCreators.networkManagement.deleteNetwork(networkId)),
 
